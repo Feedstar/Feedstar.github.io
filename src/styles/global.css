@@ -5,9 +5,11 @@
 :root {
   --bg: #151815;
   --bg-raised: #1b201b;
-  --fg: #dcdfd2;
-  --muted: #a2aa9c;
-  --subtle: #778171;
+  --fg: #f0f0e5;
+  --fg-bright: #fffef5;
+  --text-glow: rgba(218, 235, 206, 0.22);
+  --muted: #bbc3b4;
+  --subtle: #98a58f;
   --line: rgba(190, 202, 177, 0.17);
   --accent: #b7c4a8;
   --art-bg: #1b241d;
@@ -21,9 +23,11 @@
 :root[data-theme='paper'] {
   --bg: #e9e8df;
   --bg-raised: #e2e3d8;
-  --fg: #303a2f;
-  --muted: #65705f;
-  --subtle: #798271;
+  --fg: #273125;
+  --fg-bright: #132510;
+  --text-glow: rgba(55, 84, 44, 0.16);
+  --muted: #4b5b44;
+  --subtle: #5d6d55;
   --line: rgba(50, 64, 45, 0.2);
   --accent: #5a704c;
   --art-bg: #d5dccd;
@@ -43,7 +47,8 @@ body {
   font-family: var(--sans);
   font-size: 15px;
   line-height: 1.8;
-  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: auto;
 }
 a {
   color: inherit;
@@ -65,6 +70,10 @@ button {
 }
 button {
   cursor: pointer;
+  transition:
+    transform 140ms ease-out,
+    color 220ms ease,
+    background-color 220ms ease;
 }
 button:disabled {
   cursor: wait;
@@ -82,7 +91,7 @@ select:focus-visible {
   outline-offset: 6px;
 }
 button:active {
-  transform: scale(0.97);
+  transform: scale(0.99);
 }
 .wrap {
   width: min(1180px, calc(100% - 144px));
@@ -107,10 +116,15 @@ button:active {
 .paper-grain {
   position: fixed;
   inset: 0;
-  z-index: 25;
+  z-index: 0;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.8' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+}
+main,
+.site-footer {
+  position: relative;
+  z-index: 1;
 }
 .site-header {
   height: 104px;
@@ -147,7 +161,7 @@ button:active {
 .brand-caption {
   display: block;
   font-family: var(--serif);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.3em;
   margin-top: 5px;
   color: var(--muted);
@@ -160,7 +174,7 @@ button:active {
 }
 .site-header nav a {
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: 14px;
   position: relative;
   white-space: nowrap;
 }
@@ -262,6 +276,122 @@ button:active {
   display: block;
   position: relative;
 }
+.moon-scene .orbital-dust {
+  position: absolute;
+  inset: 0;
+}
+.lunar-aura {
+  position: absolute;
+  left: 68.5%;
+  top: 48.5%;
+  width: min(74vw, 100vh);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.lunar-aura span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    transparent 61%,
+    rgba(161, 197, 186, 0.12) 70%,
+    rgba(153, 185, 169, 0.07) 78%,
+    transparent 100%
+  );
+  animation: lunar-breath 11s ease-in-out infinite alternate;
+}
+.lunar-aura span::after {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 35deg,
+    transparent 14%,
+    rgba(153, 185, 169, 0.08),
+    transparent 45%,
+    rgba(134, 164, 185, 0.07),
+    transparent 85%
+  );
+  filter: blur(30px);
+}
+@keyframes lunar-breath {
+  from {
+    transform: scale(0.98);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.045);
+    opacity: 1;
+  }
+}
+.moon-scene[data-active='false'] .lunar-aura span {
+  animation-play-state: paused;
+}
+:root[data-theme='paper'] .lunar-aura span {
+  background: radial-gradient(
+    circle closest-side,
+    transparent 61%,
+    rgba(86, 115, 88, 0.16) 70%,
+    rgba(86, 115, 88, 0.08) 78%,
+    transparent 100%
+  );
+}
+.pointer-orbit {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.pointer-orbit i {
+  display: block;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+  border-radius: 50%;
+  transform: scale(0.65);
+  transition:
+    transform 240ms var(--ease-out),
+    background-color 220ms ease;
+}
+.pointer-orbit[data-mode='text'] i {
+  transform: scale(1);
+}
+.pointer-orbit[data-mode='link'] i {
+  transform: scale(1.35);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+[data-pointer-light],
+a {
+  transition:
+    color 220ms ease,
+    text-shadow 220ms ease;
+}
+[data-pointer-light].pointer-lit,
+a:focus-visible,
+button:focus-visible {
+  color: var(--fg-bright);
+  text-shadow: 0 0 20px var(--text-glow);
+}
+@media (min-width: 701px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pointer-orbit {
+    display: block;
+  }
+  .pointer-orbit[data-visible='true']:not([data-mode='hidden']) {
+    opacity: 1;
+  }
+  a:hover {
+    color: var(--fg-bright);
+  }
+}
 .moon-fallback {
   position: absolute;
   width: min(52vw, 68vh);
@@ -290,8 +420,12 @@ button:active {
   transform: translateY(var(--intro-y));
   pointer-events: none;
 }
+.hero-copy :is(h1, p),
+.arrival :is(h2, p) {
+  pointer-events: auto;
+}
 .hero-eyebrow {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   margin-bottom: 34px;
 }
@@ -304,6 +438,15 @@ h2,
 h3,
 p {
   font-weight: 400;
+}
+.hero-chinese,
+.section-heading h2,
+.project-meta h3,
+.journal-list h3,
+.arrival h2,
+.article-header h1,
+.prose {
+  font-weight: 500;
 }
 h1 {
   margin: 0;
@@ -331,7 +474,7 @@ h1 {
 }
 .hero-description {
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 2;
   color: var(--muted);
   margin-top: 25px;
@@ -349,13 +492,13 @@ h1 {
   z-index: 3;
 }
 .small-note {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--subtle);
 }
 .scroll-cue {
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   gap: 40px;
@@ -416,7 +559,7 @@ h1 {
   position: absolute;
   bottom: 113px;
   right: 15%;
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.16em;
   color: var(--subtle);
   opacity: var(--intro-opacity);
@@ -494,7 +637,7 @@ h1 {
   height: 100%;
   width: 100%;
   color: var(--fg);
-  transition: transform 700ms var(--ease-out);
+  transition: transform 600ms var(--ease-out);
   display: grid;
   place-items: center;
 }
@@ -517,7 +660,7 @@ h1 {
   left: 25px;
   bottom: 22px;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.16em;
 }
 .project-open {
@@ -531,8 +674,8 @@ h1 {
   display: grid;
   place-items: center;
   transition:
-    transform 200ms var(--ease-out),
-    background 200ms ease;
+    transform 240ms var(--ease-out),
+    background 240ms ease;
 }
 .project-meta {
   display: flex;
@@ -541,7 +684,7 @@ h1 {
   padding-top: 25px;
 }
 .project-meta .eyebrow {
-  font-size: 8px;
+  font-size: 10px;
   margin-bottom: 9px;
 }
 .project-meta h3 {
@@ -552,7 +695,7 @@ h1 {
 }
 .project-meta p {
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 2;
   margin-left: auto;
@@ -578,7 +721,7 @@ h1 {
 }
 .project-summary {
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 12px;
 }
@@ -624,7 +767,7 @@ html[data-paused='true'] .pendulum-cover {
 }
 .lab-invitation p:not(.eyebrow) {
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 2.1;
   margin-bottom: 30px;
@@ -690,7 +833,6 @@ html[data-paused='true'] .pendulum-cover {
   gap: 38px;
   border-bottom: 1px solid var(--line);
   padding: 34px 5px;
-  transition: padding-left 200ms var(--ease-out);
 }
 .note-number {
   font-family: var(--roman);
@@ -698,10 +840,14 @@ html[data-paused='true'] .pendulum-cover {
   color: var(--subtle);
 }
 .journal-list .eyebrow {
-  font-size: 8px;
+  font-size: 10px;
   margin-bottom: 12px;
 }
 .journal-list h3 {
+  transition:
+    transform 240ms var(--ease-out),
+    color 220ms ease,
+    text-shadow 220ms ease;
   font-family: var(--serif);
   font-size: 20px;
   margin: 0;
@@ -737,7 +883,7 @@ html[data-paused='true'] .pendulum-cover {
 }
 .about-fragment > div p {
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 2.2;
   color: var(--muted);
   margin-bottom: 30px;
@@ -771,7 +917,7 @@ html[data-paused='true'] .pendulum-cover {
   display: flex;
   align-items: center;
   gap: 35px;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--subtle);
 }
@@ -862,7 +1008,7 @@ html[data-paused='true'] .pendulum-cover {
 }
 .prose {
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 17px;
   line-height: 2.25;
   letter-spacing: 0.025em;
 }
@@ -973,20 +1119,23 @@ html[data-paused='true'] .pendulum-cover {
   }
   .text-link:hover span,
   .note-arrow:hover {
-    transform: translate(3px, -2px);
+    transform: translate(2px, -1px);
   }
   .project-link:hover .project-art {
-    transform: scale(1.025);
+    transform: scale(1.012);
   }
   .project-link:hover .project-open {
-    transform: rotate(45deg);
+    transform: translate(2px, -1px) scale(1.04);
     background: var(--line);
   }
   .journal-list > a:hover {
-    padding-left: 14px;
+    color: var(--fg-bright);
+  }
+  .journal-list > a:hover h3 {
+    transform: translateX(3px);
   }
   .journal-list > a:hover .note-arrow {
-    transform: translate(3px, -3px);
+    transform: translate(2px, -1px);
   }
 }
 @media (min-width: 1600px) {
@@ -1070,13 +1219,13 @@ html[data-paused='true'] .pendulum-cover {
     height: 29px;
   }
   .brand-caption {
-    font-size: 7px;
+    font-size: 9px;
   }
   .site-header nav {
     gap: 15px;
   }
   .site-header nav a {
-    font-size: 10px;
+    font-size: 11px;
   }
   .site-header nav a:last-child {
     display: none;
@@ -1100,7 +1249,7 @@ html[data-paused='true'] .pendulum-cover {
     top: 45%;
   }
   .hero-eyebrow {
-    font-size: 7px;
+    font-size: 9px;
     margin-bottom: 27px;
   }
   .hero-eyebrow span {
@@ -1118,7 +1267,7 @@ html[data-paused='true'] .pendulum-cover {
     margin-top: 32px;
   }
   .hero-description {
-    font-size: 10px;
+    font-size: 11px;
     margin-top: 20px;
   }
   .hero-bottom {
@@ -1127,16 +1276,18 @@ html[data-paused='true'] .pendulum-cover {
   .small-note {
     max-width: 105px;
     line-height: 1.9;
-    font-size: 8px;
+    font-size: 11px;
   }
   .scroll-cue {
-    font-size: 10px;
+    font-size: 11px;
     gap: 16px;
   }
   .moon-caption {
-    right: 30px;
-    bottom: 145px;
-    font-size: 6px;
+    left: 27px;
+    right: auto;
+    top: 106px;
+    bottom: auto;
+    font-size: 9px;
   }
   .orbital-lines span {
     width: 100vw;
@@ -1152,7 +1303,7 @@ html[data-paused='true'] .pendulum-cover {
   .orbital-lines i {
     right: 30px;
     top: 110px;
-    font-size: 7px;
+    font-size: 9px;
   }
   .orbit-meter {
     right: 18px;
@@ -1166,7 +1317,7 @@ html[data-paused='true'] .pendulum-cover {
     font-size: 11px;
   }
   .arrival .eyebrow {
-    font-size: 8px;
+    font-size: 11px;
   }
   .section {
     padding-top: 85px;
@@ -1184,11 +1335,11 @@ html[data-paused='true'] .pendulum-cover {
     margin-top: 4px;
   }
   .section-heading .eyebrow {
-    font-size: 8px;
+    font-size: 11px;
     letter-spacing: 0.12em;
   }
   .section-heading .text-link {
-    font-size: 10px;
+    font-size: 11px;
     gap: 12px;
   }
   .project-feature .project-image {
@@ -1206,7 +1357,7 @@ html[data-paused='true'] .pendulum-cover {
     font-size: 18px;
   }
   .project-meta .eyebrow {
-    font-size: 7px;
+    font-size: 9px;
     letter-spacing: 0.12em;
   }
   .project-feature .project-index {
@@ -1224,7 +1375,7 @@ html[data-paused='true'] .pendulum-cover {
     margin-top: 0;
   }
   .image-label {
-    font-size: 7px;
+    font-size: 9px;
     left: 17px;
     bottom: 18px;
   }
@@ -1253,7 +1404,7 @@ html[data-paused='true'] .pendulum-cover {
   .vertical-note {
     right: 0;
     top: 0;
-    font-size: 7px;
+    font-size: 9px;
   }
   .journal-list > a {
     gap: 20px;
@@ -1264,7 +1415,7 @@ html[data-paused='true'] .pendulum-cover {
     line-height: 1.9;
   }
   .journal-list .eyebrow {
-    font-size: 7px;
+    font-size: 9px;
     letter-spacing: 0.1em;
     margin-bottom: 8px;
   }
@@ -1294,7 +1445,7 @@ html[data-paused='true'] .pendulum-cover {
     padding-bottom: 30px;
   }
   .footer-top .eyebrow {
-    font-size: 7px;
+    font-size: 9px;
   }
   .footer-top .text-link {
     font-size: 11px;
@@ -1307,7 +1458,7 @@ html[data-paused='true'] .pendulum-cover {
   .footer-bottom {
     gap: 15px;
     flex-wrap: wrap;
-    font-size: 7px;
+    font-size: 9px;
   }
   .footer-bottom span:nth-of-type(1) {
     display: none;
@@ -1352,7 +1503,7 @@ html[data-paused='true'] .pendulum-cover {
     font-size: 12px;
   }
   .prose {
-    font-size: 15px;
+    font-size: 16px;
     line-height: 2.2;
   }
   .prose h2 {
@@ -1437,8 +1588,5 @@ html:not(.js) .arrival,
   }
   .hero-eyebrow {
     margin-bottom: 20px;
-  }
-  .moon-caption {
-    bottom: 125px;
   }
 }

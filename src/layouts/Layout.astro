@@ -34,6 +34,9 @@ const {
     </a>
     <div class="page-frame" aria-hidden="true"></div>
     <div class="paper-grain" aria-hidden="true"></div>
+    <div class="pointer-orbit" aria-hidden="true">
+      <i></i>
+    </div>
     <header class="site-header">
       <a class="brand" href="/" aria-label="Feedstar 首页">
         <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
@@ -105,6 +108,8 @@ const {
       </div>
     </footer>
     <script>
+      import { createPointer } from '../scripts/pointer';
+      createPointer();
       const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
       toggle?.addEventListener('click', () => {
         const next =
@@ -114,16 +119,14 @@ const {
           localStorage.setItem('feedstar-theme', next);
         } catch {}
       });
-      document
-        .querySelector('.back-top')
-        ?.addEventListener('click', () =>
-          window.scrollTo({
-            top: 0,
-            behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
-              ? 'instant'
-              : 'smooth',
-          }),
-        );
+      document.querySelector('.back-top')?.addEventListener('click', () =>
+        window.scrollTo({
+          top: 0,
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'instant'
+            : 'smooth',
+        }),
+      );
       const header = document.querySelector('.site-header');
       const updateHeader = () =>
         header?.classList.toggle('is-scrolled', scrollY > 30);

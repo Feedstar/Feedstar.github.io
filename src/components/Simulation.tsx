@@ -452,7 +452,7 @@ export default function Simulation() {
             <a className="text-link" href="/examples/run.py" download>
               Python 程序 <span>↓</span>
             </a>
-            <a className="text-link" href="/examples/README.txt" download>
+            <a className="text-link" href="/examples/instructions.txt" download>
               运行说明 <span>↓</span>
             </a>
           </div>

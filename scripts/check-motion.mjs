@@ -1,5 +1,44 @@
 import assert from 'node:assert/strict';
 import { particleState } from '../src/lib/erosion.mjs';
+import { settle } from '../src/lib/motion.mjs';
+const simulate = (hz) => {
+  let state = { value: 0, velocity: 0 };
+  for (let i = 0; i < hz / 2; i++)
+    state = settle(state.value, state.velocity, 0.6, 1 / hz);
+  return state;
+};
+assert(
+  Math.abs(simulate(30).value - simulate(120).value) < 1e-10,
+  'Scroll smoothing must be independent of display frame rate.',
+);
+let spring = { value: 0, velocity: 0 };
+let previous = 0;
+for (let i = 0; i < 120; i++) {
+  spring = settle(spring.value, spring.velocity, 0.6, 1 / 120);
+  assert(
+    spring.value >= previous && spring.value <= 0.6,
+    'A wheel step must approach its position smoothly without bouncing.',
+  );
+  previous = spring.value;
+}
+assert(
+  Math.abs(spring.value - 0.6) < 1e-7,
+  'Motion must settle when scrolling stops.',
+);
+const moving = settle(0, 0, 0.6, 0.06);
+const reversed = settle(moving.value, moving.velocity, 0, 0.00001);
+assert(
+  Math.abs(reversed.velocity - moving.velocity) < 0.01,
+  'Changing direction must preserve velocity at the interruption.',
+);
+const returned = settle(moving.value, moving.velocity, 0, 1);
+assert(
+  Math.abs(returned.value) < 1e-7,
+  'Reverse scrolling must settle at its new position.',
+);
+console.log(
+  'PASS: frame-independent smoothing, no bounce, stationary hold and continuous reversal.',
+);
 const particles = Array.from({ length: 12000 }, (_, i) => {
   const y = 1 - (2 * (i + 0.5)) / 12000,
     r = Math.sqrt(1 - y * y),
