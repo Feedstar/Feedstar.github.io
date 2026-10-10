@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { examples, type ExampleId } from '../lib/examples';
+import { simulationParams, type readPositionServo } from '../lib/control.mjs';
+type ControlState = ReturnType<typeof readPositionServo>;
+type Sample = { time: number; value: number; target?: number };
 type SimState = {
   time: number;
   qpos: number[];
@@ -9,15 +12,10 @@ type SimState = {
   positions: number[];
   matrices: number[];
   ncon: number;
+  control: ControlState | null;
 };
-const defaults = {
-  damping: 0.12,
-  angle: 0.85,
-  target: 0.6,
-  gain: 30,
-  friction: 0.25,
-  speed: 1,
-};
+const defaults = { ...simulationParams };
+type NumericParam = Exclude<keyof typeof defaults, 'gravityComp'>;
 export default function Simulation() {
   const [id, setId] = useState<ExampleId>('pendulum'),
     [ready, setReady] = useState(false),
@@ -25,13 +23,19 @@ export default function Simulation() {
     [playing, setPlaying] = useState(true),
     [version, setVersion] = useState(''),
     [params, setParams] = useState(defaults),
-    [readout, setReadout] = useState({ time: 0, value: 0.85, ncon: 0 }),
+    [readout, setReadout] = useState({
+      time: 0,
+      value: 0.85,
+      velocity: 0,
+      ncon: 0,
+      control: null as ControlState | null,
+    }),
     [retry, setRetry] = useState(0);
   const canvas = useRef<HTMLCanvasElement>(null),
     graph = useRef<HTMLCanvasElement>(null),
     worker = useRef<Worker | null>(null),
     latest = useRef<SimState | null>(null),
-    history = useRef<{ time: number; value: number }[]>([]),
+    history = useRef<Sample[]>([]),
     latestParams = useRef(params),
     playingRef = useRef(playing);
   const [xmlOpen, setXmlOpen] = useState(false);
@@ -46,6 +50,13 @@ export default function Simulation() {
     setError('');
     latest.current = null;
     history.current = [];
+    setReadout({
+      time: 0,
+      value: id === 'pendulum' ? latestParams.current.angle : 0,
+      velocity: 0,
+      ncon: 0,
+      control: null,
+    });
     let stopped = false,
       frame = 0,
       meshes: THREE.Mesh[] = [],
@@ -95,6 +106,46 @@ export default function Simulation() {
     grid.rotation.x = Math.PI / 2;
     grid.position.z = 0.002;
     scene.add(grid);
+    const targetPose = new THREE.Group();
+    const targetGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, 0.9),
+    ]);
+    const targetMaterial = new THREE.LineDashedMaterial({
+      color: 0xe1ccff,
+      dashSize: 0.045,
+      gapSize: 0.025,
+      depthTest: false,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const targetLine = new THREE.Line(targetGeometry, targetMaterial);
+    targetLine.computeLineDistances();
+    const targetTipGeometry = new THREE.BufferGeometry().setFromPoints(
+      Array.from(
+        { length: 64 },
+        (_, i) =>
+          new THREE.Vector3(
+            Math.cos((i / 64) * Math.PI * 2) * 0.1,
+            0,
+            Math.sin((i / 64) * Math.PI * 2) * 0.1,
+          ),
+      ),
+    );
+    const targetTipMaterial = new THREE.LineBasicMaterial({
+      color: 0xe1ccff,
+      transparent: true,
+      opacity: 0.85,
+      depthTest: false,
+    });
+    const targetTip = new THREE.LineLoop(targetTipGeometry, targetTipMaterial);
+    targetLine.renderOrder = 2;
+    targetTip.renderOrder = 3;
+    targetTip.position.z = 0.9;
+    targetPose.add(targetLine, targetTip);
+    targetPose.position.z = 0.3;
+    targetPose.visible = id === 'actuator';
+    scene.add(targetPose);
     const resize = () => {
       const rect = el.getBoundingClientRect();
       renderer.setSize(rect.width, rect.height, false);
@@ -194,14 +245,25 @@ export default function Simulation() {
           lastSample = -1;
         }
         if (state.time - lastSample > 0.045) {
-          history.current.push({ time: state.time, value });
+          history.current.push({
+            time: state.time,
+            value,
+            target: state.control?.target,
+          });
           if (history.current.length > 300) history.current.shift();
           lastSample = state.time;
         }
         if (performance.now() - lastUi > 110) {
-          setReadout({ time: state.time, value, ncon: state.ncon });
+          setReadout({
+            time: state.time,
+            value,
+            velocity: state.qvel[0],
+            ncon: state.ncon,
+            control: state.control,
+          });
           lastUi = performance.now();
         }
+        if (state.control) targetPose.rotation.y = state.control.target;
         drawGraph(graph.current, history.current, id === 'contact' ? 2.2 : 1.6);
       }
       controls.update();
@@ -229,6 +291,10 @@ export default function Simulation() {
       });
       grid.geometry.dispose();
       (grid.material as THREE.Material).dispose();
+      targetGeometry.dispose();
+      targetMaterial.dispose();
+      targetTipGeometry.dispose();
+      targetTipMaterial.dispose();
       renderer.dispose();
     };
   }, [id, retry]);
@@ -236,7 +302,11 @@ export default function Simulation() {
     playingRef.current = playing;
     worker.current?.postMessage({ type: 'play', value: playing });
   }, [playing]);
-  const change = (key: keyof typeof defaults, value: number, reset = false) => {
+  const change = (
+    key: keyof typeof defaults,
+    value: number | boolean,
+    reset = false,
+  ) => {
     const next = { ...params, [key]: value };
     latestParams.current = next;
     setParams(next);
@@ -274,7 +344,7 @@ export default function Simulation() {
             {e.id === 'pendulum'
               ? '关节与阻尼'
               : e.id === 'actuator'
-                ? '位置执行器'
+                ? 'PD 位置控制'
                 : '接触与摩擦'}
           </button>
         ))}
@@ -302,7 +372,11 @@ export default function Simulation() {
             <span>STUDY {example.number}</span>
           </div>
           <div className="view-bottom">
-            <span>拖动旋转 · 滚轮缩放</span>
+            <span>
+              {id === 'actuator'
+                ? '虚线：目标姿态 · 拖动旋转 / 滚轮缩放'
+                : '拖动旋转 · 滚轮缩放'}
+            </span>
             <span>t = {readout.time.toFixed(3)} s</span>
           </div>
           {!ready && (
@@ -360,12 +434,31 @@ export default function Simulation() {
               />
               <Slider
                 {...sliderProps}
-                label="位置增益"
+                label="比例增益 Kp"
                 name="gain"
                 min={5}
                 max={100}
                 step={1}
               />
+              <Slider
+                {...sliderProps}
+                label="微分增益 Kd"
+                name="derivative"
+                min={0}
+                max={20}
+                step={0.1}
+              />
+              <label className="compensation-toggle">
+                <input
+                  type="checkbox"
+                  checked={params.gravityComp}
+                  disabled={!ready}
+                  onChange={(e) => change('gravityComp', e.target.checked)}
+                />
+                <span>
+                  重力补偿<small>默认开启；关闭可观察稳态误差。</small>
+                </span>
+              </label>
             </>
           )}
           {id === 'contact' && (
@@ -412,26 +505,114 @@ export default function Simulation() {
               单步 →
             </button>
           </div>
-          <div className="live-readout">
-            <span>{id === 'contact' ? '速度' : '当前角度'}</span>
-            <strong>
-              {readout.value.toFixed(3)}
-              <small>{example.unit}</small>
-            </strong>
-            {id === 'contact' && <span>接触点：{readout.ncon}</span>}
-          </div>
         </aside>
+        <div className="live-readout">
+          <span>{id === 'contact' ? '速度' : '当前角度'}</span>
+          <strong>
+            {readout.value.toFixed(3)}
+            <small>{example.unit}</small>
+          </strong>
+          {id === 'contact' && <span>接触点：{readout.ncon}</span>}
+          {id === 'actuator' && (
+            <dl className="tracking-readout">
+              <div>
+                <dt>目标 q*</dt>
+                <dd>
+                  {(readout.control?.target ?? params.target).toFixed(3)}{' '}
+                  <small>rad</small>
+                </dd>
+              </div>
+              <div>
+                <dt>误差 e</dt>
+                <dd>
+                  {readout.control?.error.toFixed(6) ?? '—'} <small>rad</small>
+                </dd>
+              </div>
+              <div>
+                <dt>角速度 q̇</dt>
+                <dd>
+                  {readout.velocity.toFixed(3)} <small>rad/s</small>
+                </dd>
+              </div>
+            </dl>
+          )}
+        </div>
       </div>
       <div className="chart-panel">
         <div>
           <span className="eyebrow">{example.variable}</span>
           <span>最近 15 秒 / 与仿真同步</span>
         </div>
+        {id === 'actuator' && (
+          <div className="chart-legend">
+            <span>— 实际角度 q</span>
+            <span>┄ 目标角度 q*</span>
+          </div>
+        )}
         <canvas
           ref={graph}
-          aria-label={`${example.variable} 随时间变化的曲线`}
+          aria-label={
+            id === 'actuator'
+              ? '实际角度与目标角度随时间变化的对比曲线'
+              : `${example.variable} 随时间变化的曲线`
+          }
         />
       </div>
+      {id === 'actuator' && (
+        <section className="pd-explanation" aria-label="PD 控制实时分解">
+          <div className="pd-heading">
+            <p className="eyebrow">INSIDE THE CONTROLLER / 看见 PD</p>
+            <h3>靠 P 接近，由 D 收住。</h3>
+            <p className="pd-formula">
+              τ<sub>PD</sub> = Kp · (q* − q) − Kd · q̇
+            </p>
+          </div>
+          <dl className="pd-terms">
+            <div>
+              <dt>P · 位置纠偏</dt>
+              <dd>
+                {readout.control?.pTorque.toFixed(3) ?? '—'} <small>N·m</small>
+              </dd>
+              <p>误差越大，朝目标施加的力矩越大。</p>
+            </div>
+            <div>
+              <dt>D · 速度制动</dt>
+              <dd>
+                {readout.control?.dTorque.toFixed(3) ?? '—'} <small>N·m</small>
+              </dd>
+              <p>目标速度为 0；抵消运动，减少超调。</p>
+            </div>
+            <div>
+              <dt>执行器 · PD 输出</dt>
+              <dd>
+                {readout.control?.torque.toFixed(3) ?? '—'} <small>N·m</small>
+              </dd>
+              <p>
+                {readout.control?.saturated
+                  ? '已达到 ±40 N·m 限幅。'
+                  : 'P + D 的实际输出，上限 ±40 N·m。'}
+              </p>
+            </div>
+            <div>
+              <dt>重力补偿 · 独立作用</dt>
+              <dd>
+                {readout.control?.gravityTorque.toFixed(3) ?? '—'}{' '}
+                <small>N·m</small>
+              </dd>
+              <p>
+                {params.gravityComp
+                  ? '已开启；抵消连杆自重，便于比较 PD。'
+                  : '已关闭；纯 PD 需要非零误差抵抗重力。'}
+              </p>
+            </div>
+          </dl>
+          <p className="pd-guide">
+            保持 Kp = 30，将 Kd 调到 0 并重置，观察持续摆动；再调到 6
+            并重置，比较超调与收敛。重力补偿独立于 PD，关闭后即使增大
+            Kp，静态误差也通常不会严格为零。
+          </p>
+        </section>
+      )}
       <div className="experiment-notes">
         <div>
           <p className="eyebrow">WHAT TO OBSERVE</p>
@@ -486,7 +667,7 @@ function Slider({
   change,
 }: {
   label: string;
-  name: keyof typeof defaults;
+  name: NumericParam;
   min: number;
   max: number;
   step: number;
@@ -494,7 +675,7 @@ function Slider({
   resetOnChange?: boolean;
   params: typeof defaults;
   ready: boolean;
-  change: (name: keyof typeof defaults, value: number, reset?: boolean) => void;
+  change: (name: NumericParam, value: number, reset?: boolean) => void;
 }) {
   return (
     <label className="param">
@@ -522,8 +703,8 @@ function Slider({
 }
 function drawGraph(
   canvas: HTMLCanvasElement | null,
-  history: { time: number; value: number }[],
-  range: number,
+  history: Sample[],
+  minimumRange: number,
 ) {
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect(),
@@ -536,35 +717,73 @@ function drawGraph(
     canvas.height = Math.floor(rect.height * dpr);
   }
   const c = canvas.getContext('2d');
-  if (!c) return;
+  if (!c || rect.width <= 60) return;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = rect.width,
-    h = rect.height;
+    h = rect.height,
+    left = 44,
+    top = 10,
+    plotW = w - left - 12,
+    plotH = h - top - 23;
   c.clearRect(0, 0, w, h);
-  c.strokeStyle = 'rgba(159,178,142,.12)';
-  c.lineWidth = 1;
-  for (let i = 1; i < 4; i++) {
-    c.beginPath();
-    c.moveTo(0, (h * i) / 4);
-    c.lineTo(w, (h * i) / 4);
-    c.stroke();
-  }
-  for (let i = 1; i < 12; i++) {
-    c.beginPath();
-    c.moveTo((w * i) / 12, 0);
-    c.lineTo((w * i) / 12, h);
-    c.stroke();
-  }
-  if (!history.length) return;
-  const end = Math.max(15, history[history.length - 1].time),
+  const end = Math.max(15, history.at(-1)?.time ?? 0),
     start = end - 15;
-  c.strokeStyle = '#c8b1e9';
-  c.lineWidth = 1.6;
+  const visible = history.filter((p) => p.time >= start);
+  const range = Math.max(
+    minimumRange,
+    ...visible.map(
+      (p) => Math.max(Math.abs(p.value), Math.abs(p.target ?? 0)) * 1.1,
+    ),
+  );
+  const x = (time: number) => left + ((time - start) / 15) * plotW;
+  const y = (value: number) => top + plotH / 2 - ((value / range) * plotH) / 2;
+  c.font = '10px monospace';
+  c.fillStyle = '#938b9e';
+  c.strokeStyle = 'rgba(157,148,177,.2)';
+  c.lineWidth = 1;
+  for (const value of [-range, 0, range]) {
+    c.beginPath();
+    c.moveTo(left, y(value));
+    c.lineTo(w - 12, y(value));
+    c.stroke();
+    c.textAlign = 'right';
+    c.fillText(value.toFixed(1), left - 8, y(value) + 3);
+  }
+  for (let i = 0; i <= 3; i++) {
+    const time = start + i * 5;
+    c.beginPath();
+    c.moveTo(x(time), top);
+    c.lineTo(x(time), top + plotH);
+    c.stroke();
+    c.textAlign = i === 3 ? 'right' : 'left';
+    c.fillText(`${time.toFixed(0)}s`, x(time), h - 3);
+  }
+  if (!visible.length) return;
+  c.save();
   c.beginPath();
-  history.forEach((p, i) => {
-    const x = ((p.time - start) / 15) * w,
-      y = h * 0.5 - (p.value / range) * h * 0.4;
-    i === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
-  });
+  c.rect(left, top - 1, plotW, plotH + 2);
+  c.clip();
+  if (visible.some((p) => p.target !== undefined)) {
+    c.strokeStyle = '#9381ac';
+    c.lineWidth = 1.5;
+    c.setLineDash([6, 5]);
+    c.beginPath();
+    visible.forEach((p, i) => {
+      if (i === 0) c.moveTo(x(p.time), y(p.target ?? 0));
+      else {
+        c.lineTo(x(p.time), y(visible[i - 1].target ?? 0));
+        c.lineTo(x(p.time), y(p.target ?? 0));
+      }
+    });
+    c.stroke();
+    c.setLineDash([]);
+  }
+  c.strokeStyle = '#c8b1e9';
+  c.lineWidth = 2;
+  c.beginPath();
+  visible.forEach((p, i) =>
+    i === 0 ? c.moveTo(x(p.time), y(p.value)) : c.lineTo(x(p.time), y(p.value)),
+  );
   c.stroke();
+  c.restore();
 }

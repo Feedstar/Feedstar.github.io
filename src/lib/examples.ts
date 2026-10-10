@@ -19,10 +19,11 @@ export const examples = {
     id: 'actuator',
     number: '002',
     title: '向一个目标，慢慢靠近。',
-    subtitle: '位置执行器 / POSITION ACTUATOR',
-    description: '给出一个目标角度，观察执行器如何驱动连杆靠近它。',
+    subtitle: 'PD 位置控制 / POSITION & VELOCITY FEEDBACK',
+    description:
+      '分别调整比例与微分增益，对照目标姿态、实际角度和实时误差，观察连杆如何抵达。',
     observation:
-      '改变目标角度，观察响应。较高增益通常减小静态误差，也可能让运动更加急促；重力和输出限幅同样影响结果。',
+      'Kp 根据位置误差推动连杆，Kd 根据角速度制动。重力补偿默认开启，使固定目标可准确收敛；关闭后观察纯 PD 的静态误差。Kd = 0 时不会主动消除振荡。',
     xml: actuator,
     article: 'actuator',
     variable: '角度 q / rad',

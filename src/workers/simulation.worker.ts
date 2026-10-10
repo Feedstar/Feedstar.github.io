@@ -1,20 +1,18 @@
 import loadMujoco from '@mujoco/mujoco';
 import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
 import { examples, type ExampleId } from '../lib/examples';
+import {
+  simulationParams,
+  applyPositionServo,
+  readPositionServo,
+} from '../lib/control.mjs';
 let mj: any,
   model: any,
   data: any,
   id: ExampleId = 'pendulum',
   playing = true,
   disposed = false;
-let params = {
-  damping: 0.12,
-  angle: 0.85,
-  target: 0.6,
-  gain: 30,
-  friction: 0.25,
-  speed: 1,
-};
+let params = { ...simulationParams };
 let accumulator = 0,
   last = 0,
   timer: ReturnType<typeof setTimeout>;
@@ -28,15 +26,14 @@ const send = () => {
     ncon: data.ncon,
     positions: Array.from(data.geom_xpos),
     matrices: Array.from(data.geom_xmat),
+    control: id === 'actuator' ? readPositionServo(model, data) : null,
   });
 };
 function apply() {
   if (!model) return;
   if (id === 'pendulum') model.dof_damping[0] = params.damping;
   if (id === 'actuator') {
-    data.ctrl[0] = params.target;
-    model.actuator_gainprm[0] = params.gain;
-    model.actuator_biasprm[1] = -params.gain;
+    applyPositionServo(model, data, params);
   }
   if (id === 'contact')
     for (let i = 0; i < model.ngeom; i++)

@@ -99,11 +99,12 @@ export function createStudies() {
     }
     let animate: (time: number) => void = () => {};
     if (kind === 'pendulum') {
-      for (const x of [-1.16, 1.16]) {
+      // At ±0.48 rad the bob's outer edge reaches x=1.275; keep both posts clear.
+      for (const x of [-1.55, 1.55]) {
         const leg = box(0.09, 2.9, 0.16, dark);
         leg.position.set(x, 0.3, 0);
       }
-      const beam = box(2.5, 0.13, 0.22);
+      const beam = box(3.25, 0.13, 0.22);
       beam.position.y = 1.72;
       const pivot = new THREE.Group();
       pivot.position.y = 1.6;

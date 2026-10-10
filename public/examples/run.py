@@ -2,7 +2,7 @@
 
 Usage: python run.py pendulum.xml
        python run.py pendulum.xml --damping 0.8 --angle 0.85
-       python run.py actuator.xml --target 0.6 --gain 30
+       python run.py actuator.xml --target 0.6 --gain 30 --kd 6
        python run.py contact.xml --friction 0.25
 """
 import argparse
@@ -17,6 +17,8 @@ parser.add_argument("--damping", type=float, default=0.12)
 parser.add_argument("--angle", type=float, default=0.85, help="radians")
 parser.add_argument("--target", type=float, default=0.6, help="radians")
 parser.add_argument("--gain", type=float, default=30)
+parser.add_argument("--kd", type=float, default=6, help="actuator velocity feedback gain")
+parser.add_argument("--no-gravity-comp", action="store_true", help="disable gravity compensation to observe PD steady-state error")
 parser.add_argument("--friction", type=float, default=0.25)
 args = parser.parse_args()
 model = mujoco.MjModel.from_xml_path(str(args.model.resolve()))
@@ -29,6 +31,8 @@ elif args.model.stem == "actuator":
     data.ctrl[0] = args.target
     model.actuator_gainprm[0, 0] = args.gain
     model.actuator_biasprm[0, 1] = -args.gain
+    model.actuator_biasprm[0, 2] = -args.kd
+    model.body_gravcomp[1:] = 0 if args.no_gravity_comp else 1
 elif args.model.stem == "contact":
     model.geom_friction[:, 0] = args.friction
 mujoco.mj_forward(model, data)

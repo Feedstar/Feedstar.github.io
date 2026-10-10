@@ -157,7 +157,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
     </div>
     <div class="journal-list">
       {posts.map((post) => (
-        <a href={`/journal/${post.id}/`} data-reveal data-cursor="阅读 ↗">
+        <a href={`/journal/${post.id}/`} data-reveal>
           <span class="eyebrow">
             {post.data.category} <span>NOTE / {post.data.number}</span>
           </span>

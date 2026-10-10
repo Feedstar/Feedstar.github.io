@@ -12,7 +12,7 @@ const { kind, number, title, english, description, tags } = Astro.props;
 ---
 
 <article class={`study-card study-${kind}`}>
-  <a class="study-link" href={`/lab/?example=${kind}`} data-cursor="探索 ↗">
+  <a class="study-link" href={`/lab/?example=${kind}`}>
     <div class="study-window" data-study={kind}>
       <div class="study-art-fallback" aria-hidden="true">
         <ProjectArt kind={kind} />

@@ -12,10 +12,14 @@ Feedstar / MuJoCo 基础示例
 
 运行：
   python run.py pendulum.xml
-  python run.py actuator.xml --target 0.6 --gain 30
+  python run.py actuator.xml --target 0.6 --gain 30 --kd 6
+  # 关闭重力补偿，对比纯 PD 的稳态误差：
+  python run.py actuator.xml --target 0.6 --gain 30 --kd 6 --no-gravity-comp
   python run.py contact.xml --friction 0.25
 
 模型与网页使用同一份 MJCF；调整后的参数需要通过命令行传入。
+实验二的 --gain 对应 Kp，--kd 对应 Kd（MJCF 中写作 kv）。
+默认补偿重力，固定目标速度为 0。PD 输出限幅为 ±40 N·m，重力补偿独立施加。
 本地窗口需要支持图形界面的环境。macOS 如需使用被动查看器，
 请使用安装 MuJoCo 时提供的 mjpython 启动，例如 mjpython run.py pendulum.xml。
 
