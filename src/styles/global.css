@@ -285,10 +285,6 @@ main {
   height: 100%;
   position: relative;
 }
-.moon-scene .orbital-dust {
-  position: absolute;
-  inset: 0;
-}
 .moon-fallback {
   position: absolute;
   width: min(54vw, 70vh);

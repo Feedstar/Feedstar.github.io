@@ -2,12 +2,13 @@
   class="moon-scene"
   id="moon-scene"
   role="img"
-  aria-label="具有明暗与颗粒层次的月体，随滚动从左侧逐渐风化为细小粒子"
+  aria-label="缓慢自转的月体，边缘浮动着细密星屑，随滚动从左侧逐渐风化"
 >
-  <div class="lunar-aura" aria-hidden="true"><span></span></div>
+  <div class="lunar-aura" aria-hidden="true">
+    <span></span>
+  </div>
   <div class="moon-fallback" aria-hidden="true"></div>
   <canvas id="moon-canvas" aria-hidden="true"></canvas>
-  <canvas class="orbital-dust" aria-hidden="true"></canvas>
 </div>
 <script>
   import { createMoon } from '../scripts/moon';

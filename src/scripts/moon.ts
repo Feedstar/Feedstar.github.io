@@ -6,29 +6,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const host = canvas.parentElement!;
   const journey = document.getElementById('orbit-journey')!;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   const aura = host.querySelector<HTMLElement>('.lunar-aura')!;
-  const dust = host.querySelector<HTMLCanvasElement>('.orbital-dust')!;
-  const dustContext = dust.getContext('2d');
-  let width = 0,
-    height = 0,
-    moonX = 0,
-    moonY = 0,
-    moonRadius = 0;
-  let pointerX = -1000,
-    pointerY = -1000;
-  const motes = Array.from({ length: innerWidth < 700 ? 160 : 420 }, (_, i) => {
-    const random = (n: number) => {
-      const v = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
-      return v - Math.floor(v);
-    };
-    return {
-      angle: random(1) * Math.PI * 2,
-      radius: 0.95 + random(2) * 1.75,
-      depth: random(3),
-      size: 0.65 + random(4) ** 2 * 2.1,
-      speed: 0.008 + random(5) * 0.012,
-    };
-  });
   let renderer: THREE.WebGLRenderer;
   try {
     renderer = new THREE.WebGLRenderer({
@@ -59,8 +38,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
     dirty = true;
   });
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
   const uniforms = {
     uProgress: { value: 0 },
+    uSpin: { value: 0 },
     uTexture: { value: texture },
     uDpr: { value: renderer.getPixelRatio() },
   };
@@ -68,9 +49,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
     uniforms,
     transparent: false,
     vertexShader: `varying vec3 vPosition; varying vec2 vUv; void main(){ vPosition=position; vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-    fragmentShader: `uniform float uProgress; uniform sampler2D uTexture; varying vec3 vPosition; varying vec2 vUv; ${erosionGLSL}
-    void main(){ vec3 p=normalize(vPosition); if(uProgress>thresholdAt(p,0.)) discard;
-      vec3 tex=texture2D(uTexture,vUv).rgb; float lum=dot(tex,vec3(.299,.587,.114));
+    fragmentShader: `uniform float uProgress; uniform float uSpin; uniform sampler2D uTexture; varying vec3 vPosition; varying vec2 vUv; ${erosionGLSL}
+    void main(){ vec3 p=normalize(vPosition); if(uProgress>.075 && uProgress>thresholdAt(p,0.)) discard;
+      vec3 tex=texture2D(uTexture,vec2(vUv.x+uSpin/6.2831853,vUv.y)).rgb; float lum=dot(tex,vec3(.299,.587,.114));
       float light=.16+.86*pow(max(0.,dot(p,normalize(vec3(-.6,.65,1.2)))),.6);
       float grain=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
       vec3 color=vec3(.89,.88,.94)*(pow(lum,.75)*1.12)*light + (grain-.5)*.035;
@@ -112,20 +93,96 @@ export function createMoon(canvas: HTMLCanvasElement) {
         vUv=uv; vec4 mv=modelViewMatrix*vec4(p*1.002,1.);
         gl_PointSize=clamp((1.1+aSeed*.7)*uDpr*(5./-mv.z),.65,2.5); gl_Position=projectionMatrix*mv;
       }`,
-    fragmentShader: `uniform sampler2D uTexture; varying vec2 vUv; varying float vAlpha; varying float vLight;
+    fragmentShader: `uniform sampler2D uTexture; uniform float uSpin; varying vec2 vUv; varying float vAlpha; varying float vLight;
       void main(){ float radius=length(gl_PointCoord-.5); if(radius>.5)discard;
-        vec3 tex=texture2D(uTexture,vUv).rgb; float lum=dot(tex,vec3(.299,.587,.114));
+        vec3 tex=texture2D(uTexture,vec2(vUv.x+uSpin/6.2831853,vUv.y)).rgb; float lum=dot(tex,vec3(.299,.587,.114));
         gl_FragColor=vec4(vec3(.89,.88,.94)*pow(lum,.75)*1.12*vLight, vAlpha*(1.-smoothstep(.15,.5,radius))); }`,
   });
   const points = new THREE.Points(geometry, material);
   group.add(points);
   points.frustumCulled = false;
+  // Long-lived grains originate on the illuminated limb. Their staggered
+  // lifetimes make a continuous dust stream without synchronised pulses.
+  const dustCount = innerWidth < 700 ? 14000 : 32000;
+  const dustPositions = new Float32Array(dustCount * 3);
+  const dustSeeds = new Float32Array(dustCount * 4);
+  for (let i = 0; i < dustCount; i++) {
+    const random = (n: number) => {
+      const v = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
+      return v - Math.floor(v);
+    };
+    const y = (random(1) * 2 - 1) * 0.96;
+    const r = Math.sqrt(1 - y * y);
+    const x = -r * (0.84 + random(2) * 0.15);
+    const z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
+    dustPositions.set([x, y, z], i * 3);
+    dustSeeds.set([random(3), random(4), random(5), random(6)], i * 4);
+  }
+  const dustGeometry = new THREE.BufferGeometry();
+  dustGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(dustPositions, 3),
+  );
+  dustGeometry.setAttribute('aDust', new THREE.BufferAttribute(dustSeeds, 4));
+  const dustUniforms = {
+    uProgress: uniforms.uProgress,
+    uDpr: uniforms.uDpr,
+    uTime: { value: 0 },
+    uPaper: { value: 0 },
+    uViewport: { value: new THREE.Vector2(1, 1) },
+    uPointer: { value: new THREE.Vector2(-1000, -1000) },
+  };
+  const dustMaterial = new THREE.ShaderMaterial({
+    uniforms: dustUniforms,
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `
+      uniform float uTime, uProgress, uDpr;
+      uniform vec2 uViewport, uPointer;
+      attribute vec4 aDust;
+      varying float vAlpha, vTone;
+      void main(){
+        float life=fract(aDust.x+uTime*(.022+aDust.y*.016));
+        float travel=pow(life,1.6)*(1.05+aDust.z*.85);
+        vec3 p=position;
+        p.x-=travel*(1.+uProgress*.4);
+        float ribbon=sin(position.y*11.+travel*2.8);
+        p.y+=travel*(.07+ribbon*.08)+(aDust.y-.5)*travel*.16;
+        p.z+=(aDust.z-.5)*travel*.3;
+        float birth=smoothstep(0.,.08,life);
+        float death=1.-smoothstep(.48,1.,life);
+        float band=.46+.54*pow(.5+.5*sin(position.y*16.+aDust.z*1.5),2.);
+        vAlpha=birth*death*band*(.34+aDust.w*.6)*(1.-smoothstep(.18,.91,uProgress));
+        vTone=aDust.y;
+        vec4 mv=modelViewMatrix*vec4(p*1.006,1.);
+        gl_Position=projectionMatrix*mv;
+        vec2 screen=(gl_Position.xy/gl_Position.w*.5+.5)*uViewport;
+        vec2 delta=screen-uPointer;
+        float distance=length(delta);
+        float influence=pow(1.-smoothstep(0.,110.,distance),2.);
+        gl_Position.xy+=delta/max(1.,distance)*influence*13./uViewport*2.*gl_Position.w;
+        gl_PointSize=clamp((.72+pow(aDust.w,3.)*.8)*uDpr*(5./-mv.z),.65,2.5);
+      }`,
+    fragmentShader: `
+      uniform float uPaper;
+      varying float vAlpha, vTone;
+      void main(){
+        float r=length(gl_PointCoord-.5);
+        if(r>.5) discard;
+        vec3 silver=mix(vec3(.61,.63,.7),vec3(.93,.91,.96),vTone);
+        vec3 color=mix(silver,vec3(.37,.32,.44),uPaper);
+        gl_FragColor=vec4(color,vAlpha*(1.-smoothstep(.08,.5,r)));
+      }`,
+  });
+  const dustPoints = new THREE.Points(dustGeometry, dustMaterial);
+  dustPoints.frustumCulled = false;
+  group.add(dustPoints);
+  group.rotation.set(0, -0.34, 0.08);
+  canvas.dataset.dustParticles = String(dustCount);
   const resize = () => {
     dirty = true;
     const w = host.clientWidth,
       h = host.clientHeight;
-    width = w;
-    height = h;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -141,16 +198,13 @@ export function createMoon(canvas: HTMLCanvasElement) {
       mobile ? viewH * 0.22 : viewH * 0.01,
       0,
     );
-    moonX = (0.5 + group.position.x / viewW) * w;
-    moonY = (0.5 - group.position.y / viewH) * h;
-    moonRadius = (radius / viewH) * h;
+    const moonX = (0.5 + group.position.x / viewW) * w;
+    const moonY = (0.5 - group.position.y / viewH) * h;
+    const moonRadius = (radius / viewH) * h;
     aura.style.left = `${moonX}px`;
     aura.style.top = `${moonY}px`;
     aura.style.width = `${moonRadius * 2.9}px`;
-    const dpr = Math.min(devicePixelRatio, 1.5);
-    dust.width = Math.round(w * dpr);
-    dust.height = Math.round(h * dpr);
-    dustContext?.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dustUniforms.uViewport.value.set(w, h);
   };
   const observer = new ResizeObserver(resize);
   observer.observe(host);
@@ -168,6 +222,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const updatePresentation = () => {
     const rect = journey.getBoundingClientRect();
     uniforms.uProgress.value = reduced.matches ? 0 : progress * 1.18;
+    points.visible = uniforms.uProgress.value > 0.075;
+    dustPoints.visible = uniforms.uProgress.value < 0.91;
     const introOpacity = 1 - smoothstep(0.08, 0.4, progress);
     if (intro) {
       intro.style.opacity = String(introOpacity);
@@ -219,88 +275,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
     }
     dirty = true;
   };
-  const sprites = [false, true].map((paper) => {
-    const sprite = document.createElement('canvas');
-    sprite.width = 64;
-    sprite.height = 64;
-    const context = sprite.getContext('2d')!;
-    const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gradient.addColorStop(
-      0,
-      paper ? 'rgba(87,65,123,1)' : 'rgba(251,243,255,1)',
-    );
-    gradient.addColorStop(
-      0.1,
-      paper ? 'rgba(107,84,143,.65)' : 'rgba(220,206,255,.8)',
-    );
-    gradient.addColorStop(
-      0.35,
-      paper ? 'rgba(107,84,143,.12)' : 'rgba(176,153,240,.15)',
-    );
-    gradient.addColorStop(1, 'rgba(140,120,180,0)');
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, 64, 64);
-    return sprite;
-  });
-  dust.dataset.count = String(motes.length);
-  const drawDust = (time: number) => {
-    if (!dustContext) return;
-    dustContext.clearRect(0, 0, width, height);
-    const fade = 1 - smoothstep(0.22, 0.85, progress);
-    if (fade === 0) return;
-    const paper = document.documentElement.dataset.theme === 'paper';
-    for (const [index, mote] of motes.entries()) {
-      const angle = mote.angle + time * mote.speed;
-      let x = moonX + Math.cos(angle) * moonRadius * mote.radius;
-      let y =
-        moonY +
-        Math.sin(angle) * moonRadius * mote.radius * (0.65 + mote.depth * 0.5);
-      const dx = x - pointerX,
-        dy = y - pointerY,
-        distance = Math.hypot(dx, dy);
-      if (distance < 150 && distance > 0 && !reduced.matches) {
-        const repel = (1 - distance / 150) ** 2 * 34;
-        x += (dx / distance) * repel;
-        y += (dy / distance) * repel;
-      }
-      const pulse = 0.72 + Math.sin(time * 0.45 + mote.angle * 3) * 0.22;
-      const alpha = fade * pulse * (0.4 + mote.depth * 0.55);
-      dustContext.globalAlpha = alpha;
-      if (mote.size > 1.45) {
-        const size = mote.size * 12;
-        dustContext.drawImage(
-          sprites[Number(paper)],
-          x - size / 2,
-          y - size / 2,
-          size,
-          size,
-        );
-      }
-      dustContext.fillStyle = paper
-        ? '#69547f'
-        : index % 7 === 0
-          ? '#e8c9ac'
-          : '#e7dffa';
-      dustContext.beginPath();
-      dustContext.arc(x, y, mote.size * 0.6, 0, Math.PI * 2);
-      dustContext.fill();
-      if (index % 26 === 0) {
-        const arm = mote.size * 2.7;
-        dustContext.strokeStyle = paper ? '#88759b' : '#ede2ff';
-        dustContext.lineWidth = 0.5;
-        dustContext.beginPath();
-        dustContext.moveTo(x - arm, y);
-        dustContext.lineTo(x + arm, y);
-        dustContext.moveTo(x, y - arm);
-        dustContext.lineTo(x, y + arm);
-        dustContext.stroke();
-      }
-    }
-    dustContext.globalAlpha = 1;
-  };
   let previousTime = 0,
     ambientTime = 0,
-    dustTime = 0;
+    renderTime = 0;
   const draw = (now: number) => {
     frame = requestAnimationFrame(draw);
     const dt = previousTime
@@ -324,16 +301,28 @@ export function createMoon(canvas: HTMLCanvasElement) {
       }
       dirty = true;
     }
-    if (active && visible && dirty) {
-      updatePresentation();
-      group.rotation.y = -0.34;
-      group.rotation.z = 0.08;
-      renderer.render(scene, camera);
+    if (dirty) updatePresentation();
+    if (!reduced.matches) {
+      // Stop the longitudinal rotation before erosion starts: a held scroll
+      // position keeps its surface/particle correspondence, including on rewind.
+      const spinRate = 0.012 * (1 - smoothstep(0.005, 0.065, progress));
+      uniforms.uSpin.value =
+        (uniforms.uSpin.value + dt * spinRate) % (Math.PI * 2);
+      ambientTime += dt;
+    } else {
+      dustUniforms.uPointer.value.set(-1000, -1000);
     }
-    if (!reduced.matches) ambientTime += dt;
-    if ((now - dustTime > 1000 / 30 && !reduced.matches) || dirty) {
-      drawDust(ambientTime);
-      dustTime = now;
+    if (
+      dirty ||
+      (!reduced.matches && now - renderTime >= 1000 / 30 && progress < 0.94)
+    ) {
+      dustUniforms.uTime.value = reduced.matches ? 0 : ambientTime;
+      dustUniforms.uPaper.value = Number(
+        document.documentElement.dataset.theme === 'paper',
+      );
+      canvas.dataset.rotation = uniforms.uSpin.value.toFixed(5);
+      renderer.render(scene, camera);
+      renderTime = now;
     }
     dirty = false;
   };
@@ -343,15 +332,29 @@ export function createMoon(canvas: HTMLCanvasElement) {
     dirty = true;
   };
   const onPointer = (event: PointerEvent) => {
-    if (!active || event.pointerType === 'touch') return;
+    if (
+      !active ||
+      reduced.matches ||
+      !finePointer.matches ||
+      event.pointerType === 'touch'
+    )
+      return;
     const rect = host.getBoundingClientRect();
-    pointerX = event.clientX - rect.left;
-    pointerY = event.clientY - rect.top;
+    dustUniforms.uPointer.value.set(
+      event.clientX - rect.left,
+      rect.bottom - event.clientY,
+    );
   };
   const onPointerLeave = () => {
-    pointerX = -1000;
-    pointerY = -1000;
+    dustUniforms.uPointer.value.set(-1000, -1000);
   };
+  const themeObserver = new MutationObserver(() => {
+    dirty = true;
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
   window.addEventListener('scroll', sync, { passive: true });
   window.addEventListener('resize', sync);
   window.addEventListener('pointermove', onPointer, { passive: true });
@@ -364,6 +367,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
   return () => {
     cancelAnimationFrame(frame);
     observer.disconnect();
+    themeObserver.disconnect();
     window.removeEventListener('scroll', sync);
     window.removeEventListener('resize', sync);
     window.removeEventListener('pointermove', onPointer);
@@ -374,6 +378,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
     surface.dispose();
     geometry.dispose();
     material.dispose();
+    dustGeometry.dispose();
+    dustMaterial.dispose();
     texture.dispose();
     renderer.dispose();
   };
