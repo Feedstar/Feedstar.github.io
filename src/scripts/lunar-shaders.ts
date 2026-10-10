@@ -59,9 +59,15 @@ ${lunarFlowGLSL}
 void main(){
   float seed=aFlow.x;
   float release=releaseAt(aFlow.w,uProgress,aFlow.z);
+  float gather=gatherAt(uProgress,seed);
+  // Surface grains that have not been released contribute no visible pixels.
+  // Skip their wind, lighting and texture work until they actually enter.
+  if(release<=0. && gather<=0.){
+    vAlpha=0.; vLight=0.; vGather=0.; vUv=uv; vTargetColor=aTargetColor;
+    gl_Position=vec4(2.,2.,2.,1.); gl_PointSize=1.; return;
+  }
   float lifeAlpha;
   vec3 p=windPosition(position,seed,uProgress,uTime,release,aFlow.w,lifeAlpha);
-  float gather=gatherAt(uProgress,seed);
   vec4 source=modelViewMatrix*vec4(p*1.004,1.);
   vec4 target=viewMatrix*vec4(aTarget,1.);
   vec4 mv=mix(source,target,gather);
@@ -90,6 +96,7 @@ varying float vAlpha, vLight, vGather;
 varying vec2 vUv;
 varying vec3 vTargetColor;
 void main(){
+  if(vAlpha<=0.) discard;
   float r=length(gl_PointCoord-.5);
   if(r>.5) discard;
   vec3 tex=texture2D(uTexture,vec2(vUv.x+uSpin/6.2831853,vUv.y)).rgb;

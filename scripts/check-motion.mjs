@@ -5,6 +5,7 @@ import {
   lunarTiming,
 } from '../src/lib/lunar-flow.mjs';
 import { settle, titleSpring } from '../src/lib/motion.mjs';
+import { mistBufferSize } from '../src/lib/lunar-render.mjs';
 import {
   createPreviewLoop,
   previewPixelRatio,
@@ -30,7 +31,7 @@ const previewHarness = () => {
     },
   };
 };
-for (const hz of [30, 60, 120, 144]) {
+for (const hz of [30, 60, 120, 144, 180]) {
   const preview = previewHarness();
   let rendered = 0,
     elapsed = 0;
@@ -103,6 +104,28 @@ for (const [width, height, dpr] of [
 }
 console.log(
   'PASS: display-rate cover rendering, refresh-independent motion, offscreen/hidden suspension, clean resumption and bounded pixel cost.',
+);
+for (const [width, height, dpr] of [
+  [390, 844, 1.7],
+  [1920, 1080, 1],
+  [3840, 2160, 1.7],
+]) {
+  const mist = mistBufferSize(width, height, dpr);
+  assert(
+    mist.width * mist.height <= 700_000,
+    'Soft mist must stay within its shading budget, including high-DPI 4K screens.',
+  );
+  assert(
+    mist.width * mist.height <= width * height * dpr ** 2 * 0.25,
+    'Mist must cost no more than one quarter of the full-resolution noise pass.',
+  );
+  assert(
+    Math.abs(mist.width / mist.height - width / height) < 0.01,
+    'Downsampling must preserve the cloud layout and aspect ratio.',
+  );
+}
+console.log(
+  'PASS: soft-mist buffer budget and unchanged cloud aspect ratio across phone, desktop and high-DPI 4K sizes.',
 );
 const simulate = (hz) => {
   let state = { value: 0, velocity: 0 };

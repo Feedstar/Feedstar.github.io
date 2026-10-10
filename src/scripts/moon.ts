@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { erosionThreshold, clamp, smoothstep } from '../lib/erosion.mjs';
-import { arrivalOpacity, lunarNotch } from '../lib/lunar-flow.mjs';
+import { arrivalOpacity, lunarNotch, lunarTiming } from '../lib/lunar-flow.mjs';
 import { sampleArrival } from './particle-targets';
 import {
   surfaceVertex,
@@ -9,7 +9,9 @@ import {
   flowFragment,
 } from './lunar-shaders';
 import { settle } from '../lib/motion.mjs';
-import { mistVertex, mistFragment } from './lunar-mist';
+import { createPreviewLoop } from '../lib/preview-loop.mjs';
+import { mistBufferSize } from '../lib/lunar-render.mjs';
+import { mistVertex, mistFragment, mistCompositeFragment } from './lunar-mist';
 
 export function createMoon(canvas: HTMLCanvasElement) {
   const host = canvas.parentElement!;
@@ -36,8 +38,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
     journey.dataset.static = 'true';
   };
   const scene = new THREE.Scene();
+  const loop = createPreviewLoop(requestAnimationFrame, cancelAnimationFrame);
   let dirty = true,
     disposed = false;
+  let wake = () => {};
   const arrival = journey.querySelector<HTMLElement>('.arrival')!;
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   camera.position.z = 6;
@@ -46,6 +50,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const texture = new THREE.TextureLoader().load('/assets/moon.jpg', () => {
     host.dataset.ready = 'true';
     dirty = true;
+    wake();
   });
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
@@ -73,6 +78,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
   // Seeds on the limb are already airborne; surface seeds join the same flow
   // as their matching surface region feathers away.
   const count = innerWidth < 700 ? 42000 : 96000;
+  const ambientCount = Math.ceil(count * 0.42);
+  let firstRelease = Infinity;
   const positions = new Float32Array(count * 3);
   const uvs = new Float32Array(count * 2);
   const flow = new Float32Array(count * 4);
@@ -83,7 +90,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
       const value = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
       return value - Math.floor(value);
     };
-    const ambient = i < count * 0.42;
+    const ambient = i < ambientCount;
     const y = (random(1) * 2 - 1) * 0.97;
     const r = Math.sqrt(1 - y * y);
     const angle = random(2) * Math.PI;
@@ -101,10 +108,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
       [Math.atan2(z, -x) / (2 * Math.PI) + 0.5, Math.acos(-y) / Math.PI],
       i * 2,
     );
-    flow.set(
-      [seed, random(4), Number(ambient), erosionThreshold(x, y, z, seed)],
-      i * 4,
-    );
+    const threshold = erosionThreshold(x, y, z, seed);
+    if (!ambient) firstRelease = Math.min(firstRelease, threshold - 0.075);
+    flow.set([seed, random(4), Number(ambient), threshold], i * 4);
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -128,13 +134,31 @@ export function createMoon(canvas: HTMLCanvasElement) {
   group.add(points);
   const mistMaterial = new THREE.ShaderMaterial({
     uniforms,
-    transparent: true,
+    // Store straight alpha in the intermediate texture; blend only once when
+    // compositing, so the cloud retains its existing opacity and milk colour.
+    blending: THREE.NoBlending,
     depthWrite: false,
     depthTest: false,
     vertexShader: mistVertex,
     fragmentShader: mistFragment,
   });
-  const mist = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mistMaterial);
+  const mistScene = new THREE.Scene();
+  const mistPlane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mistMaterial);
+  mistPlane.frustumCulled = false;
+  mistScene.add(mistPlane);
+  const mistTarget = new THREE.WebGLRenderTarget(1, 1, {
+    depthBuffer: false,
+    stencilBuffer: false,
+  });
+  const mistComposite = new THREE.ShaderMaterial({
+    uniforms: { uMist: { value: mistTarget.texture } },
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    vertexShader: mistVertex,
+    fragmentShader: mistCompositeFragment,
+  });
+  const mist = new THREE.Mesh(mistPlane.geometry, mistComposite);
   mist.frustumCulled = false;
   mist.renderOrder = 2;
   scene.add(mist);
@@ -148,6 +172,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
     const w = host.clientWidth,
       h = host.clientHeight;
     renderer.setSize(w, h, false);
+    const mistSize = mistBufferSize(w, h, renderer.getPixelRatio());
+    mistTarget.setSize(mistSize.width, mistSize.height);
+    canvas.dataset.mistPixels = String(mistSize.width * mistSize.height);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     const viewH = 2 * Math.tan(THREE.MathUtils.degToRad(17.5)) * 6,
@@ -186,12 +213,12 @@ export function createMoon(canvas: HTMLCanvasElement) {
       colorAttribute.needsUpdate = true;
     }
     canvas.dataset.targetSamples = String(samples.length);
+    wake();
   };
   const observer = new ResizeObserver(resize);
   observer.observe(host);
   resize();
-  let frame = 0,
-    active = true,
+  let active = true,
     visible = !document.hidden;
   let progress = 0,
     targetProgress = 0,
@@ -199,9 +226,18 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const bottom = journey.querySelector<HTMLElement>('.hero-bottom');
   const intro = journey.querySelector<HTMLElement>('.hero-copy');
   const indicator = document.getElementById('orbit-progress');
+  const ornaments = journey.querySelectorAll<HTMLElement>(
+    '.orbital-lines, .moon-caption',
+  );
+  let measureScroll = true;
   const updatePresentation = () => {
-    const rect = journey.getBoundingClientRect();
     uniforms.uProgress.value = reduced.matches ? 0 : progress;
+    const drawn =
+      uniforms.uProgress.value * lunarTiming.erosionScale <= firstRelease
+        ? ambientCount
+        : count;
+    geometry.setDrawRange(0, drawn);
+    canvas.dataset.drawnParticles = String(drawn);
     points.visible = reduced.matches || progress < 0.97;
     sphere.visible = reduced.matches || progress < 0.51;
     mist.visible = reduced.matches || progress < 0.7;
@@ -211,11 +247,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
       intro.style.transform = `translateY(${reduced.matches ? 0 : -progress * 65}px)`;
     }
     if (bottom) bottom.style.opacity = String(introOpacity);
-    journey
-      .querySelectorAll<HTMLElement>('.orbital-lines, .moon-caption')
-      .forEach((el) => {
-        el.style.opacity = String(introOpacity);
-      });
+    ornaments.forEach((el) => {
+      el.style.opacity = String(introOpacity);
+    });
     if (arrival) {
       arrival.style.opacity = String(
         reduced.matches
@@ -249,10 +283,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
             ? 'gathering'
             : 'content';
     if (indicator) indicator.style.transform = `scaleY(${progress})`;
-    active = rect.bottom > 0 && rect.top < innerHeight;
     host.dataset.active = String(active && visible);
   };
-  const sync = () => {
+  const measure = () => {
+    measureScroll = false;
     const rect = journey.getBoundingClientRect();
     targetProgress = clamp(
       -rect.top / Math.max(1, journey.offsetHeight - innerHeight),
@@ -266,16 +300,29 @@ export function createMoon(canvas: HTMLCanvasElement) {
     }
     dirty = true;
   };
-  let previousTime = 0,
-    ambientTime = 0,
-    renderTime = 0;
-  const draw = (now: number) => {
-    frame = requestAnimationFrame(draw);
-    const dt = previousTime
-      ? Math.min((now - previousTime) / 1000, 0.05)
-      : 1 / 60;
-    previousTime = now;
-    if (!active || !visible) return;
+  const sync = () => {
+    measureScroll = true;
+    wake();
+  };
+  let ambientTime = 0;
+  let reportAt = 0,
+    reportFrames = 0,
+    reportCost = 0;
+  let pointer: { x: number; y: number } | null = null;
+  const draw = (dt: number, now: number) => {
+    if (measureScroll) measure();
+    if (!active || !visible) {
+      loop.remove(draw);
+      return;
+    }
+    if (pointer) {
+      const rect = host.getBoundingClientRect();
+      uniforms.uPointer.value.set(
+        pointer.x - rect.left,
+        rect.bottom - pointer.y,
+      );
+      pointer = null;
+    }
     if (
       Math.abs(progress - targetProgress) > 0.00001 ||
       Math.abs(velocity) > 0.00001
@@ -302,25 +349,50 @@ export function createMoon(canvas: HTMLCanvasElement) {
     } else {
       uniforms.uPointer.value.set(-1000, -1000);
     }
-    if (
-      dirty ||
-      (!reduced.matches && now - renderTime >= 1000 / 30 && progress < 0.97)
-    ) {
+    if (dirty || (!reduced.matches && progress < 0.97)) {
       uniforms.uTime.value = reduced.matches ? 0 : ambientTime;
       uniforms.uPaper.value = Number(
         document.documentElement.dataset.theme === 'paper',
       );
-      canvas.dataset.rotation = uniforms.uSpin.value.toFixed(5);
-      canvas.dataset.flowTime = uniforms.uTime.value.toFixed(3);
+      const started = performance.now();
+      if (mist.visible) {
+        renderer.setRenderTarget(mistTarget);
+        renderer.render(mistScene, camera);
+        renderer.setRenderTarget(null);
+      }
       renderer.render(scene, camera);
-      renderTime = now;
+      if (dt === 0) {
+        reportAt = now;
+        reportFrames = reportCost = 0;
+      } else reportFrames++;
+      reportCost += performance.now() - started;
+      if (now - reportAt >= 1000) {
+        canvas.dataset.renderFps = (
+          (reportFrames * 1000) /
+          (now - reportAt)
+        ).toFixed(1);
+        canvas.dataset.renderMs = (reportCost / (reportFrames + 1)).toFixed(2);
+        canvas.dataset.rotation = uniforms.uSpin.value.toFixed(5);
+        canvas.dataset.flowTime = uniforms.uTime.value.toFixed(3);
+        reportAt = now;
+        reportFrames = reportCost = 0;
+      }
     }
     dirty = false;
+    const settling =
+      Math.abs(progress - targetProgress) > 0.00001 ||
+      Math.abs(velocity) > 0.00001;
+    if (reduced.matches || (progress >= 0.97 && !settling)) loop.remove(draw);
+  };
+  wake = () => {
+    if (!disposed && visible && (active || measureScroll)) loop.add(draw);
   };
   const onVisibility = () => {
     visible = !document.hidden;
     host.dataset.active = String(active && visible);
     dirty = true;
+    loop.suspend(!visible);
+    if (visible) sync();
   };
   const onPointer = (event: PointerEvent) => {
     if (
@@ -330,13 +402,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
       event.pointerType === 'touch'
     )
       return;
-    const rect = host.getBoundingClientRect();
-    uniforms.uPointer.value.set(
-      event.clientX - rect.left,
-      rect.bottom - event.clientY,
-    );
+    pointer = { x: event.clientX, y: event.clientY };
   };
   const onPointerLeave = () => {
+    pointer = null;
     uniforms.uPointer.value.set(-1000, -1000);
   };
   const onFonts = () => {
@@ -355,12 +424,12 @@ export function createMoon(canvas: HTMLCanvasElement) {
   document.addEventListener('pointerleave', onPointerLeave);
   reduced.addEventListener('change', sync);
   document.addEventListener('visibilitychange', onVisibility);
-  sync();
+  measure();
   progress = targetProgress;
-  frame = requestAnimationFrame(draw);
+  wake();
   return () => {
     disposed = true;
-    cancelAnimationFrame(frame);
+    loop.dispose();
     document.fonts.removeEventListener('loadingdone', onFonts);
     observer.disconnect();
     themeObserver.disconnect();
@@ -376,6 +445,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
     material.dispose();
     mist.geometry.dispose();
     mistMaterial.dispose();
+    mistComposite.dispose();
+    mistTarget.dispose();
     texture.dispose();
     renderer.dispose();
   };

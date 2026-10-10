@@ -4,6 +4,11 @@ export const mistVertex = `
 varying vec2 vUv;
 void main(){ vUv=uv; gl_Position=vec4(position.xy,.99,1.); }
 `;
+export const mistCompositeFragment = `
+uniform sampler2D uMist;
+varying vec2 vUv;
+void main(){ gl_FragColor=texture2D(uMist,vUv); }
+`;
 export const mistFragment = `
 uniform float uTime, uProgress, uPaper;
 uniform vec2 uViewport;
