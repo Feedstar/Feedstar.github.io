@@ -21,8 +21,16 @@ export function createChapters() {
   const update = () => {
     frame = 0;
     const height = innerHeight;
-    for (const section of chapters) {
-      const rect = section.getBoundingClientRect();
+    // Measure the whole chapter once, before applying any masks/transforms.
+    // Interleaving these reads and writes forces repeated style/layout work.
+    const chapterRects = chapters.map((section) =>
+      section.getBoundingClientRect(),
+    );
+    const cardRects = cards.map((card) => card.getBoundingClientRect());
+    const lineRects = lines.map((line) => line.getBoundingClientRect());
+    const footerRect = footer?.getBoundingClientRect();
+    for (const [index, section] of chapters.entries()) {
+      const rect = chapterRects[index];
       const p = reduced.matches
         ? 1
         : smoothstep(0, 1, (height - rect.top) / (height * 0.86));
@@ -44,8 +52,8 @@ export function createChapters() {
         if (rule) rule.style.transform = `scaleX(${p})`;
       }
     }
-    for (const card of cards) {
-      const rect = card.getBoundingClientRect();
+    for (const [index, card] of cards.entries()) {
+      const rect = cardRects[index];
       if (rect.bottom < -100 || rect.top > height + 100) continue;
       const p = reduced.matches
         ? 1
@@ -58,8 +66,8 @@ export function createChapters() {
         ? ''
         : `inset(${(1 - p) * 12}% ${(1 - p) * 5}% round 28px)`;
     }
-    for (const line of lines) {
-      const rect = line.getBoundingClientRect();
+    for (const [index, line] of lines.entries()) {
+      const rect = lineRects[index];
       const p = reduced.matches
         ? 1
         : smoothstep(0, 1, (height * 0.94 - rect.top) / (height * 0.36));
@@ -67,14 +75,10 @@ export function createChapters() {
         ? ''
         : `inset(0 ${(1 - p) * 100}% 0 0)`;
     }
-    if (footer && wordmark) {
+    if (footer && footerRect && wordmark) {
       const p = reduced.matches
         ? 1
-        : smoothstep(
-            0,
-            1,
-            (height - footer.getBoundingClientRect().top) / (height * 0.8),
-          );
+        : smoothstep(0, 1, (height - footerRect.top) / (height * 0.8));
       wordmark.style.transform = reduced.matches
         ? ''
         : `translate3d(${(1 - p) * -4}%,${(1 - p) * 90}px,0)`;

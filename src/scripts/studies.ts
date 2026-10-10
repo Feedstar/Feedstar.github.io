@@ -2,16 +2,17 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { settle } from '../lib/motion.mjs';
-import { clamp, smoothstep } from '../lib/erosion.mjs';
+import { createPreviewLoop, previewPixelRatio } from '../lib/preview-loop.mjs';
 
 // Gallery sculptures are visual covers. The linked lab runs the actual MJCF models.
 export function createStudies() {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const cleanup: (() => void)[] = [];
-  const updates: ((dt: number, time: number) => void)[] = [];
+  const loop = createPreviewLoop(requestAnimationFrame, cancelAnimationFrame);
+  let disposed = false;
   const windows = document.querySelectorAll<HTMLElement>('[data-study]');
-  const mount = (host: HTMLElement) => {
+  const mount = async (host: HTMLElement) => {
     let dirty = true;
     const canvas = host.querySelector<HTMLCanvasElement>('canvas')!;
     let renderer: THREE.WebGLRenderer;
@@ -20,12 +21,11 @@ export function createStudies() {
         canvas,
         alpha: true,
         antialias: true,
-        powerPreference: 'low-power',
+        powerPreference: 'high-performance',
       });
     } catch {
       return;
     }
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35;
     const scene = new THREE.Scene();
@@ -233,57 +233,70 @@ export function createStudies() {
       dirty = true;
       const w = host.clientWidth,
         h = host.clientHeight;
+      renderer.setPixelRatio(previewPixelRatio(w, h, devicePixelRatio));
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.position.z = w / h < 1 ? 8.6 : 6.8;
+      camera.lookAt(0, 0.1, 0);
       camera.updateProjectionMatrix();
+      requestDraw();
     };
     const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(host);
-    resize();
     let active = false,
+      ready = false,
+      time = 0,
       px = 0,
       py = 0,
       rx = 0,
       ry = 0,
       vx = 0,
       vy = 0;
+    let pointer: { x: number; y: number } | null = null;
+    let reportAt = 0,
+      reportFrames = 0,
+      reportCost = 0;
+    const requestDraw = () => {
+      if (ready && active) loop.add(update);
+    };
     const intersection = new IntersectionObserver(
       (entries) => {
         active = entries[0].isIntersecting;
+        host.dataset.active = String(active);
         dirty = true;
+        reportAt = 0;
+        reportFrames = reportCost = 0;
+        if (active) requestDraw();
+        else loop.remove(update);
       },
-      { rootMargin: '100px' },
+      { threshold: 0 },
     );
-    intersection.observe(host);
     const move = (event: PointerEvent) => {
       if (!fine.matches || reduced.matches) return;
-      const rect = host.getBoundingClientRect();
-      px = ((event.clientX - rect.left) / rect.width - 0.5) * 0.28;
-      py = ((event.clientY - rect.top) / rect.height - 0.5) * 0.16;
+      // Coalesce high-frequency pointer events into the next rendered frame.
+      pointer = { x: event.clientX, y: event.clientY };
       dirty = true;
+      requestDraw();
     };
     const leave = () => {
+      pointer = null;
       px = 0;
       py = 0;
       dirty = true;
+      requestDraw();
     };
     host.addEventListener('pointermove', move, { passive: true });
     host.addEventListener('pointerleave', leave);
-    const aperture = () => {
-      const rect = host.getBoundingClientRect();
-      const entry = clamp(
-        (innerHeight - rect.top) / (innerHeight + rect.height),
-      );
-      host.style.clipPath = reduced.matches
-        ? 'none'
-        : `inset(${(1 - smoothstep(0.02, 0.38, entry)) * 4}% round 28px)`;
-      return entry;
-    };
-    window.addEventListener('scroll', aperture, { passive: true });
-    updates.push((dt, time) => {
-      if (!active || document.hidden) return;
-      if (reduced.matches && !dirty) return;
+    const update = (dt: number, now: number) => {
+      if (!ready || !active || (reduced.matches && !dirty)) {
+        loop.remove(update);
+        return;
+      }
+      if (pointer) {
+        const rect = host.getBoundingClientRect();
+        px = ((pointer.x - rect.left) / rect.width - 0.5) * 0.28;
+        py = ((pointer.y - rect.top) / rect.height - 0.5) * 0.16;
+        pointer = null;
+      }
       const sx = settle(rx, vx, px, dt, 0.4),
         sy = settle(ry, vy, py, dt, 0.4);
       rx = sx.value;
@@ -292,24 +305,44 @@ export function createStudies() {
       vy = sy.velocity;
       world.rotation.y = -0.18 + rx;
       world.rotation.x = ry;
-      const entry = aperture();
-      world.position.y = reduced.matches ? 0 : (entry - 0.5) * 0.18;
+      time += dt;
       animate(reduced.matches ? 1.2 : time);
+      const started = performance.now();
       renderer.render(scene, camera);
-      host.dataset.ready = 'true';
+      if (dt === 0) {
+        reportAt = 0;
+        reportFrames = reportCost = 0;
+      }
+      reportCost += performance.now() - started;
+      if (!reportAt) reportAt = now;
+      else reportFrames++;
+      if (now - reportAt >= 1000) {
+        host.dataset.previewFps = (
+          (reportFrames * 1000) /
+          (now - reportAt)
+        ).toFixed(1);
+        host.dataset.renderMs = (reportCost / (reportFrames + 1)).toFixed(2);
+        reportAt = now;
+        reportFrames = reportCost = 0;
+      }
       dirty = false;
-    });
+      if (reduced.matches) loop.remove(update);
+    };
     const change = () => {
+      if (reduced.matches || !fine.matches) leave();
       dirty = true;
+      requestDraw();
     };
     reduced.addEventListener('change', change);
+    fine.addEventListener('change', change);
     cleanup.push(() => {
+      loop.remove(update);
       resizeObserver.disconnect();
       intersection.disconnect();
       host.removeEventListener('pointermove', move);
       host.removeEventListener('pointerleave', leave);
-      window.removeEventListener('scroll', aperture);
       reduced.removeEventListener('change', change);
+      fine.removeEventListener('change', change);
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line) {
           object.geometry.dispose();
@@ -322,40 +355,90 @@ export function createStudies() {
       environment.dispose();
       renderer.dispose();
     });
+    resizeObserver.observe(host);
+    resize();
+    // Compile before the cover enters, using parallel shader compilation when
+    // supported. No synchronous first-use compilation during its entrance.
+    try {
+      await renderer.compileAsync(scene, camera);
+      if (disposed) return;
+      world.rotation.y = -0.18;
+      animate(reduced.matches ? 1.2 : 0);
+      renderer.render(scene, camera);
+      ready = true;
+      host.dataset.ready = 'true';
+      intersection.observe(host);
+    } catch {
+      host.dataset.ready = 'false';
+    }
   };
-  // Create GPU resources shortly before each cover enters, keeping the opening light.
+  // Prepare one cover per idle task; two adjacent cards must not allocate their
+  // environments and compile all their materials in the same scrolling frame.
+  const pending: HTMLElement[] = [];
+  let preparing = false;
+  let idle: number | null = null;
+  const scheduleMount = () => {
+    if (
+      disposed ||
+      preparing ||
+      idle !== null ||
+      !pending.length ||
+      document.hidden
+    )
+      return;
+    const prepare = async () => {
+      idle = null;
+      if (disposed || document.hidden) return;
+      preparing = true;
+      const host = pending.shift()!;
+      try {
+        await mount(host);
+      } catch {
+        host.dataset.ready = 'false';
+      } finally {
+        preparing = false;
+        scheduleMount();
+      }
+    };
+    idle =
+      'requestIdleCallback' in window
+        ? window.requestIdleCallback(prepare, { timeout: 1000 })
+        : globalThis.setTimeout(prepare, 0);
+  };
   const preload = new IntersectionObserver(
     (entries) => {
       for (const entry of entries)
         if (entry.isIntersecting) {
           preload.unobserve(entry.target);
-          mount(entry.target as HTMLElement);
+          pending.push(entry.target as HTMLElement);
         }
+      scheduleMount();
     },
-    { rootMargin: '350px' },
+    { rootMargin: '700px' },
   );
   windows.forEach((host) => preload.observe(host));
   cleanup.push(() => preload.disconnect());
-  let frame = 0,
-    previous = 0,
-    time = 0;
-  const tick = (now: number) => {
-    frame = requestAnimationFrame(tick);
-    if (now - previous < 1000 / 30) return;
-    const dt = previous ? Math.min((now - previous) / 1000, 0.05) : 1 / 30;
-    previous = now;
-    if (!document.hidden) time += dt;
-    updates.forEach((update) => update(dt, time));
+  const visibility = () => {
+    loop.suspend(document.hidden);
+    if (!document.hidden) scheduleMount();
   };
-  frame = requestAnimationFrame(tick);
+  document.addEventListener('visibilitychange', visibility);
+  visibility();
   window.addEventListener('pagehide', (event) => {
-    cancelAnimationFrame(frame);
-    if (!event.persisted) cleanup.forEach((dispose) => dispose());
+    loop.suspend(true);
+    if (idle !== null) {
+      if ('cancelIdleCallback' in window) window.cancelIdleCallback(idle);
+      else clearTimeout(idle);
+      idle = null;
+    }
+    if (!event.persisted) {
+      disposed = true;
+      loop.dispose();
+      cleanup.forEach((dispose) => dispose());
+      document.removeEventListener('visibilitychange', visibility);
+    }
   });
   window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-      previous = 0;
-      frame = requestAnimationFrame(tick);
-    }
+    if (event.persisted) visibility();
   });
 }

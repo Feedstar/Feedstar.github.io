@@ -5,6 +5,105 @@ import {
   lunarTiming,
 } from '../src/lib/lunar-flow.mjs';
 import { settle, titleSpring } from '../src/lib/motion.mjs';
+import {
+  createPreviewLoop,
+  previewPixelRatio,
+} from '../src/lib/preview-loop.mjs';
+
+const previewHarness = () => {
+  const queued = new Map();
+  let id = 0;
+  const loop = createPreviewLoop(
+    (callback) => {
+      queued.set(++id, callback);
+      return id;
+    },
+    (handle) => queued.delete(handle),
+  );
+  return {
+    loop,
+    queued,
+    frame(now) {
+      const callbacks = [...queued.values()];
+      queued.clear();
+      callbacks.forEach((callback) => callback(now));
+    },
+  };
+};
+for (const hz of [30, 60, 120, 144]) {
+  const preview = previewHarness();
+  let rendered = 0,
+    elapsed = 0;
+  const draw = (dt) => {
+    rendered++;
+    elapsed += dt;
+  };
+  preview.loop.add(draw);
+  preview.loop.add(draw);
+  for (let i = 0; i <= hz; i++) preview.frame((i * 1000) / hz);
+  assert.equal(
+    rendered,
+    hz + 1,
+    'A visible cover must render every display frame, with no 30fps gate or duplicate loop.',
+  );
+  assert(
+    Math.abs(elapsed - 1) < 1e-10,
+    'Cover animation speed must be independent of refresh rate.',
+  );
+  preview.loop.remove(draw);
+  assert.equal(
+    preview.queued.size,
+    0,
+    'Leaving the viewport must stop the last cover loop.',
+  );
+}
+const preview = previewHarness();
+const deltas = [];
+const draw = (dt) => deltas.push(dt);
+preview.loop.add(draw);
+preview.frame(0);
+preview.frame(16);
+preview.loop.suspend(true);
+assert.equal(
+  preview.queued.size,
+  0,
+  'A hidden page must not schedule preview frames.',
+);
+preview.loop.suspend(false);
+preview.frame(60000);
+assert.equal(
+  deltas.at(-1),
+  0,
+  'Returning to the page must not jump through the hidden time.',
+);
+preview.loop.remove(draw);
+preview.loop.add((dt) => {
+  preview.loop.dispose();
+});
+preview.frame(60016);
+assert.equal(
+  preview.queued.size,
+  0,
+  'A one-frame reduced-motion render must return to idle.',
+);
+for (const [width, height, dpr] of [
+  [1440, 680, 2],
+  [550, 550, 2],
+  [390, 440, 3],
+]) {
+  const ratio = previewPixelRatio(width, height, dpr);
+  assert(
+    width * height * ratio ** 2 <= 1_000_001,
+    'Cover resolution must remain within its pixel budget.',
+  );
+  assert(
+    ratio <= dpr && ratio >= 1,
+    'Normal cover sizes must retain at least native CSS resolution.',
+  );
+}
+console.log(
+  'PASS: display-rate cover rendering, refresh-independent motion, offscreen/hidden suspension, clean resumption and bounded pixel cost.',
+);
 const simulate = (hz) => {
   let state = { value: 0, velocity: 0 };
   for (let i = 0; i < hz / 2; i++)

@@ -538,6 +538,7 @@ main {
   border-radius: 28px;
   overflow: hidden;
   isolation: isolate;
+  contain: layout paint;
   color: #eeecf5;
   background: radial-gradient(
     ellipse at 60% 25%,
@@ -545,6 +546,9 @@ main {
     #35333f 52%,
     #20212a 100%
   );
+}
+.study-window[data-active='true'] {
+  will-change: transform;
 }
 .study-actuator .study-window {
   background: radial-gradient(
