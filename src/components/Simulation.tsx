@@ -52,8 +52,8 @@ export default function Simulation() {
       lastUi = 0,
       lastSample = -1;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#1b221c');
-    scene.fog = new THREE.Fog('#1b221c', 7, 16);
+    scene.background = new THREE.Color('#191b27');
+    scene.fog = new THREE.Fog('#191b27', 7, 16);
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
@@ -80,8 +80,8 @@ export default function Simulation() {
     controls.maxDistance = 9;
     controls.maxPolarAngle = Math.PI * 0.49;
     controls.update();
-    scene.add(new THREE.HemisphereLight('#eef0d8', '#465241', 1));
-    const light = new THREE.DirectionalLight('#f5e8c6', 2.3);
+    scene.add(new THREE.HemisphereLight('#eeeafa', '#44405a', 1));
+    const light = new THREE.DirectionalLight('#f7ecfc', 2.3);
     light.position.set(-3, -2, 6);
     light.castShadow = true;
     light.shadow.mapSize.set(1024, 1024);
@@ -91,7 +91,7 @@ export default function Simulation() {
     light.shadow.camera.bottom = -4;
     light.shadow.normalBias = 0.02;
     scene.add(light);
-    const grid = new THREE.GridHelper(12, 36, '#68745d', '#364432');
+    const grid = new THREE.GridHelper(12, 36, '#76708b', '#353247');
     grid.rotation.x = Math.PI / 2;
     grid.position.z = 0.002;
     scene.add(grid);
@@ -558,7 +558,7 @@ function drawGraph(
   if (!history.length) return;
   const end = Math.max(15, history[history.length - 1].time),
     start = end - 15;
-  c.strokeStyle = '#a9bc98';
+  c.strokeStyle = '#c8b1e9';
   c.lineWidth = 1.6;
   c.beginPath();
   history.forEach((p, i) => {

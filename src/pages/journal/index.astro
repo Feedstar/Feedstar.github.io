@@ -20,7 +20,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
       从入门示例开始，把现象、原理与代码放在一起。
     </p>
   </div>
-  <section class="page-content wrap">
+  <section class="page-content wrap journal-archive">
     <div class="journal-list">
       {posts.map((post) => (
         <a href={`/journal/${post.id}/`} data-reveal>
@@ -36,17 +36,3 @@ const posts = (await getCollection('journal')).sort((a, b) =>
     </div>
   </section>
 </Layout>
-<style>
-  .journal-excerpt {
-    font-family: var(--serif);
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 0;
-    max-width: 700px;
-  }
-  @media (max-width: 600px) {
-    .journal-excerpt {
-      font-size: 11px;
-    }
-  }
-</style>

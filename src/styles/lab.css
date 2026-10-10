@@ -37,7 +37,7 @@
   padding: 45px 0 35px;
 }
 .experiment-intro .eyebrow {
-  font-size: 9px;
+  font-size: 11px;
   margin-bottom: 15px;
 }
 .experiment-intro h2 {
@@ -55,11 +55,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   border: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
 }
 .simulation-view {
   position: relative;
   min-height: 480px;
-  background: #1b221c;
+  background: #191b27;
   overflow: hidden;
 }
 .simulation-view > canvas {
@@ -79,8 +81,8 @@
   justify-content: space-between;
   gap: 15px;
   pointer-events: none;
-  color: #a9b59f;
-  font-size: 9px;
+  color: #beb7ce;
+  font-size: 11px;
   letter-spacing: 0.08em;
   z-index: 1;
 }
@@ -99,11 +101,11 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #68765f;
+  background: #78688d;
 }
 .engine-status i.live {
-  background: #bccb9e;
-  box-shadow: 0 0 8px #c9ddb23b;
+  background: #cbb5e8;
+  box-shadow: 0 0 8px #ceb0ed3b;
 }
 .parameter-panel {
   padding: 28px 25px;
@@ -111,7 +113,7 @@
   border-left: 1px solid var(--line);
 }
 .parameter-panel > .eyebrow {
-  font-size: 9px;
+  font-size: 11px;
   margin-bottom: 30px;
 }
 .param {
@@ -134,7 +136,7 @@
 }
 .param input {
   width: 100%;
-  accent-color: #a8b494;
+  accent-color: #bda5da;
   margin: 18px 0 4px;
   height: 3px;
   cursor: ew-resize;
@@ -142,7 +144,7 @@
 .param small {
   display: flex;
   justify-content: space-between;
-  font-size: 8px;
+  font-size: 10px;
   color: var(--subtle);
 }
 .speed-control {
@@ -186,7 +188,7 @@
   gap: 8px;
 }
 .live-readout > span {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
 }
 .live-readout strong {
@@ -198,7 +200,7 @@
 }
 .live-readout small {
   font-family: var(--sans);
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
   margin-left: 10px;
 }
@@ -216,9 +218,9 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #1b221ce8;
+  background: #191b27e8;
   z-index: 2;
-  color: #b5bfaa;
+  color: #c6b8db;
   padding: 40px;
   text-align: center;
   font-family: var(--serif);
@@ -229,14 +231,14 @@
 }
 .engine-overlay button {
   padding: 8px 25px;
-  color: #d3dcc7;
+  color: #e2d7ee;
   margin-top: 12px;
 }
 .loading-orbit {
   height: 35px;
   width: 35px;
-  border: 1px solid #64775a;
-  border-top-color: #d0dbb9;
+  border: 1px solid #75618e;
+  border-top-color: #d7c0ef;
   border-radius: 50%;
   animation: loading-turn 2s linear infinite;
 }
@@ -259,11 +261,11 @@
   margin-bottom: 15px;
 }
 .chart-panel .eyebrow {
-  font-size: 9px;
+  font-size: 11px;
   margin: 0;
 }
 .chart-panel > div > span:last-child {
-  font-size: 8px;
+  font-size: 10px;
   color: var(--subtle);
 }
 .chart-panel canvas {
@@ -405,7 +407,7 @@
   .view-bottom {
     left: 17px;
     right: 17px;
-    font-size: 8px;
+    font-size: 10px;
   }
   .experiment-notes {
     grid-template-columns: 1fr;

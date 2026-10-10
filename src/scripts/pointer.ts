@@ -8,7 +8,7 @@ export function createPointer() {
   );
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const textSelector =
-    '.hero-english, .hero-chinese, .hero-description, .eyebrow, .section-heading h2, .project-meta h3, .project-summary, .journal-list h3, .arrival h2, .arrival p, .about-quote, .about-body p, .about-fragment p, .prose p, .prose h2, .prose h3, .prose li, .footer-statement, .article-header h1, .article-description, .page-intro h1, .intro-description';
+    '.hero-english, .hero-chinese, .hero-description, .eyebrow, .field-title h2, .study-caption h3, .study-description, .notes-heading h2, .journal-list h3, .arrival h2, .arrival p, .about-quote, .about-body p, .about-fragment p, .prose p, .prose h2, .prose h3, .prose li, .footer-statement, .article-header h1, .article-description, .page-intro h1, .intro-description';
   document
     .querySelectorAll(textSelector)
     .forEach((el) => el.setAttribute('data-pointer-light', ''));
@@ -35,6 +35,11 @@ export function createPointer() {
       next?.classList.add('pointer-lit');
       lit = next;
     }
+    const label = element
+      ?.closest('[data-cursor]')
+      ?.getAttribute('data-cursor');
+    orbit.dataset.label = String(!!label && !blocked);
+    orbit.querySelector('span')!.textContent = label ?? '';
     orbit.dataset.mode = blocked
       ? 'hidden'
       : element?.closest('a, button')

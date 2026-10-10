@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ProjectArt from '../components/ProjectArt.astro';
-import { examples } from '../lib/examples';
+import StudyCard from '../components/StudyCard.astro';
 ---
 
 <Layout title="探索 · Feedstar" page="projects">
@@ -10,33 +9,42 @@ import { examples } from '../lib/examples';
     <h1>
       把好奇，
       <br />
-      变成可以触碰的东西。
+      <em>变成可以触碰的东西。</em>
     </h1>
     <p class="intro-description">
       从一个模型、一个参数、一次观察开始。
       <br />
-      这里的每个示例，都连接着可运行的实验、解释与源码。
+      每个示例，都连接着可运行的实验、解释与源码。
     </p>
   </div>
-  <section class="page-content wrap project-grid" aria-label="项目与交互示例">
-    {Object.values(examples).map((example) => (
-      <a class="project-link" href={`/lab/?example=${example.id}`} data-reveal>
-        <div class="project-image">
-          <ProjectArt kind={example.id} />
-          <span class="image-label">MUJOCO / STUDY {example.number}</span>
-          <span class="project-open" aria-hidden="true">
-            ↗
-          </span>
-        </div>
-        <div class="project-meta">
-          <div>
-            <p class="eyebrow">{example.subtitle}</p>
-            <h3>{example.title}</h3>
-          </div>
-          <span class="project-index">{example.number.slice(1)}</span>
-        </div>
-        <p class="project-summary">{example.description}</p>
-      </a>
-    ))}
+  <section class="portfolio-field project-archive">
+    <div class="wrap">
+      <StudyCard
+        kind="pendulum"
+        number="01"
+        english="The shape of time"
+        title="时间的形状。"
+        description="放开一枚摆，观察阻尼如何让运动慢慢安静。"
+        tags={['关节动力学', '阻尼', '能量']}
+      />
+      <div class="study-duet">
+        <StudyCard
+          kind="actuator"
+          number="02"
+          english="A quiet pursuit"
+          title="向目标靠近。"
+          description="目标、误差与响应，在一段运动里变得具体。"
+          tags={['位置执行器', '控制', '响应']}
+        />
+        <StudyCard
+          kind="contact"
+          number="03"
+          english="Where things meet"
+          title="接触的地方。"
+          description="让一个方块滑行，看见摩擦留下的痕迹。"
+          tags={['接触', '摩擦', '滑动']}
+        />
+      </div>
+    </div>
   </section>
 </Layout>

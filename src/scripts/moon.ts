@@ -16,17 +16,17 @@ export function createMoon(canvas: HTMLCanvasElement) {
     moonRadius = 0;
   let pointerX = -1000,
     pointerY = -1000;
-  const motes = Array.from({ length: innerWidth < 700 ? 50 : 110 }, (_, i) => {
+  const motes = Array.from({ length: innerWidth < 700 ? 160 : 420 }, (_, i) => {
     const random = (n: number) => {
       const v = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
       return v - Math.floor(v);
     };
     return {
       angle: random(1) * Math.PI * 2,
-      radius: 1.08 + random(2) * 0.92,
+      radius: 0.95 + random(2) * 1.75,
       depth: random(3),
-      size: 0.45 + random(4) * 0.85,
-      speed: 0.007 + random(5) * 0.009,
+      size: 0.65 + random(4) ** 2 * 2.1,
+      speed: 0.008 + random(5) * 0.012,
     };
   });
   let renderer: THREE.WebGLRenderer;
@@ -73,7 +73,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
       vec3 tex=texture2D(uTexture,vUv).rgb; float lum=dot(tex,vec3(.299,.587,.114));
       float light=.16+.86*pow(max(0.,dot(p,normalize(vec3(-.6,.65,1.2)))),.6);
       float grain=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
-      vec3 color=vec3(.86,.88,.82)*(pow(lum,.75)*1.12)*light + (grain-.5)*.035;
+      vec3 color=vec3(.89,.88,.94)*(pow(lum,.75)*1.12)*light + (grain-.5)*.035;
       gl_FragColor=vec4(color,1.); }`,
   });
   const sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 160, 100), surface);
@@ -115,7 +115,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     fragmentShader: `uniform sampler2D uTexture; varying vec2 vUv; varying float vAlpha; varying float vLight;
       void main(){ float radius=length(gl_PointCoord-.5); if(radius>.5)discard;
         vec3 tex=texture2D(uTexture,vUv).rgb; float lum=dot(tex,vec3(.299,.587,.114));
-        gl_FragColor=vec4(vec3(.86,.88,.82)*pow(lum,.75)*1.12*vLight, vAlpha*(1.-smoothstep(.15,.5,radius))); }`,
+        gl_FragColor=vec4(vec3(.89,.88,.94)*pow(lum,.75)*1.12*vLight, vAlpha*(1.-smoothstep(.15,.5,radius))); }`,
   });
   const points = new THREE.Points(geometry, material);
   group.add(points);
@@ -133,12 +133,12 @@ export function createMoon(canvas: HTMLCanvasElement) {
       viewW = viewH * camera.aspect;
     const mobile = w < 700;
     const radius = mobile
-      ? Math.min(viewW * 0.33, viewH * 0.24)
-      : Math.min(viewH * 0.35, viewW * 0.255);
+      ? Math.min(viewW * 0.31, viewH * 0.23)
+      : Math.min(viewH * 0.34, viewW * 0.27);
     group.scale.setScalar(radius);
     group.position.set(
-      mobile ? viewW * 0.12 : viewW * 0.185,
-      mobile ? viewH * 0.21 : viewH * 0.015,
+      mobile ? viewW * 0.12 : viewW * 0.15,
+      mobile ? viewH * 0.22 : viewH * 0.01,
       0,
     );
     moonX = (0.5 + group.position.x / viewW) * w;
@@ -168,22 +168,23 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const updatePresentation = () => {
     const rect = journey.getBoundingClientRect();
     uniforms.uProgress.value = reduced.matches ? 0 : progress * 1.18;
-    journey.style.setProperty(
-      '--intro-opacity',
-      String(1 - smoothstep(0.12, 0.43, progress)),
-    );
-    journey.style.setProperty(
-      '--intro-y',
-      `${reduced.matches ? 0 : -progress * 60}px`,
-    );
-    journey.style.setProperty(
-      '--arrival-opacity',
-      String(smoothstep(0.4, 0.72, progress)),
-    );
-    journey.style.setProperty(
-      '--arrival-y',
-      `${reduced.matches ? 0 : 24 * (1 - smoothstep(0.4, 0.75, progress))}px`,
-    );
+    const introOpacity = 1 - smoothstep(0.08, 0.4, progress);
+    if (intro) {
+      intro.style.opacity = String(introOpacity);
+      intro.style.transform = `translateY(${reduced.matches ? 0 : -progress * 65}px)`;
+    }
+    if (bottom) bottom.style.opacity = String(introOpacity);
+    journey
+      .querySelectorAll<HTMLElement>(
+        '.orbital-lines, .moon-caption, .hero-atmosphere',
+      )
+      .forEach((el) => {
+        el.style.opacity = String(introOpacity);
+      });
+    if (arrival) {
+      arrival.style.opacity = String(smoothstep(0.4, 0.72, progress));
+      arrival.style.transform = `translateY(calc(-50% + ${reduced.matches ? 0 : 24 * (1 - smoothstep(0.4, 0.75, progress))}px))`;
+    }
     canvas.style.opacity = reduced.matches
       ? String(1 - smoothstep(0.25, 0.7, progress))
       : '1';
@@ -218,32 +219,84 @@ export function createMoon(canvas: HTMLCanvasElement) {
     }
     dirty = true;
   };
+  const sprites = [false, true].map((paper) => {
+    const sprite = document.createElement('canvas');
+    sprite.width = 64;
+    sprite.height = 64;
+    const context = sprite.getContext('2d')!;
+    const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(
+      0,
+      paper ? 'rgba(87,65,123,1)' : 'rgba(251,243,255,1)',
+    );
+    gradient.addColorStop(
+      0.1,
+      paper ? 'rgba(107,84,143,.65)' : 'rgba(220,206,255,.8)',
+    );
+    gradient.addColorStop(
+      0.35,
+      paper ? 'rgba(107,84,143,.12)' : 'rgba(176,153,240,.15)',
+    );
+    gradient.addColorStop(1, 'rgba(140,120,180,0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 64, 64);
+    return sprite;
+  });
+  dust.dataset.count = String(motes.length);
   const drawDust = (time: number) => {
     if (!dustContext) return;
     dustContext.clearRect(0, 0, width, height);
-    const fade = 1 - smoothstep(0.18, 0.78, progress);
+    const fade = 1 - smoothstep(0.22, 0.85, progress);
     if (fade === 0) return;
     const paper = document.documentElement.dataset.theme === 'paper';
-    for (const mote of motes) {
+    for (const [index, mote] of motes.entries()) {
       const angle = mote.angle + time * mote.speed;
       let x = moonX + Math.cos(angle) * moonRadius * mote.radius;
       let y =
         moonY +
-        Math.sin(angle) * moonRadius * mote.radius * (0.62 + mote.depth * 0.32);
+        Math.sin(angle) * moonRadius * mote.radius * (0.65 + mote.depth * 0.5);
       const dx = x - pointerX,
         dy = y - pointerY,
         distance = Math.hypot(dx, dy);
-      if (distance < 105 && distance > 0 && !reduced.matches) {
-        const repel = (1 - distance / 105) ** 2 * 16;
+      if (distance < 150 && distance > 0 && !reduced.matches) {
+        const repel = (1 - distance / 150) ** 2 * 34;
         x += (dx / distance) * repel;
         y += (dy / distance) * repel;
       }
-      const pulse = 0.55 + Math.sin(time * 0.5 + mote.angle * 3) * 0.25;
-      dustContext.fillStyle = `rgba(${paper ? '73,94,78' : '213,230,212'},${fade * pulse * (0.22 + mote.depth * 0.35)})`;
+      const pulse = 0.72 + Math.sin(time * 0.45 + mote.angle * 3) * 0.22;
+      const alpha = fade * pulse * (0.4 + mote.depth * 0.55);
+      dustContext.globalAlpha = alpha;
+      if (mote.size > 1.45) {
+        const size = mote.size * 12;
+        dustContext.drawImage(
+          sprites[Number(paper)],
+          x - size / 2,
+          y - size / 2,
+          size,
+          size,
+        );
+      }
+      dustContext.fillStyle = paper
+        ? '#69547f'
+        : index % 7 === 0
+          ? '#e8c9ac'
+          : '#e7dffa';
       dustContext.beginPath();
-      dustContext.arc(x, y, mote.size, 0, Math.PI * 2);
+      dustContext.arc(x, y, mote.size * 0.6, 0, Math.PI * 2);
       dustContext.fill();
+      if (index % 26 === 0) {
+        const arm = mote.size * 2.7;
+        dustContext.strokeStyle = paper ? '#88759b' : '#ede2ff';
+        dustContext.lineWidth = 0.5;
+        dustContext.beginPath();
+        dustContext.moveTo(x - arm, y);
+        dustContext.lineTo(x + arm, y);
+        dustContext.moveTo(x, y - arm);
+        dustContext.lineTo(x, y + arm);
+        dustContext.stroke();
+      }
     }
+    dustContext.globalAlpha = 1;
   };
   let previousTime = 0,
     ambientTime = 0,
