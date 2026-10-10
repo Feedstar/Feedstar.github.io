@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="关于 · Feedstar" page="about">
+  <div class="page-intro wrap">
+    <p class="eyebrow">04 / ABOUT THIS SPACE</p>
+    <h1>
+      微光与秩序。
+      <br />
+      <em>A personal observatory.</em>
+    </h1>
+    <p class="intro-description">Feedstar 的个人空间。</p>
+  </div>
+  <section class="page-content wrap">
+    <div class="about-body">
+      <p class="about-quote">
+        把问题留下，
+        <br />
+        把理解慢慢补上。
+      </p>
+      <p>
+        我想在这里存放工作与学习过程中的思考：一些文章，一些可视化程序，以及一些用来理解
+        MuJoCo 特性与基本功能的小实验。
+      </p>
+      <p>
+        文章记录思路，实验提供直觉，代码让过程可以复现。它们围绕同一个问题相互连接，也随着新的理解继续生长。
+      </p>
+      <p>
+        这个空间从最基础的运动开始。关于关节与阻尼，关于目标与响应，关于接触和摩擦。希望每一次观察，都能让一个抽象的概念变得具体一些。
+      </p>
+      <a
+        class="text-link"
+        href="https://github.com/Feedstar"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        在 GitHub 找到我 <span>↗</span>
+      </a>
+      <div class="about-colophon">
+        <p class="eyebrow">COLOPHON / 关于这个网站</p>
+        <p>
+          以月体为序章，以细小的粒子记录形态的变化。首页月面纹理来自{' '}
+          <a
+            href="https://svs.gsfc.nasa.gov/4720/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            NASA's Scientific Visualization Studio
+          </a>
+          ，基于 LRO / LROC 数据；构图与浏览节奏参考{' '}
+          <a
+            href="https://ungetsu.net/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ungetsu
+          </a>
+          ，页面、文字与交互实现为 Feedstar 制作。
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>
+<style>
+  .about-colophon {
+    margin-top: 80px;
+    padding-top: 35px;
+    border-top: 1px solid var(--line);
+  }
+  .about-colophon p:not(.eyebrow) {
+    font-size: 12px;
+  }
+  .about-colophon a {
+    border-bottom: 1px solid var(--line);
+  }
+</style>

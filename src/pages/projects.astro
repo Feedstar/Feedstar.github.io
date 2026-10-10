@@ -1,0 +1,42 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProjectArt from '../components/ProjectArt.astro';
+import { examples } from '../lib/examples';
+---
+
+<Layout title="探索 · Feedstar" page="projects">
+  <div class="page-intro wrap">
+    <p class="eyebrow">01 / EXPLORATIONS</p>
+    <h1>
+      把好奇，
+      <br />
+      变成可以触碰的东西。
+    </h1>
+    <p class="intro-description">
+      从一个模型、一个参数、一次观察开始。
+      <br />
+      这里的每个示例，都连接着可运行的实验、解释与源码。
+    </p>
+  </div>
+  <section class="page-content wrap project-grid" aria-label="项目与交互示例">
+    {Object.values(examples).map((example) => (
+      <a class="project-link" href={`/lab/?example=${example.id}`} data-reveal>
+        <div class="project-image">
+          <ProjectArt kind={example.id} />
+          <span class="image-label">MUJOCO / STUDY {example.number}</span>
+          <span class="project-open" aria-hidden="true">
+            ↗
+          </span>
+        </div>
+        <div class="project-meta">
+          <div>
+            <p class="eyebrow">{example.subtitle}</p>
+            <h3>{example.title}</h3>
+          </div>
+          <span class="project-index">{example.number.slice(1)}</span>
+        </div>
+        <p class="project-summary">{example.description}</p>
+      </a>
+    ))}
+  </section>
+</Layout>

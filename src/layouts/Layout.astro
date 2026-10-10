@@ -1,0 +1,150 @@
+---
+import '../styles/global.css';
+const {
+  title = 'Feedstar · 微光与秩序',
+  description = 'Feedstar 的个人空间。记录学习，拆解运动，在微小的实验里理解世界。',
+  page = 'home',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN" data-theme="ink">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#151815" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <title>{title}</title>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      try {
+        const theme = localStorage.getItem('feedstar-theme');
+        if (theme === 'paper') document.documentElement.dataset.theme = 'paper';
+      } catch {}
+    </script>
+  </head>
+  <body data-page={page}>
+    <a class="skip-link" href="#main">
+      跳到正文
+    </a>
+    <div class="page-frame" aria-hidden="true"></div>
+    <div class="paper-grain" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Feedstar 首页">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="12" />
+          <ellipse
+            cx="24"
+            cy="24"
+            rx="22"
+            ry="7"
+            transform="rotate(-35 24 24)"
+          />
+          <circle class="star-dot" cx="37" cy="13" r="2" />
+        </svg>
+        <span>
+          FEEDSTAR<span class="brand-caption">微光与秩序</span>
+        </span>
+      </a>
+      <nav aria-label="主导航">
+        <a
+          href="/projects/"
+          aria-current={page === 'projects' ? 'page' : undefined}
+        >
+          <span class="nav-number">01</span> 探索
+        </a>
+        <a
+          href="/journal/"
+          aria-current={page === 'journal' ? 'page' : undefined}
+        >
+          <span class="nav-number">02</span> 手记
+        </a>
+        <a href="/lab/" aria-current={page === 'lab' ? 'page' : undefined}>
+          <span class="nav-number">03</span> 实验室
+        </a>
+        <a href="/about/" aria-current={page === 'about' ? 'page' : undefined}>
+          <span class="nav-number">04</span> 关于
+        </a>
+      </nav>
+      <button class="theme-toggle" aria-label="切换明暗主题" title="纸 / 墨">
+        <span class="theme-orb"></span>
+      </button>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer wrap">
+      <div class="footer-top">
+        <span class="eyebrow">THE OBSERVATION CONTINUES</span>
+        <a
+          class="text-link"
+          href="https://github.com/Feedstar"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub <span>↗</span>
+        </a>
+      </div>
+      <p class="footer-statement">
+        保持好奇，
+        <br />
+        <span>让微光继续。</span>
+      </p>
+      <div class="footer-bottom">
+        <a href="/">FEEDSTAR</a>
+        <span>记录 · 理解 · 再出发</span>
+        <span>© {new Date().getFullYear()} Feedstar</span>
+        <button class="back-top" aria-label="回到顶部">
+          ↑
+        </button>
+      </div>
+    </footer>
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+      toggle?.addEventListener('click', () => {
+        const next =
+          document.documentElement.dataset.theme === 'paper' ? 'ink' : 'paper';
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem('feedstar-theme', next);
+        } catch {}
+      });
+      document
+        .querySelector('.back-top')
+        ?.addEventListener('click', () =>
+          window.scrollTo({
+            top: 0,
+            behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+              ? 'instant'
+              : 'smooth',
+          }),
+        );
+      const header = document.querySelector('.site-header');
+      const updateHeader = () =>
+        header?.classList.toggle('is-scrolled', scrollY > 30);
+      window.addEventListener('scroll', updateHeader, { passive: true });
+      updateHeader();
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries)
+            if (e.isIntersecting) {
+              e.target.classList.add('is-visible');
+              io.unobserve(e.target);
+            }
+        },
+        { threshold: 0.12 },
+      );
+      document
+        .querySelectorAll('[data-reveal]')
+        .forEach((el) => io.observe(el));
+      document.addEventListener('visibilitychange', () => {
+        document.documentElement.dataset.paused = String(document.hidden);
+      });
+    </script>
+  </body>
+</html>

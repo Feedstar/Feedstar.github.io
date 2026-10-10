@@ -1,0 +1,138 @@
+import loadMujoco from '@mujoco/mujoco';
+import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
+import { examples, type ExampleId } from '../lib/examples';
+let mj: any,
+  model: any,
+  data: any,
+  id: ExampleId = 'pendulum',
+  playing = true,
+  disposed = false;
+let params = {
+  damping: 0.12,
+  angle: 0.85,
+  target: 0.6,
+  gain: 30,
+  friction: 0.25,
+  speed: 1,
+};
+let accumulator = 0,
+  last = 0,
+  timer: ReturnType<typeof setTimeout>;
+const send = () => {
+  if (!data) return;
+  self.postMessage({
+    type: 'state',
+    time: data.time,
+    qpos: Array.from(data.qpos),
+    qvel: Array.from(data.qvel),
+    ncon: data.ncon,
+    positions: Array.from(data.geom_xpos),
+    matrices: Array.from(data.geom_xmat),
+  });
+};
+function apply() {
+  if (!model) return;
+  if (id === 'pendulum') model.dof_damping[0] = params.damping;
+  if (id === 'actuator') {
+    data.ctrl[0] = params.target;
+    model.actuator_gainprm[0] = params.gain;
+    model.actuator_biasprm[1] = -params.gain;
+  }
+  if (id === 'contact')
+    for (let i = 0; i < model.ngeom; i++)
+      model.geom_friction[i * 3] = params.friction;
+}
+function reset() {
+  mj.mj_resetDataKeyframe(model, data, 0);
+  if (id === 'pendulum') data.qpos[0] = params.angle;
+  apply();
+  mj.mj_forward(model, data);
+  accumulator = 0;
+  last = performance.now();
+  send();
+}
+async function load(next: ExampleId) {
+  if (!mj)
+    mj = await loadMujoco({
+      locateFile: (file: string) => (file.endsWith('.wasm') ? wasmUrl : file),
+    });
+  if (disposed) return;
+  clearTimeout(timer);
+  data?.delete();
+  model?.delete();
+  id = next;
+  model = mj.MjModel.from_xml_string(examples[id].xml);
+  data = new mj.MjData(model);
+  reset();
+  self.postMessage({
+    type: 'ready',
+    id,
+    version: mj.mj_versionString(),
+    types: Array.from(model.geom_type),
+    sizes: Array.from(model.geom_size),
+    colors: Array.from(model.geom_rgba),
+  });
+  last = performance.now();
+  tick();
+}
+function tick() {
+  if (disposed) return;
+  const now = performance.now();
+  const elapsed = Math.min((now - last) / 1000, 0.06);
+  last = now;
+  if (playing) {
+    accumulator += elapsed * params.speed;
+    const dt = model.opt.timestep;
+    let steps = 0;
+    while (accumulator >= dt && steps < 100) {
+      apply();
+      mj.mj_step(model, data);
+      accumulator -= dt;
+      steps++;
+    }
+    mj.mj_forward(model, data);
+    send();
+  }
+  timer = setTimeout(tick, 16);
+}
+self.onmessage = async (event) => {
+  try {
+    const message = event.data;
+    if (message.type === 'load') {
+      await load(message.id in examples ? message.id : 'pendulum');
+      return;
+    }
+    if (message.type === 'params') {
+      params = { ...params, ...message.params };
+      apply();
+      if (!playing) {
+        mj.mj_forward(model, data);
+        send();
+      }
+    }
+    if (message.type === 'play') {
+      playing = message.value;
+      last = performance.now();
+      accumulator = 0;
+    }
+    if (message.type === 'reset') reset();
+    if (message.type === 'step') {
+      apply();
+      mj.mj_step(model, data);
+      mj.mj_forward(model, data);
+      send();
+    }
+    if (message.type === 'dispose') {
+      disposed = true;
+      clearTimeout(timer);
+      data?.delete();
+      model?.delete();
+      self.close();
+    }
+  } catch (error) {
+    self.postMessage({
+      type: 'error',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+};

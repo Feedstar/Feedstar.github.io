@@ -1,0 +1,52 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+const posts = (await getCollection('journal')).sort((a, b) =>
+  a.data.number.localeCompare(b.data.number),
+);
+---
+
+<Layout title="手记 · Feedstar" page="journal">
+  <div class="page-intro wrap">
+    <p class="eyebrow">02 / FIELD NOTES</p>
+    <h1>
+      思考的痕迹，
+      <br />
+      <em>沿途的微光。</em>
+    </h1>
+    <p class="intro-description">
+      在阅读与实践之间，记下一点理解。
+      <br />
+      从入门示例开始，把现象、原理与代码放在一起。
+    </p>
+  </div>
+  <section class="page-content wrap">
+    <div class="journal-list">
+      {posts.map((post) => (
+        <a href={`/journal/${post.id}/`} data-reveal>
+          <span class="note-number">{post.data.number}</span>
+          <div>
+            <p class="eyebrow">{post.data.category} / MUJOCO NOTES</p>
+            <h3>{post.data.title}</h3>
+            <p class="journal-excerpt">{post.data.description}</p>
+          </div>
+          <span class="note-arrow">↗</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Layout>
+<style>
+  .journal-excerpt {
+    font-family: var(--serif);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 0;
+    max-width: 700px;
+  }
+  @media (max-width: 600px) {
+    .journal-excerpt {
+      font-size: 11px;
+    }
+  }
+</style>

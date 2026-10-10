@@ -1,0 +1,16 @@
+<mujoco model="Feedstar - damped pendulum">
+  <option timestep="0.002" integrator="RK4" gravity="0 0 -9.81"/>
+  <worldbody>
+    <geom name="floor" type="plane" size="3 3 .1" rgba=".25 .31 .25 1"/>
+    <geom name="stand" type="cylinder" pos="0 0 1.7" size=".035 .12" quat=".7071 .7071 0 0" rgba=".7 .72 .63 1" contype="0" conaffinity="0"/>
+    <geom name="stand_base" type="cylinder" pos="0 .18 .035" size=".18 .035" rgba=".3 .38 .29 1" contype="0" conaffinity="0"/>
+    <geom name="stand_post" type="capsule" fromto="0 .18 .07 0 .18 1.7" size=".018" rgba=".5 .56 .46 1" contype="0" conaffinity="0"/>
+    <geom name="stand_beam" type="capsule" fromto="0 .18 1.7 0 0 1.7" size=".018" rgba=".5 .56 .46 1" contype="0" conaffinity="0"/>
+    <body name="pendulum" pos="0 0 1.7">
+      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.12"/>
+      <geom name="rod" type="capsule" fromto="0 0 0 0 0 -1" size=".018" mass=".1" rgba=".68 .72 .61 1"/>
+      <geom name="bob" type="sphere" pos="0 0 -1" size=".095" mass="1" rgba=".72 .78 .61 1"/>
+    </body>
+  </worldbody>
+  <keyframe><key name="initial" qpos="0.85"/></keyframe>
+</mujoco>

@@ -1,0 +1,161 @@
+---
+const { kind = 'pendulum' } = Astro.props;
+---
+
+<div class:list={['project-art', `art-${kind}`]} aria-hidden="true">
+  <svg viewBox="0 0 900 600" fill="none">
+    <defs>
+      <pattern
+        id={`grid-${kind}`}
+        width="50"
+        height="50"
+        patternUnits="userSpaceOnUse"
+      >
+        <path
+          d="M 50 0 L 0 0 0 50"
+          stroke="currentColor"
+          stroke-opacity=".07"
+        />
+      </pattern>
+      <radialGradient id={`glow-${kind}`}>
+        <stop stop-color="#a5b9a4" stop-opacity=".13" />
+        <stop offset="1" stop-color="#a5b9a4" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    <rect width="900" height="600" fill={`url(#grid-${kind})`} />
+    <ellipse cx="460" cy="330" rx="350" ry="250" fill={`url(#glow-${kind})`} />
+    {kind === 'pendulum' && (
+      <g>
+        <ellipse
+          cx="460"
+          cy="493"
+          rx="183"
+          ry="36"
+          fill="currentColor"
+          opacity=".025"
+        />
+        <path
+          d="M210 140 H690 M450 100 V145"
+          stroke="currentColor"
+          opacity=".24"
+        />
+        <path
+          d="M250 140 A200 200 0 0 0 650 140"
+          stroke="currentColor"
+          opacity=".18"
+          stroke-dasharray="3 8"
+        />
+        <path
+          d="M450 140 V385"
+          stroke="currentColor"
+          opacity=".15"
+          stroke-dasharray="3 8"
+        />
+        <g class="pendulum-cover" style="transform-origin:450px 140px">
+          <path d="M450 140 V390" stroke="currentColor" stroke-width="3" />
+          <circle cx="450" cy="393" r="28" fill="#9ead98" />
+          <circle cx="444" cy="386" r="17" fill="#d2d5c5" opacity=".5" />
+        </g>
+        <circle cx="450" cy="140" r="6" fill="currentColor" />
+        <circle cx="450" cy="140" r="14" stroke="currentColor" opacity=".2" />
+        <path
+          d="M80 500 C125 440 155 560 200 500 S265 460 300 500 S350 520 390 500 S435 489 470 500 S520 504 560 500 H800"
+          stroke="#a6b39d"
+          stroke-width="1.5"
+          opacity=".7"
+        />
+        <text x="75" y="75">
+          01 / DAMPED MOTION
+        </text>
+        <text x="680" y="555">
+          θ(t) → 0
+        </text>
+      </g>
+    )}
+    {kind === 'actuator' && (
+      <g>
+        <ellipse
+          cx="470"
+          cy="480"
+          rx="160"
+          ry="34"
+          stroke="currentColor"
+          opacity=".15"
+        />
+        <path
+          d="M350 440 L480 470 L590 430 L460 400 Z"
+          fill="currentColor"
+          opacity=".08"
+        />
+        <path
+          d="M460 430 V310 L550 245 L490 160"
+          stroke="#bdc6b2"
+          stroke-width="13"
+          stroke-linecap="round"
+        />
+        <path
+          d="M450 425 V307 L540 242 L482 160"
+          stroke="#768473"
+          stroke-width="3"
+        />
+        <circle cx="460" cy="310" r="20" fill="#333d34" stroke="#b6c2ad" />
+        <circle cx="550" cy="245" r="17" fill="#333d34" stroke="#b6c2ad" />
+        <path
+          d="M475 145 L505 130 L520 150 M475 145 L461 161 L477 180"
+          stroke="#bcc7b4"
+          stroke-width="3"
+        />
+        <path
+          d="M480 160 C400 100 300 140 300 250"
+          stroke="currentColor"
+          stroke-dasharray="3 8"
+          opacity=".28"
+        />
+        <circle cx="300" cy="250" r="5" fill="#a6b39d" />
+        <text x="75" y="75">
+          02 / TARGET & RESPONSE
+        </text>
+        <text x="650" y="510">
+          q → q*
+        </text>
+      </g>
+    )}
+    {kind === 'contact' && (
+      <g>
+        <path
+          d="M140 420 L450 510 L760 360 L450 270 Z"
+          fill="currentColor"
+          opacity=".04"
+          stroke="currentColor"
+          stroke-opacity=".3"
+        />
+        <path
+          d="M380 285 L480 315 L565 270 L465 240 Z M380 285 V370 L480 400 V315 M480 400 L565 355 V270"
+          fill="#687762"
+          fill-opacity=".35"
+          stroke="#b0bca4"
+          stroke-width="1.5"
+        />
+        <path
+          d="M480 398 L610 435 M480 398 V455 M480 398 L420 445"
+          stroke="#bbbc98"
+          stroke-width="1.5"
+        />
+        <path d="M600 426 L610 435 L595 438" stroke="#bbbc98" />
+        <circle cx="480" cy="398" r="5" fill="#d6c9a3" />
+        <circle cx="480" cy="398" r="17" stroke="#d6c9a3" opacity=".3" />
+        <path
+          d="M280 330 L360 355 M260 350 L340 375 M240 370 L320 395"
+          stroke="currentColor"
+          opacity=".2"
+        />
+        <text x="75" y="75">
+          03 / CONTACT & FRICTION
+        </text>
+        <text x="640" y="510">
+          μ · Fₙ
+        </text>
+      </g>
+    )}
+  </svg>
+</div>

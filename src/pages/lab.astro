@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Simulation from '../components/Simulation';
+import '../styles/lab.css';
+---
+
+<Layout title="实验室 · Feedstar" page="lab">
+  <div class="page-intro wrap lab-page-intro">
+    <p class="eyebrow">03 / THE SMALL LABORATORY</p>
+    <h1>让它发生一次。</h1>
+    <p class="intro-description">
+      调一个参数，观察一次变化。
+      <br />
+      在这些小小的实验里，建立对运动的直觉。
+    </p>
+  </div>
+  <section class="page-content wrap">
+    <Simulation client:load />
+    <noscript>
+      <p>
+        交互实验需要启用 JavaScript。你可以直接下载
+        <a href="/examples/pendulum.xml">单摆模型</a>与
+        <a href="/examples/run.py">Python 运行程序</a>。
+      </p>
+    </noscript>
+  </section>
+</Layout>

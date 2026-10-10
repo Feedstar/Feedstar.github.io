@@ -1,0 +1,21 @@
+<div
+  class="moon-scene"
+  id="moon-scene"
+  role="img"
+  aria-label="具有明暗与颗粒层次的月体，随滚动从左侧逐渐风化为细小粒子"
+>
+  <div class="moon-fallback" aria-hidden="true"></div>
+  <canvas id="moon-canvas" aria-hidden="true"></canvas>
+</div>
+<script>
+  import { createMoon } from '../scripts/moon';
+  let dispose: (() => void) | undefined;
+  function mount() {
+    dispose?.();
+    const canvas = document.querySelector<HTMLCanvasElement>('#moon-canvas');
+    if (canvas) dispose = createMoon(canvas);
+  }
+  mount();
+  document.addEventListener('astro:page-load', mount);
+  document.addEventListener('astro:before-swap', () => dispose?.());
+</script>

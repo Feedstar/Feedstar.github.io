@@ -1,0 +1,23 @@
+Feedstar / MuJoCo 基础示例
+
+将 run.py 与所需的 XML 模型放在同一目录。
+建议使用 Python 3.11+，安装与网页一致的 MuJoCo 版本：
+
+  python -m venv .venv
+  # Linux / macOS:
+  source .venv/bin/activate
+  # Windows PowerShell:
+  # .venv\Scripts\Activate.ps1
+  pip install mujoco==3.15.0
+
+运行：
+  python run.py pendulum.xml
+  python run.py actuator.xml --target 0.6 --gain 30
+  python run.py contact.xml --friction 0.25
+
+模型与网页使用同一份 MJCF；调整后的参数需要通过命令行传入。
+本地窗口需要支持图形界面的环境。macOS 如需使用被动查看器，
+请使用安装 MuJoCo 时提供的 mjpython 启动，例如 mjpython run.py pendulum.xml。
+
+网页版本使用 @mujoco/mujoco 的单线程 WASM 引擎，物理计算放在独立 Web Worker。
+这些示例不包含远程计算或训练。

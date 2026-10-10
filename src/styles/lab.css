@@ -1,0 +1,434 @@
+.lab-page-intro {
+  padding-bottom: 45px;
+}
+.experiment-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  gap: 35px;
+}
+.experiment-tabs button {
+  border: 0;
+  background: none;
+  padding: 0 0 20px;
+  font-family: var(--serif);
+  font-size: 13px;
+  position: relative;
+  color: var(--muted);
+}
+.experiment-tabs button span {
+  font-family: var(--roman);
+  margin-right: 12px;
+  font-size: 12px;
+  color: var(--subtle);
+}
+.experiment-tabs button[aria-pressed='true'] {
+  color: var(--fg);
+}
+.experiment-tabs button[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--accent);
+}
+.experiment-intro {
+  padding: 45px 0 35px;
+}
+.experiment-intro .eyebrow {
+  font-size: 9px;
+  margin-bottom: 15px;
+}
+.experiment-intro h2 {
+  font-family: var(--serif);
+  font-size: 29px;
+  margin: 0 0 15px;
+}
+.experiment-intro > p:last-child {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+.experiment-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  border: 1px solid var(--line);
+}
+.simulation-view {
+  position: relative;
+  min-height: 480px;
+  background: #1b221c;
+  overflow: hidden;
+}
+.simulation-view > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.view-top,
+.view-bottom {
+  position: absolute;
+  left: 25px;
+  right: 25px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  pointer-events: none;
+  color: #a9b59f;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  z-index: 1;
+}
+.view-top {
+  top: 23px;
+}
+.view-bottom {
+  bottom: 23px;
+}
+.engine-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.engine-status i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #68765f;
+}
+.engine-status i.live {
+  background: #bccb9e;
+  box-shadow: 0 0 8px #c9ddb23b;
+}
+.parameter-panel {
+  padding: 28px 25px;
+  background: var(--bg-raised);
+  border-left: 1px solid var(--line);
+}
+.parameter-panel > .eyebrow {
+  font-size: 9px;
+  margin-bottom: 30px;
+}
+.param {
+  display: block;
+  margin-bottom: 28px;
+}
+.param > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.param output {
+  font-family: monospace;
+  color: var(--fg);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.param input {
+  width: 100%;
+  accent-color: #a8b494;
+  margin: 18px 0 4px;
+  height: 3px;
+  cursor: ew-resize;
+}
+.param small {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: var(--subtle);
+}
+.speed-control {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 20px 0 25px;
+}
+.speed-control select {
+  max-width: 110px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  padding: 5px 8px;
+  font-size: 10px;
+}
+.simulation-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.simulation-actions button,
+.engine-overlay button {
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 9px 4px;
+  font-size: 11px;
+  transition: transform 160ms var(--ease-out);
+}
+.simulation-actions button:last-child {
+  grid-column: 1/-1;
+}
+.live-readout {
+  border-top: 1px solid var(--line);
+  padding-top: 25px;
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.live-readout > span {
+  font-size: 9px;
+  color: var(--muted);
+}
+.live-readout strong {
+  font-family: var(--roman);
+  font-weight: 400;
+  font-size: 38px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.live-readout small {
+  font-family: var(--sans);
+  font-size: 9px;
+  color: var(--muted);
+  margin-left: 10px;
+}
+.param-note {
+  font-family: var(--serif);
+  font-size: 10px;
+  line-height: 2;
+  color: var(--muted);
+  margin-bottom: 30px;
+}
+.engine-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #1b221ce8;
+  z-index: 2;
+  color: #b5bfaa;
+  padding: 40px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 12px;
+}
+.engine-overlay p {
+  max-width: 360px;
+}
+.engine-overlay button {
+  padding: 8px 25px;
+  color: #d3dcc7;
+  margin-top: 12px;
+}
+.loading-orbit {
+  height: 35px;
+  width: 35px;
+  border: 1px solid #64775a;
+  border-top-color: #d0dbb9;
+  border-radius: 50%;
+  animation: loading-turn 2s linear infinite;
+}
+@keyframes loading-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.chart-panel {
+  border: 1px solid var(--line);
+  border-top: 0;
+  padding: 22px 25px;
+  background: var(--bg-raised);
+}
+.chart-panel > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.chart-panel .eyebrow {
+  font-size: 9px;
+  margin: 0;
+}
+.chart-panel > div > span:last-child {
+  font-size: 8px;
+  color: var(--subtle);
+}
+.chart-panel canvas {
+  display: block;
+  width: 100%;
+  height: 130px;
+}
+.experiment-notes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  margin-top: 65px;
+  padding-bottom: 45px;
+}
+.experiment-notes h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  margin: 0 0 18px;
+}
+.experiment-notes p:not(.eyebrow) {
+  font-family: var(--serif);
+  font-size: 12px;
+  line-height: 2.1;
+  color: var(--muted);
+  margin-bottom: 25px;
+}
+.source-links {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.source-links .text-link {
+  font-size: 10px;
+  gap: 12px;
+}
+.xml-source {
+  border-block: 1px solid var(--line);
+  margin-top: 15px;
+}
+.xml-source summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 25px 0;
+  font-family: var(--serif);
+  font-size: 12px;
+  list-style: none;
+}
+.xml-source summary::-webkit-details-marker {
+  display: none;
+}
+.xml-source summary span {
+  font-family: var(--sans);
+  font-size: 19px;
+  color: var(--subtle);
+}
+.xml-source[open] summary span {
+  transform: rotate(45deg);
+}
+.xml-source pre {
+  font-size: 11px;
+  line-height: 2;
+  padding: 25px;
+  overflow: auto;
+  background: var(--bg-raised);
+  color: var(--muted);
+  margin-top: 0;
+}
+@media (max-width: 900px) {
+  .experiment-workspace {
+    grid-template-columns: minmax(0, 1fr) 240px;
+  }
+  .parameter-panel {
+    padding: 23px 18px;
+  }
+  .experiment-tabs {
+    gap: 25px;
+  }
+  .experiment-notes {
+    gap: 40px;
+  }
+  .simulation-view {
+    min-height: 450px;
+  }
+}
+@media (max-width: 650px) {
+  .experiment-tabs {
+    gap: 0;
+    justify-content: space-between;
+  }
+  .experiment-tabs button {
+    font-size: 11px;
+    padding-bottom: 16px;
+  }
+  .experiment-tabs button span {
+    display: block;
+    font-size: 11px;
+    margin: 0 0 5px;
+  }
+  .experiment-intro {
+    padding: 35px 0 25px;
+  }
+  .experiment-intro h2 {
+    font-size: 23px;
+  }
+  .experiment-intro > p:last-child {
+    font-size: 11px;
+  }
+  .experiment-workspace {
+    grid-template-columns: 1fr;
+  }
+  .simulation-view {
+    min-height: 370px;
+  }
+  .parameter-panel {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding: 25px;
+  }
+  .parameter-panel > .eyebrow {
+    margin-bottom: 25px;
+  }
+  .live-readout {
+    padding-top: 15px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .live-readout strong {
+    font-size: 30px;
+  }
+  .param {
+    margin-bottom: 25px;
+  }
+  .view-top,
+  .view-bottom {
+    left: 17px;
+    right: 17px;
+    font-size: 8px;
+  }
+  .experiment-notes {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    margin-top: 40px;
+  }
+  .experiment-notes h3 {
+    font-size: 20px;
+  }
+  .chart-panel {
+    padding: 20px 17px;
+  }
+  .chart-panel canvas {
+    height: 100px;
+  }
+  .chart-panel > div > span:last-child {
+    font-size: 7px;
+  }
+  .xml-source pre {
+    padding: 17px;
+    font-size: 10px;
+  }
+  .xml-source summary {
+    font-size: 11px;
+  }
+}
