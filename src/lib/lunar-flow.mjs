@@ -43,7 +43,7 @@ export function lunarParticle(position, seed, progress, time, ambient = false) {
     (0.72 + 0.28 * Math.sqrt(Math.max(0, 1 - position[1] * position[1])));
   const p = [...position];
   p[0] -= travel;
-  const taper = Math.exp(-travel * 1.55);
+  const taper = Math.exp(-travel * 1.2);
   const spine = -0.12 + Math.sin(travel * 1.6 - time * 0.18) * 0.05;
   p[1] = position[1] * taper + spine * (1 - taper);
   p[1] += Math.sin(seed * 24 + time * 0.55 + travel * 3) * 0.025 * (1 - taper);
@@ -74,7 +74,7 @@ vec3 windPosition(vec3 p, float seed, float progress, float time, float release,
   float travel=(.035+life*(1.95+seed*.7)+age*.8)*release*(.72+.28*sqrt(max(0.,1.-p.y*p.y)));
   vec3 moved=p;
   moved.x-=travel;
-  float taper=exp(-travel*1.55);
+  float taper=exp(-travel*1.2);
   float spine=-.12+sin(travel*1.6-time*.18)*.05;
   moved.y=p.y*taper+spine*(1.-taper);
   moved.y+=sin(seed*24.+time*.55+travel*3.)*.025*(1.-taper);
