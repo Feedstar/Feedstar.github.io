@@ -9,7 +9,7 @@
     "preview": "astro preview --host 127.0.0.1",
     "check:motion": "node scripts/check-motion.mjs",
     "test": "node scripts/check-motion.mjs && node scripts/check-simulations.mjs",
-    "check": "tsc --noEmit"
+    "check": "astro sync && tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/mdx": "8.0.3",
