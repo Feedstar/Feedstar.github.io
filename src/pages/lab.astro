@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Simulation from '../components/Simulation';
+import ArmSeries from '../components/ArmSeries.astro';
 import '../styles/lab.css';
 ---
 
@@ -15,6 +16,7 @@ import '../styles/lab.css';
     </p>
   </div>
   <section class="page-content wrap">
+    <ArmSeries />
     <Simulation client:load />
     <noscript>
       <p>

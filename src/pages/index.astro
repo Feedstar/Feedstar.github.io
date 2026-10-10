@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Moon from '../components/Moon.astro';
 import StudyCard from '../components/StudyCard.astro';
+import ArmSeries from '../components/ArmSeries.astro';
 import { getCollection } from 'astro:content';
 const posts = (await getCollection('journal')).sort((a, b) =>
   a.data.number.localeCompare(b.data.number),
@@ -133,6 +134,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
           亲手试一次 <span>↗</span>
         </a>
       </div>
+      <ArmSeries />
     </div>
   </section>
   <section class="notes-chapter" data-chapter="notes">

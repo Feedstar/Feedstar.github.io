@@ -1,0 +1,149 @@
+<a class="arm-series" href="/lab/arm/">
+  <div class="arm-series-art" aria-hidden="true">
+    <svg viewBox="0 0 320 200">
+      <defs>
+        <linearGradient id="arm-ink" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#d7e4de" />
+          <stop offset="1" stop-color="#688a80" />
+        </linearGradient>
+      </defs>
+      <ellipse
+        cx="150"
+        cy="172"
+        rx="110"
+        ry="16"
+        fill="none"
+        stroke="#6c847c"
+        stroke-opacity=".22"
+      />
+      <path
+        d="M35 180H290M90 30V185M185 30V185M280 30V185"
+        stroke="#78958b"
+        stroke-opacity=".12"
+      />
+      <path
+        d="M95 160V131L148 57L234 93"
+        fill="none"
+        stroke="url(#arm-ink)"
+        stroke-width="17"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M234 93v22m-12-1h24m-24 0v24m24-24v24"
+        stroke="#aec6ba"
+        stroke-width="7"
+        fill="none"
+        stroke-linejoin="round"
+      />
+      <g fill="#1c2928" stroke="#b3d3c5" stroke-width="2">
+        <circle cx="95" cy="131" r="12" />
+        <circle cx="148" cy="57" r="11" />
+        <circle cx="234" cy="93" r="9" />
+      </g>
+      <path
+        d="M72 169h46"
+        stroke="#bccdc6"
+        stroke-width="9"
+        stroke-linecap="round"
+      />
+      <rect x="225" y="148" width="18" height="18" rx="2" fill="#ad9061" />
+      <circle
+        cx="148"
+        cy="57"
+        r="26"
+        stroke="#8ca599"
+        fill="none"
+        stroke-dasharray="2 6"
+        stroke-opacity=".4"
+      />
+    </svg>
+  </div>
+  <div class="arm-series-copy">
+    <p>NEW FIELD STUDY / 原创实验集</p>
+    <h2>一点点，读懂运动。</h2>
+    <span>从自己搭建的机械臂出发，读懂模型、控制、传感器与接触。</span>
+    <div>
+      <small>4 个学习章节 · 在线运行 · 完整源码</small>
+      <b>进入实验 ↗</b>
+    </div>
+  </div>
+</a>
+<style>
+  .arm-series {
+    display: grid;
+    grid-template-columns: 31% 1fr;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    margin: 0 0 55px;
+    overflow: hidden;
+    background: var(--bg-raised);
+  }
+  .arm-series-art {
+    background: #172020;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+  }
+  .arm-series-art svg {
+    width: 100%;
+    display: block;
+  }
+  .arm-series-copy {
+    padding: 30px 36px;
+  }
+  .arm-series-copy > p {
+    font-size: 9px;
+    color: var(--subtle);
+    letter-spacing: 0.12em;
+    margin: 0 0 13px;
+  }
+  .arm-series h2 {
+    font: 25px/1.7 var(--serif);
+    margin-bottom: 12px;
+  }
+  .arm-series-copy > span {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .arm-series-copy > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-top: 22px;
+  }
+  .arm-series small {
+    color: var(--subtle);
+    font-size: 9px;
+  }
+  .arm-series b {
+    font-weight: 400;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  @media (max-width: 720px) {
+    .arm-series {
+      grid-template-columns: 1fr;
+    }
+    .arm-series-art {
+      max-height: 175px;
+      justify-content: center;
+    }
+    .arm-series-art svg {
+      width: 240px;
+    }
+    .arm-series-copy {
+      padding: 24px;
+    }
+    .arm-series h2 {
+      font-size: 22px;
+    }
+    .arm-series-copy > div {
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+  }
+</style>

@@ -1,0 +1,90 @@
+<!-- Feedstar: an original four-axis teaching arm. All geometry is procedural. -->
+<mujoco model="Feedstar teaching arm">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast" cone="elliptic"/>
+  <statistic center="0.25 0 0.45" extent="1.1"/>
+  <visual><global azimuth="135" elevation="-20"/></visual>
+  <default>
+    <joint damping="0.3" armature="0.025"/>
+    <geom friction="0.8 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.001"/>
+    <default class="shell"><geom contype="0" conaffinity="0" group="2" material="ivory" density="0"/></default>
+    <default class="structure"><geom group="3" rgba="0.7 0.8 0.8 0.3"/></default>
+    <default class="servo"><position kp="120" kv="14" forcerange="-90 90"/></default>
+    <default class="finger">
+      <joint type="slide" range="0 0.065" damping="0.5" armature="0.005"/>
+      <geom type="box" size="0.016 0.01 0.045" pos="0 0 0.045" mass="0.055" material="graphite"/>
+      <position kp="250" kv="8" ctrlrange="0 0.065" forcerange="-15 15"/>
+    </default>
+  </default>
+  <asset>
+    <material name="ivory" rgba="0.82 0.84 0.82 1"/>
+    <material name="graphite" rgba="0.13 0.17 0.19 1"/>
+    <material name="mint" rgba="0.4 0.68 0.63 1"/>
+    <material name="brass" rgba="0.8 0.6 0.3 1"/>
+  </asset>
+  <worldbody>
+    <light pos="1 -2 4" dir="-0.2 0.2 -1"/>
+    <geom name="floor" type="plane" size="4 4 0.05" rgba="0.12 0.15 0.17 1"/>
+    <geom name="base_plate" type="cylinder" size="0.145 0.028" pos="0 0 0.028" material="graphite"/>
+    <geom name="workbench" type="box" size="0.14 0.13 0.04" pos="0.58176 0 0.04" material="graphite"/>
+    <body name="turntable" pos="0 0 0.06" gravcomp="1">
+      <joint name="base" type="hinge" axis="0 0 1" range="-1.57 1.57"/>
+      <geom name="pedestal" type="cylinder" size="0.075 0.09" pos="0 0 0.09" mass="1.2" material="ivory"/>
+      <geom class="shell" type="cylinder" size="0.078 0.008" pos="0 0 0.045" material="mint"/>
+      <body name="upper_arm" pos="0 0 0.18" gravcomp="1">
+        <joint name="shoulder" type="hinge" axis="0 1 0" range="-0.35 1.4"/>
+        <geom class="structure" type="capsule" fromto="0 0 0 0 0 0.4" size="0.04" mass="0.8"/>
+        <geom class="shell" type="cylinder" size="0.061 0.065" quat="0.707107 0.707107 0 0" material="graphite"/>
+        <geom class="shell" type="cylinder" size="0.046 0.067" quat="0.707107 0.707107 0 0" material="mint"/>
+        <geom class="shell" type="capsule" fromto="0 -0.027 0.035 0 -0.027 0.37" size="0.027"/>
+        <geom class="shell" type="capsule" fromto="0 0.027 0.035 0 0.027 0.37" size="0.027"/>
+        <body name="forearm" pos="0 0 0.4" gravcomp="1">
+          <joint name="elbow" type="hinge" axis="0 1 0" range="-0.1 2.3"/>
+          <geom class="structure" type="capsule" fromto="0 0 0 0 0 0.36" size="0.032" mass="0.55"/>
+          <geom class="shell" type="cylinder" size="0.051 0.055" quat="0.707107 0.707107 0 0" material="graphite"/>
+          <geom class="shell" type="cylinder" size="0.037 0.057" quat="0.707107 0.707107 0 0" material="mint"/>
+          <geom class="shell" type="capsule" fromto="0 0 0.03 0 0 0.325" size="0.034"/>
+          <body name="wrist" pos="0 0 0.36" gravcomp="1">
+            <joint name="wrist" type="hinge" axis="0 1 0" range="-2.8 2.8"/>
+            <geom type="cylinder" size="0.04 0.042" quat="0.707107 0.707107 0 0" mass="0.15" material="mint"/>
+            <geom name="palm" type="box" size="0.045 0.103 0.025" pos="0 0 0.042" mass="0.18" material="ivory"/>
+            <site name="tool_tip" pos="0 0 0.11" size="0.007" rgba="0.8 0.6 0.3 1"/>
+            <body name="left_finger" pos="0 0.09 0.065" gravcomp="1" childclass="finger">
+              <joint name="left_grip" axis="0 -1 0"/>
+              <geom name="left_pad"/>
+              <site name="left_touch" type="box" size="0.017 0.012 0.046" pos="0 0 0.045" rgba="0 0 0 0"/>
+            </body>
+            <body name="right_finger" pos="0 -0.09 0.065" gravcomp="1" childclass="finger">
+              <joint name="right_grip" axis="0 1 0"/>
+              <geom name="right_pad"/>
+              <site name="right_touch" type="box" size="0.017 0.012 0.046" pos="0 0 0.045" rgba="0 0 0 0"/>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="sample" pos="0.58176 0 0.115">
+      <freejoint name="sample_free"/>
+      <geom name="sample_cube" type="box" size="0.035 0.035 0.035" mass="0.07" material="brass" friction="0.8 0.01 0.001"/>
+    </body>
+  </worldbody>
+  <actuator>
+    <position class="servo" name="base_servo" joint="base" ctrlrange="-1.57 1.57"/>
+    <position class="servo" name="shoulder_servo" joint="shoulder" ctrlrange="-0.35 1.4"/>
+    <position class="servo" name="elbow_servo" joint="elbow" ctrlrange="-0.1 2.3"/>
+    <position class="servo" name="wrist_servo" joint="wrist" ctrlrange="-2.8 2.8"/>
+    <position class="finger" name="left_servo" joint="left_grip"/>
+    <position class="finger" name="right_servo" joint="right_grip"/>
+  </actuator>
+  <sensor>
+    <jointpos name="shoulder_position" joint="shoulder"/>
+    <jointvel name="shoulder_velocity" joint="shoulder"/>
+    <framepos name="tool_position" objtype="site" objname="tool_tip"/>
+    <framequat name="tool_orientation" objtype="site" objname="tool_tip"/>
+    <touch name="left_pressure" site="left_touch"/>
+    <touch name="right_pressure" site="right_touch"/>
+  </sensor>
+  <keyframe>
+    <key name="home" qpos="0 0.48 0.7 1.96159265 0 0 0.58176 0 0.115 1 0 0 0" ctrl="0 0.48 0.7 1.96159265 0 0"/>
+  </keyframe>
+</mujoco>
