@@ -45,6 +45,33 @@ body {
   color: var(--fg);
   font: 15px/1.8 var(--sans);
   font-optical-sizing: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+input,
+textarea,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.motion-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.motion-glyph {
+  display: inline-block;
+  transform-origin: 50% 100%;
 }
 a {
   color: inherit;
@@ -464,12 +491,13 @@ main {
   --line: rgba(48, 39, 61, 0.2);
   --accent: #796292;
   --text-glow: rgba(103, 77, 142, 0.16);
+  --liquid-ink: #eeece8;
   position: relative;
   z-index: 2;
   background: #eeece8;
   color: var(--fg);
   border-radius: 36px 36px 0 0;
-  padding: 110px 0 70px;
+  padding: 110px 0 140px;
   margin-top: -36px;
   color-scheme: light;
 }
@@ -491,7 +519,7 @@ main {
   font: 500 clamp(48px, 6.2vw, 88px)/1.3 var(--sans);
   letter-spacing: -0.055em;
 }
-.field-title h2 span {
+.field-title h2 > span:not(.motion-glyph):not(.sr-only) {
   color: #847b8e;
 }
 .field-title > div {
@@ -692,6 +720,22 @@ main {
   gap: 10%;
   padding-block: 150px 110px;
 }
+.notes-chapter {
+  position: relative;
+  z-index: 3;
+  background: var(--bg);
+  margin-top: -64px;
+  overflow: clip;
+}
+.notes-chapter .notes-field {
+  padding-top: 170px;
+}
+.notes-chapter .journal-list > a:nth-child(2) {
+  transition-delay: 60ms;
+}
+.notes-chapter .journal-list > a:nth-child(3) {
+  transition-delay: 120ms;
+}
 .notes-heading {
   position: relative;
   align-self: start;
@@ -769,8 +813,20 @@ main {
   top: 65px;
 }
 .about-fragment {
+  position: relative;
   padding-block: 75px 140px;
-  border-top: 1px solid var(--line);
+}
+.chapter-rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--line));
+  transform-origin: left;
+}
+[data-story-line] {
+  display: inline-block;
 }
 .about-fragment-body {
   display: grid;
@@ -806,6 +862,7 @@ main {
   --subtle: #786d86;
   --line: #41324b40;
   --accent: #5a416f;
+  --liquid-ink: #d5cce3;
 }
 .footer-top {
   display: flex;
@@ -821,7 +878,7 @@ main {
   letter-spacing: -0.045em;
   margin: 55px 0;
 }
-.footer-statement span {
+.footer-statement > span:not(.motion-glyph):not(.sr-only) {
   color: #83748e;
 }
 .footer-wordmark {
@@ -1012,6 +1069,27 @@ a:focus-visible {
   transform: none;
 }
 @media (prefers-reduced-motion: no-preference) {
+  [data-chapter],
+  body[data-page='home'] .site-footer {
+    transition: clip-path 420ms var(--ease-out);
+  }
+  body[data-page='home'] .study-window {
+    transition:
+      transform 420ms var(--ease-out),
+      clip-path 420ms var(--ease-out);
+  }
+  [data-story-line] {
+    transition: clip-path 420ms var(--ease-out);
+  }
+  .chapter-rule,
+  .notes-asterisk {
+    transition: transform 420ms var(--ease-out);
+  }
+  body[data-page='home'] .footer-wordmark {
+    transition:
+      transform 600ms var(--ease-out),
+      opacity 420ms ease;
+  }
   .js [data-reveal] {
     opacity: 0;
     transform: translateY(28px);
@@ -1057,13 +1135,6 @@ a:focus-visible {
   .journal-list > a:hover .note-arrow {
     transform: translate(3px, -2px);
   }
-  .pill-link:hover {
-    background: var(--fg);
-    color: var(--bg);
-  }
-  .portfolio-field .pill-link:hover {
-    color: #eeece8;
-  }
   .study-link:hover .study-enter {
     background: #ffffff20;
     transform: rotate(5deg);
@@ -1075,6 +1146,68 @@ a:focus-visible {
   .scroll-cue:hover .scroll-orb {
     transform: translateY(3px);
     background: #d3bef41a;
+  }
+}
+/* Two overlapping liquid fronts rise inside the existing button geometry.
+   Native text stays above the fill, including client-rendered lab controls. */
+:is(button, .pill-link, .site-header nav a, .scroll-orb) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+:is(button, .pill-link, .site-header nav a, .scroll-orb)::before,
+:is(button, .pill-link, .site-header nav a, .scroll-orb)::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  left: -20%;
+  top: -110%;
+  width: 140%;
+  height: 320%;
+  border-radius: 45% 55% 38% 62%;
+  background: linear-gradient(
+    130deg,
+    var(--accent),
+    var(--fg) 60%,
+    var(--accent)
+  );
+  transform: translateY(75%) rotate(-14deg);
+  transition:
+    transform 280ms var(--ease-out),
+    opacity 220ms ease;
+  opacity: 0;
+}
+:is(button, .pill-link, .site-header nav a, .scroll-orb)::after {
+  border-radius: 55% 45% 60% 40%;
+  background: linear-gradient(
+    25deg,
+    var(--fg) 20%,
+    color-mix(in srgb, var(--fg) 78%, var(--accent)) 70%,
+    var(--fg)
+  );
+  transform: translateY(82%) rotate(12deg);
+  transition-delay: 35ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  :is(button:not(:disabled), .pill-link, .site-header nav a):hover,
+  .scroll-cue:hover .scroll-orb {
+    color: var(--liquid-ink, var(--bg));
+    text-shadow: none;
+  }
+  :is(button:not(:disabled), .pill-link, .site-header nav a):hover::before,
+  .scroll-cue:hover .scroll-orb::before {
+    transform: translateY(0) rotate(8deg);
+    opacity: 1;
+  }
+  :is(button:not(:disabled), .pill-link, .site-header nav a):hover::after,
+  .scroll-cue:hover .scroll-orb::after {
+    transform: translateY(4%) rotate(-8deg);
+    opacity: 1;
+  }
+  .theme-toggle:hover .theme-orb {
+    background: linear-gradient(110deg, var(--bg) 48%, transparent 51%);
+    box-shadow: 0 0 0 1px var(--bg);
   }
 }
 :root[data-theme='paper'] .hero-english em {

@@ -24,20 +24,20 @@ float wisps(vec2 p){
 }
 void main(){
   vec2 q=(vUv*uViewport-uMoon.xy)/uMoon.z;
-  float time=uTime*.028;
-  float bend=sin(q.x*1.5+time*.7)*.04;
-  float middle=exp(-pow((q.y+.34+bend)/.18,2.));
+  float time=uTime*.11;
+  float bend=sin(q.x*1.5+time*.7)*.065;
+  float middle=exp(-pow((q.y+.34+bend)/.21,2.));
   middle*=1.-smoothstep(-.7,-.18,q.x);
   middle*=smoothstep(.01,.18,vUv.x);
-  float floorY=.13+sin(vUv.x*7.+time*.3)*.012;
-  float floorBand=exp(-pow((vUv.y-floorY)/.062,2.));
+  float floorY=.13+sin(vUv.x*7.+time*.65)*.018;
+  float floorBand=exp(-pow((vUv.y-floorY)/.075,2.));
   floorBand*=smoothstep(.07,.40,vUv.x);
   if(middle+floorBand<.004) discard;
-  float warp=noise(vec2(q.x*.8+time*.3,q.y*4.));
+  float warp=noise(vec2(q.x*.8+time*.5,q.y*4.-time*.17));
   float cloud=wisps(vec2(q.x*.88+time,q.y*7.5+warp*.8));
   float lower=wisps(vec2(vUv.x*5.2+time*.65,vUv.y*30.+warp*.6));
-  float density=middle*smoothstep(.19,.82,cloud)*.26;
-  density+=floorBand*smoothstep(.21,.84,lower)*.23;
+  float density=middle*smoothstep(.16,.80,cloud)*.3;
+  density+=floorBand*smoothstep(.18,.82,lower)*.27;
   density*=1.-smoothstep(.18,.70,uProgress);
   vec3 color=mix(vec3(.71,.74,.71),vec3(.34,.36,.33),uPaper);
   gl_FragColor=vec4(color,density);

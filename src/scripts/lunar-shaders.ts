@@ -15,7 +15,7 @@ void main(){
   gl_Position=projectionMatrix*mv;
 }`;
 export const surfaceFragment = `
-uniform float uProgress, uSpin;
+uniform float uProgress, uSpin, uTime;
 uniform sampler2D uTexture;
 varying vec3 vPosition, vNormal, vView;
 varying vec2 vUv;
@@ -27,8 +27,9 @@ void main(){
   float left=1.-smoothstep(-.65,.05,p.x);
   float edgeWidth=mix(.09,.27,left);
   float rim=smoothstep(.015,edgeWidth,facing);
-  float notch=notchAt(p.y)+(erosionNoise(p*12.)-.5)*.045;
-  float cutaway=smoothstep(notch-.075,notch+.12,p.x);
+  float breeze=erosionNoise(p*5.+vec3(uTime*.075,0.,0.))-.5;
+  float notch=notchAt(p.y)+breeze*.075;
+  float cutaway=smoothstep(notch-.20,notch+.23,p.x);
   float erosion=uProgress*${lunarTiming.erosionScale};
   float remaining=1.;
   if(erosion>.005){
@@ -41,9 +42,7 @@ void main(){
   float lum=dot(tex,vec3(.299,.587,.114));
   float light=.48+.55*pow(max(0.,dot(p,normalize(vec3(.75,.35,1.8)))),.5);
   float shadow=mix(.48,1.,smoothstep(-.48,.22,p.x+sin(p.y*3.)*.04));
-  float grain=erosionHash(floor(p*490.));
   float alpha=rim*remaining*cutaway;
-  alpha*=mix(1.,smoothstep(.08,.78,grain),clamp(feather*.68,0.,.9));
   vec3 color=vec3(.94,.95,.91)*pow(lum,.46)*1.16*light*shadow;
   gl_FragColor=vec4(color,alpha);
 }`;
@@ -70,7 +69,8 @@ void main(){
   mv.y+=arc*((seed-.5)*.28+sin(uTime*.3+seed*6.28)*.035);
   mv.z+=arc*(aFlow.y-.5)*.18;
   float band=.58+.42*pow(.5+.5*sin(position.y*13.+seed),2.);
-  float flowing=release*lifeAlpha*(.35+seed*.46)*band;
+  float poleFade=1.-smoothstep(.50,.97,abs(position.y));
+  float flowing=release*lifeAlpha*(.35+seed*.46)*band*poleFade;
   vAlpha=mix(flowing,.42+aFlow.y*.2,gather)*(1.-handoffAt(uProgress));
   vLight=.56+.4*pow(max(0.,dot(normalize(position),normalize(vec3(.75,.35,1.8)))),.5);
   vGather=gather; vTargetColor=aTargetColor; vUv=uv;

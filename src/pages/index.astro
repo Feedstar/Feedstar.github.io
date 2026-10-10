@@ -76,7 +76,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
       <span class="moon-caption">MOVE GENTLY / 星屑会回应你的靠近</span>
     </div>
   </section>
-  <section class="portfolio-field" id="explore">
+  <section class="portfolio-field" id="explore" data-chapter="gallery">
     <div class="wrap">
       <div class="field-intro">
         <p class="eyebrow" data-reveal>
@@ -135,48 +135,53 @@ const posts = (await getCollection('journal')).sort((a, b) =>
       </div>
     </div>
   </section>
-  <section class="notes-field wrap">
-    <div class="notes-heading" data-reveal>
-      <p class="eyebrow">02 / FIELD NOTES</p>
-      <h2>
-        沿途的
-        <br />
-        <em>微光。</em>
-      </h2>
-      <p>
-        一些工作与学习的手记。
-        <br />
-        把尚未完整的理解，慢慢写清。
-      </p>
-      <a class="text-link" href="/journal/">
-        翻开全部手记 <span>↗</span>
-      </a>
-      <span class="notes-asterisk" aria-hidden="true">
-        ✳
-      </span>
-    </div>
-    <div class="journal-list">
-      {posts.map((post) => (
-        <a href={`/journal/${post.id}/`} data-reveal>
-          <span class="eyebrow">
-            {post.data.category} <span>NOTE / {post.data.number}</span>
-          </span>
-          <h3>{post.data.title}</h3>
-          <p>{post.data.description}</p>
-          <span class="note-arrow" aria-hidden="true">
-            ↗
-          </span>
+  <section class="notes-chapter" data-chapter="notes">
+    <div class="notes-field wrap">
+      <div class="notes-heading" data-reveal>
+        <p class="eyebrow">02 / FIELD NOTES</p>
+        <h2>
+          沿途的
+          <br />
+          <em>微光。</em>
+        </h2>
+        <p>
+          一些工作与学习的手记。
+          <br />
+          把尚未完整的理解，慢慢写清。
+        </p>
+        <a class="text-link" href="/journal/">
+          翻开全部手记 <span>↗</span>
         </a>
-      ))}
+        <span class="notes-asterisk" aria-hidden="true">
+          ✳
+        </span>
+      </div>
+      <div class="journal-list">
+        {posts.map((post) => (
+          <a href={`/journal/${post.id}/`} data-reveal>
+            <span class="eyebrow">
+              {post.data.category} <span>NOTE / {post.data.number}</span>
+            </span>
+            <h3>{post.data.title}</h3>
+            <p>{post.data.description}</p>
+            <span class="note-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </a>
+        ))}
+      </div>
     </div>
   </section>
-  <section class="about-fragment wrap" data-reveal>
+  <section class="about-fragment wrap" data-chapter="about">
+    <span class="chapter-rule" aria-hidden="true"></span>
     <p class="eyebrow">03 / A NOTE FROM FEEDSTAR</p>
     <div class="about-fragment-body">
       <p class="about-quote">
-        有些理解，来自阅读。
+        <span data-story-line>有些理解，来自阅读。</span>
         <br />
-        有些理解，<em>要让它发生一次。</em>
+        <span data-story-line>
+          有些理解，<em>要让它发生一次。</em>
+        </span>
       </p>
       <div>
         <p>

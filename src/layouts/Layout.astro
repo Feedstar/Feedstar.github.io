@@ -109,7 +109,11 @@ const {
     </footer>
     <script>
       import { createPointer } from '../scripts/pointer';
+      import { createTitleMotion } from '../scripts/title-motion';
+      import { createChapters } from '../scripts/chapters';
       createPointer();
+      createTitleMotion();
+      createChapters();
       const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
       toggle?.addEventListener('click', () => {
         const next =

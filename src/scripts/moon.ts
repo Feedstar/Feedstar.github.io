@@ -84,7 +84,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
       return value - Math.floor(value);
     };
     const ambient = i < count * 0.36;
-    const y = (random(1) * 2 - 1) * 0.97;
+    const y = (random(1) * 2 - 1) * (ambient ? 0.89 : 0.97);
     const r = Math.sqrt(1 - y * y);
     const angle = random(2) * Math.PI;
     const x = ambient

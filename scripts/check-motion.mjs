@@ -4,7 +4,7 @@ import {
   arrivalOpacity,
   lunarTiming,
 } from '../src/lib/lunar-flow.mjs';
-import { settle } from '../src/lib/motion.mjs';
+import { settle, titleSpring } from '../src/lib/motion.mjs';
 const simulate = (hz) => {
   let state = { value: 0, velocity: 0 };
   for (let i = 0; i < hz / 2; i++)
@@ -42,6 +42,27 @@ assert(
 );
 console.log(
   'PASS: frame-independent smoothing, no bounce, stationary hold and continuous reversal.',
+);
+const hoverAt = (hz) => {
+  let state = { value: 0, velocity: 0 };
+  for (let i = 0; i < hz / 2; i++)
+    state = titleSpring(state.value, state.velocity, -12, 1 / hz);
+  return state;
+};
+assert(
+  Math.abs(hoverAt(30).value - hoverAt(120).value) < 1e-10,
+  'Title rebound must be independent of frame rate.',
+);
+const hover = hoverAt(60);
+const hoverExit = titleSpring(hover.value, hover.velocity, 0, 0.000001);
+assert(
+  Math.abs(hoverExit.velocity - hover.velocity) < 0.002,
+  'Pointer exit must preserve the moving title velocity.',
+);
+const hoverRest = titleSpring(hover.value, hover.velocity, 0, 3);
+assert(
+  Math.abs(hoverRest.value) < 0.001,
+  'Titles must return to their original baseline after leaving.',
 );
 const particles = Array.from({ length: 12000 }, (_, i) => {
   const y = 1 - (2 * (i + 0.5)) / 12000,
@@ -112,7 +133,7 @@ for (const seed of [0.05, 0.25, 0.5, 0.75, 0.95]) {
     lunarParticle(position, seed, 0.4, 8, false),
     'Airborne and released grains must share exactly the same wind path.',
   );
-  const wrap = (1 - seed) / (0.026 + seed * 0.012);
+  const wrap = (1 - seed) / (0.045 + seed * 0.014);
   assert(
     lunarParticle(position, seed, 0.3, wrap - 1e-5, true).lifeAlpha < 1e-6,
   );
@@ -121,6 +142,22 @@ for (const seed of [0.05, 0.25, 0.5, 0.75, 0.95]) {
     'Lifecycle wrapping must be invisible.',
   );
 }
+// A plume must converge vertically as it travels, not carry a moon-height wall.
+const plumeWidth = (time) => {
+  const top = lunarParticle([-0.65, 0.8, 0.1], 0.12, 0, time, true).position;
+  const bottom = lunarParticle(
+    [-0.65, -0.8, 0.1],
+    0.12,
+    0,
+    time,
+    true,
+  ).position;
+  return Math.abs(top[1] - bottom[1]);
+};
+assert(
+  plumeWidth(10) < plumeWidth(1) * 0.35,
+  'The distant tail must narrow substantially.',
+);
 assert(
   states(lunarTiming.handoffStart).every((s) => s.gather === 1),
   'All particle targets must be reached before readable HTML appears.',
