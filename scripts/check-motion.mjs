@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
-import { particleState } from '../src/lib/erosion.mjs';
+import {
+  lunarParticle,
+  arrivalOpacity,
+  lunarTiming,
+} from '../src/lib/lunar-flow.mjs';
 import { settle } from '../src/lib/motion.mjs';
 const simulate = (hz) => {
   let state = { value: 0, velocity: 0 };
@@ -48,53 +52,93 @@ const particles = Array.from({ length: 12000 }, (_, i) => {
     seed: Math.abs(Math.sin(i * 127.1) * 43758.5453) % 1,
   };
 });
-const states = (p) =>
-  particles.map(({ p: position, seed }) => particleState(position, seed, p));
+const states = (progress, time = 8) =>
+  particles.map(({ p, seed }) => lunarParticle(p, seed, progress, time));
 assert(
-  states(0).every((s) => !s.detached && s.alpha === 1),
-  'Initial moon must remain intact.',
+  states(0).every((s) => s.release === 0 && s.gather === 0),
+  'The opening surface must remain intact.',
 );
-const stages = [0, 0.2, 0.4, 0.6, 0.8, 1.18].map((p) => ({
-  progress: p,
-  remaining: states(p).filter((s) => s.alpha > 0.1).length,
-  detached: states(p).filter((s) => s.detached).length,
+const stages = [0, 0.2, 0.4, 0.5, 0.65, 0.8, 0.87, 0.97].map((progress) => ({
+  progress,
+  released: states(progress).filter((s) => s.release > 0.5).length,
+  gathered: states(progress).filter((s) => s.gather > 0.98).length,
+  html: arrivalOpacity(progress),
 }));
-for (let i = 1; i < stages.length; i++)
+for (let i = 1; i < stages.length; i++) {
   assert(
-    stages[i].remaining <= stages[i - 1].remaining,
-    'Particle density must progressively decrease.',
+    stages[i].released >= stages[i - 1].released,
+    'Local release must progress monotonically.',
   );
-assert.equal(
-  stages.at(-1).remaining,
-  0,
-  'Particles must disappear before the next section.',
-);
-const mid = states(0.4);
+  assert(
+    stages[i].gathered >= stages[i - 1].gathered,
+    'Particles must progressively converge onto content.',
+  );
+}
+const mid = states(0.2);
 const left = particles.filter(
-  (v, i) => v.p[0] < -0.4 && mid[i].detached,
+  (v, i) => v.p[0] < -0.4 && mid[i].release > 0.5,
 ).length;
 const right = particles.filter(
-  (v, i) => v.p[0] > 0.4 && mid[i].detached,
+  (v, i) => v.p[0] > 0.4 && mid[i].release > 0.5,
 ).length;
 assert(
   left > right * 3,
-  'Erosion must start locally and preserve a directional progression.',
+  'Wind erosion must retain local, directional variation.',
 );
-const distances = particles.map((v, i) =>
-  Math.hypot(...mid[i].position.map((x, j) => x - v.p[j])),
+const held = states(0.35, 8),
+  later = states(0.35, 8.4);
+const flowing = held.filter(
+  (s, i) => s.release > 0.8 && s.lifeAlpha > 0.5 && later[i].lifeAlpha > 0.5,
 );
 assert(
-  Math.max(...distances) > 0.1 && Math.min(...distances) === 0,
-  'Mid-transition needs actual displacement alongside still-attached particles.',
+  flowing.length > 1000,
+  'The held stage must have a substantial visible flowing cloud.',
 );
-const checkpoint = states(0.45);
-states(0.8);
+const moved = held.filter(
+  (s, i) =>
+    s.release > 0.8 &&
+    s.lifeAlpha > 0.5 &&
+    later[i].lifeAlpha > 0.5 &&
+    Math.hypot(...s.position.map((v, j) => v - later[i].position[j])) > 0.001,
+);
+assert(
+  moved.length === flowing.length,
+  'Released grains must keep flowing when scrolling stops.',
+);
+for (const seed of [0.05, 0.25, 0.5, 0.75, 0.95]) {
+  const position = [-0.8, 0.2, 0.56];
+  assert.deepEqual(
+    lunarParticle(position, seed, 0.4, 8, true),
+    lunarParticle(position, seed, 0.4, 8, false),
+    'Airborne and released grains must share exactly the same wind path.',
+  );
+  const wrap = (1 - seed) / (0.026 + seed * 0.012);
+  assert(
+    lunarParticle(position, seed, 0.3, wrap - 1e-5, true).lifeAlpha < 1e-6,
+  );
+  assert(
+    lunarParticle(position, seed, 0.3, wrap + 1e-5, true).lifeAlpha < 1e-6,
+    'Lifecycle wrapping must be invisible.',
+  );
+}
+assert(
+  states(lunarTiming.handoffStart).every((s) => s.gather === 1),
+  'All particle targets must be reached before readable HTML appears.',
+);
+assert.equal(arrivalOpacity(lunarTiming.handoffStart), 0);
+assert(
+  states(0.97).every((s) => s.alpha === 0),
+  'The complete HTML must have no competing particle overlay.',
+);
+assert.equal(arrivalOpacity(0.97), 1);
+const checkpoint = states(0.65, 8);
+states(0.97, 8);
 assert.deepEqual(
-  states(0.45),
+  states(0.65, 8),
   checkpoint,
-  'Reverse scroll must recover exactly the same particle state.',
+  'Reversing scroll must restore the same shape at a fixed wind phase.',
 );
 console.log(
-  'PASS: intact origin, local erosion, displacement, density, completion and reversible scroll.',
+  'PASS: intact origin, local feathered release, continuous shared wind, invisible wrapping, content convergence and reversible handoff.',
 );
 console.table(stages);

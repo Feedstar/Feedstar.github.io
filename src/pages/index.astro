@@ -53,20 +53,23 @@ const posts = (await getCollection('journal')).sort((a, b) =>
         </p>
       </div>
       <div class="arrival wrap">
-        <p class="eyebrow">01 / FROM WONDER TO UNDERSTANDING</p>
+        <p class="eyebrow" data-particle-text>
+          01 / FROM WONDER TO UNDERSTANDING
+        </p>
         <h2>
-          从一个疑问，
+          <span data-particle-text>从一个疑问，</span>
           <br />
-          <em>到一次发生。</em>
+          <em data-particle-text>到一次发生。</em>
         </h2>
         <div class="arrival-bottom">
           <p>
-            把问题拆小，把运动看清。
+            <span data-particle-text>把问题拆小，把运动看清。</span>
             <br />
-            在思考与实践之间，寻找自己的轨道。
+            <span data-particle-text>在思考与实践之间，寻找自己的轨道。</span>
           </p>
-          <a class="pill-link" href="#explore">
-            进入探索 <span>↘</span>
+          <a class="pill-link" href="#explore" data-particle-border>
+            <span data-particle-text>进入探索</span>{' '}
+            <span data-particle-text>↘</span>
           </a>
         </div>
       </div>

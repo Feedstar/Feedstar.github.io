@@ -1,5 +1,4 @@
-// One deterministic scroll field drives both the surface cutout and the particles.
-// Ambient light/dust use a separate clock; erosion remains a reversible scroll field.
+// One deterministic local field drives the feathered surface and grain release.
 export const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 export const smoothstep = (a, b, x) => {
   const t = clamp((x - a) / (b - a));
@@ -47,22 +46,6 @@ export function erosionThreshold(x, y, z, seed = 0) {
     0.08,
     0.84,
   );
-}
-export function particleState(position, seed, progress) {
-  const [x, y, z] = position;
-  const threshold = erosionThreshold(x, y, z, seed);
-  const age = Math.max(0, progress - threshold);
-  const drift = ((age * age) / (age + 0.035)) * (0.8 + seed * 0.8);
-  return {
-    threshold,
-    detached: progress > threshold,
-    alpha: 1 - smoothstep(0.1, 0.34, age),
-    position: [
-      x - drift * (1.7 + seed * 0.5),
-      y + drift * (0.2 + Math.sin(y * 5 + seed * 9) * 0.4),
-      z + drift * Math.sin(x * 4 + seed * 7) * 0.35,
-    ],
-  };
 }
 export const erosionGLSL = `
 float erosionHash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}

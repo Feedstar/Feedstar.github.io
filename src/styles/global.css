@@ -255,7 +255,7 @@ main {
 }
 /* The opening is one continuous spatial sequence, rather than a static banner. */
 .orbit-journey {
-  height: 300svh;
+  height: 340svh;
   position: relative;
 }
 .orbit-sticky {
@@ -270,8 +270,8 @@ main {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 69% 48%, #3f354f48, transparent 57%),
-    radial-gradient(ellipse at 30% 90%, #34354d35, transparent 58%);
+    radial-gradient(ellipse at 69% 48%, #b8b3a512, transparent 57%),
+    radial-gradient(ellipse at 30% 90%, #c1bcaf08, transparent 58%);
   pointer-events: none;
 }
 .moon-scene {
@@ -317,8 +317,8 @@ main {
   background: radial-gradient(
     circle closest-side,
     transparent 60%,
-    rgba(167, 155, 224, 0.22) 71%,
-    rgba(160, 155, 214, 0.1) 79%,
+    rgba(247, 243, 228, 0.17) 71%,
+    rgba(241, 237, 222, 0.06) 79%,
     transparent 100%
   );
   animation: lunar-breath 9s ease-in-out infinite alternate;
@@ -331,9 +331,9 @@ main {
   background: conic-gradient(
     from 35deg,
     transparent 10%,
-    #b2a3e51e,
+    #f7f3e51a,
     transparent 45%,
-    #c8b09c12,
+    #eee9dd0f,
     transparent 85%
   );
   filter: blur(28px);
@@ -494,7 +494,7 @@ main {
   left: 0;
   right: 0;
   top: 50%;
-  transform: translateY(calc(-50% + 24px));
+  transform: translateY(-50%);
   opacity: 0;
   pointer-events: none;
 }
@@ -507,7 +507,10 @@ main {
 }
 .arrival h2 em {
   font-style: normal;
-  color: var(--accent);
+  color: var(--fg);
+}
+.arrival .pill-link > span:first-child {
+  font-size: 13px;
 }
 .arrival-bottom {
   display: flex;
@@ -1153,13 +1156,13 @@ a:focus-visible {
   background: radial-gradient(
     circle closest-side,
     transparent 61%,
-    #8d78a73d 71%,
-    #8d78a71a 79%,
+    #fffdf370 71%,
+    #fffdf329 79%,
     transparent 100%
   );
 }
 :root[data-theme='paper'] .hero-atmosphere {
-  background: radial-gradient(ellipse at 69% 48%, #c3b5d438, transparent 60%);
+  background: radial-gradient(ellipse at 69% 48%, #c7c3b817, transparent 60%);
 }
 @media (min-width: 1700px) {
   .hero-copy {
@@ -1268,7 +1271,7 @@ a:focus-visible {
     width: 12px;
   }
   .orbit-journey {
-    height: 270svh;
+    height: 310svh;
   }
   .orbit-sticky {
     min-height: 650px;
