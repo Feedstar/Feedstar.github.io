@@ -265,14 +265,10 @@ main {
   min-height: 680px;
   overflow: hidden;
   isolation: isolate;
+  background: #131414;
 }
-.hero-atmosphere {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 69% 48%, #b8b3a512, transparent 57%),
-    radial-gradient(ellipse at 30% 90%, #c1bcaf08, transparent 58%);
-  pointer-events: none;
+:root[data-theme='paper'] .orbit-sticky {
+  background: var(--bg);
 }
 .moon-scene {
   position: absolute;
@@ -293,7 +289,7 @@ main {
   top: 15%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 28% 25%, transparent 35%, #090712 100%),
+    linear-gradient(90deg, #121414d9 8%, transparent 62%),
     url('/assets/moon.jpg') 51% center/auto 100%;
 }
 .moon-scene[data-ready='true'] .moon-fallback {
@@ -301,55 +297,6 @@ main {
 }
 .moon-scene[data-fallback='true'] canvas {
   display: none;
-}
-.lunar-aura {
-  position: absolute;
-  left: 66%;
-  top: 48%;
-  width: min(80vw, 105vh);
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-}
-.lunar-aura span {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle closest-side,
-    transparent 60%,
-    rgba(247, 243, 228, 0.17) 71%,
-    rgba(241, 237, 222, 0.06) 79%,
-    transparent 100%
-  );
-  animation: lunar-breath 9s ease-in-out infinite alternate;
-}
-.lunar-aura span::after {
-  content: '';
-  position: absolute;
-  inset: 3%;
-  border-radius: inherit;
-  background: conic-gradient(
-    from 35deg,
-    transparent 10%,
-    #f7f3e51a,
-    transparent 45%,
-    #eee9dd0f,
-    transparent 85%
-  );
-  filter: blur(28px);
-}
-@keyframes lunar-breath {
-  from {
-    transform: scale(0.98);
-    opacity: 0.65;
-  }
-  to {
-    transform: scale(1.045);
-    opacity: 1;
-  }
-}
-.moon-scene[data-active='false'] .lunar-aura span {
-  animation-play-state: paused;
 }
 .hero-copy {
   position: absolute;
@@ -449,22 +396,6 @@ main {
   inset: 0;
   pointer-events: none;
   overflow: hidden;
-}
-.orbital-lines span {
-  position: absolute;
-  left: 30%;
-  top: 50%;
-  width: 83vw;
-  aspect-ratio: 1;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  transform: translateY(-50%) rotate(-26deg) scaleY(0.64);
-  opacity: 0.3;
-}
-.orbital-lines span:nth-child(2) {
-  width: 100vw;
-  left: 20%;
-  opacity: 0.13;
 }
 .orbital-lines i {
   position: absolute;
@@ -1152,18 +1083,6 @@ a:focus-visible {
 :root[data-theme='paper'] .hero-english {
   text-shadow: 0 2px 24px #eae7e140;
 }
-:root[data-theme='paper'] .lunar-aura span {
-  background: radial-gradient(
-    circle closest-side,
-    transparent 61%,
-    #fffdf370 71%,
-    #fffdf329 79%,
-    transparent 100%
-  );
-}
-:root[data-theme='paper'] .hero-atmosphere {
-  background: radial-gradient(ellipse at 69% 48%, #c7c3b817, transparent 60%);
-}
 @media (min-width: 1700px) {
   .hero-copy {
     top: 26%;
@@ -1332,15 +1251,6 @@ a:focus-visible {
     top: 125px;
     left: 22px;
     font-size: 7px;
-  }
-  .orbital-lines span {
-    width: 130vw;
-    left: 0;
-    top: 30%;
-  }
-  .orbital-lines span:nth-child(2) {
-    width: 155vw;
-    left: -15%;
   }
   .orbit-meter {
     right: 12px;

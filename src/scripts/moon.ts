@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { erosionThreshold, clamp, smoothstep } from '../lib/erosion.mjs';
-import { arrivalOpacity } from '../lib/lunar-flow.mjs';
+import { arrivalOpacity, lunarNotch } from '../lib/lunar-flow.mjs';
 import { sampleArrival } from './particle-targets';
 import {
   surfaceVertex,
@@ -9,13 +9,13 @@ import {
   flowFragment,
 } from './lunar-shaders';
 import { settle } from '../lib/motion.mjs';
+import { mistVertex, mistFragment } from './lunar-mist';
 
 export function createMoon(canvas: HTMLCanvasElement) {
   const host = canvas.parentElement!;
   const journey = document.getElementById('orbit-journey')!;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  const aura = host.querySelector<HTMLElement>('.lunar-aura')!;
   let renderer: THREE.WebGLRenderer;
   try {
     renderer = new THREE.WebGLRenderer({
@@ -51,13 +51,14 @@ export function createMoon(canvas: HTMLCanvasElement) {
   texture.wrapS = THREE.RepeatWrapping;
   const uniforms = {
     uProgress: { value: 0 },
-    uSpin: { value: 0 },
+    uSpin: { value: 2.05 },
     uTexture: { value: texture },
     uDpr: { value: renderer.getPixelRatio() },
     uTime: { value: 0 },
     uPaper: { value: 0 },
     uViewport: { value: new THREE.Vector2(1, 1) },
     uPointer: { value: new THREE.Vector2(-1000, -1000) },
+    uMoon: { value: new THREE.Vector3(0, 0, 1) },
   };
   const surface = new THREE.ShaderMaterial({
     uniforms,
@@ -82,11 +83,13 @@ export function createMoon(canvas: HTMLCanvasElement) {
       const value = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
       return value - Math.floor(value);
     };
-    const ambient = i < count * 0.28;
+    const ambient = i < count * 0.36;
     const y = (random(1) * 2 - 1) * 0.97;
     const r = Math.sqrt(1 - y * y);
     const angle = random(2) * Math.PI;
-    const x = ambient ? -r * (0.82 + random(2) * 0.175) : Math.cos(angle) * r;
+    const x = ambient
+      ? clamp(lunarNotch(y) + (random(2) - 0.5) * 0.16, -r + 0.002, r - 0.002)
+      : Math.cos(angle) * r;
     const z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
     const seed = random(3);
     positions.set([x, y, z], i * 3);
@@ -119,6 +122,18 @@ export function createMoon(canvas: HTMLCanvasElement) {
   points.renderOrder = 1;
   points.frustumCulled = false;
   group.add(points);
+  const mistMaterial = new THREE.ShaderMaterial({
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    vertexShader: mistVertex,
+    fragmentShader: mistFragment,
+  });
+  const mist = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mistMaterial);
+  mist.frustumCulled = false;
+  mist.renderOrder = 2;
+  scene.add(mist);
   group.rotation.set(0, -0.34, 0.08);
   canvas.dataset.particles = String(count);
   canvas.dataset.particleSystem = 'continuous-wind-to-content';
@@ -144,9 +159,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     const moonX = (0.5 + group.position.x / viewW) * w;
     const moonY = (0.5 - group.position.y / viewH) * h;
     const moonRadius = (radius / viewH) * h;
-    aura.style.left = `${moonX}px`;
-    aura.style.top = `${moonY}px`;
-    aura.style.width = `${moonRadius * 2.9}px`;
+    uniforms.uMoon.value.set(moonX, h - moonY, moonRadius);
     uniforms.uViewport.value.set(w, h);
     const samples = sampleArrival(arrival, host);
     if (samples.length) {
@@ -185,6 +198,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     uniforms.uProgress.value = reduced.matches ? 0 : progress;
     points.visible = reduced.matches || progress < 0.97;
     sphere.visible = reduced.matches || progress < 0.51;
+    mist.visible = reduced.matches || progress < 0.7;
     const introOpacity = 1 - smoothstep(0.08, 0.4, progress);
     if (intro) {
       intro.style.opacity = String(introOpacity);
@@ -192,9 +206,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     }
     if (bottom) bottom.style.opacity = String(introOpacity);
     journey
-      .querySelectorAll<HTMLElement>(
-        '.orbital-lines, .moon-caption, .hero-atmosphere',
-      )
+      .querySelectorAll<HTMLElement>('.orbital-lines, .moon-caption')
       .forEach((el) => {
         el.style.opacity = String(introOpacity);
       });
@@ -231,7 +243,6 @@ export function createMoon(canvas: HTMLCanvasElement) {
             ? 'gathering'
             : 'content';
     if (indicator) indicator.style.transform = `scaleY(${progress})`;
-    aura.style.opacity = String(1 - smoothstep(0.08, 0.46, progress));
     active = rect.bottom > 0 && rect.top < innerHeight;
     host.dataset.active = String(active && visible);
   };
@@ -357,6 +368,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
     surface.dispose();
     geometry.dispose();
     material.dispose();
+    mist.geometry.dispose();
+    mistMaterial.dispose();
     texture.dispose();
     renderer.dispose();
   };

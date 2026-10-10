@@ -10,6 +10,25 @@ export const lunarTiming = {
 export const arrivalOpacity = (progress) =>
   smoothstep(lunarTiming.handoffStart, lunarTiming.handoffEnd, progress);
 
+// The opening is already weathered along the left limb. Use this contour both
+// for the surface cutaway and the airborne particles' origins.
+export function lunarNotch(y) {
+  const latitude = Math.max(0, 1 - y * y);
+  return (
+    -Math.sqrt(latitude) +
+    0.65 * latitude ** 0.85 +
+    Math.sin(y * 8) * 0.018 +
+    Math.sin(y * 19 + 1.2) * 0.014 +
+    0.16 * Math.exp(-(((y + 0.05) / 0.4) ** 2)) -
+    0.14 * Math.exp(-(((y - 0.55) / 0.25) ** 2))
+  );
+}
+export const lunarNotchGLSL = `
+float notchAt(float y) {
+  float latitude=max(0.,1.-y*y);
+  return -sqrt(latitude)+.65*pow(latitude,.85)+sin(y*8.)*.018+sin(y*19.+1.2)*.014+.16*exp(-pow((y+.05)/.4,2.))-.14*exp(-pow((y-.55)/.25,2.));
+}`;
+
 // CPU reference for the shader field: scroll controls the shape, time supplies
 // bounded continuous advection. No accumulated simulation can diverge on rewind.
 export function lunarParticle(position, seed, progress, time, ambient = false) {
@@ -22,7 +41,9 @@ export function lunarParticle(position, seed, progress, time, ambient = false) {
   const life = phase - Math.floor(phase);
   const age = Math.max(0, erosion - threshold);
   const travel =
-    (0.04 + life ** 1.4 * (0.75 + seed * 0.65) + age * 0.8) * release;
+    (0.04 + life ** 1.4 * (0.9 + seed * 0.85) + age * 0.8) *
+    release *
+    (0.38 + 0.62 * Math.sqrt(Math.max(0, 1 - position[1] * position[1])));
   const p = [...position];
   p[0] -= travel;
   p[1] +=
@@ -51,7 +72,7 @@ float releaseAt(float threshold, float progress, float ambient) {
 vec3 windPosition(vec3 p, float seed, float progress, float time, float release, float threshold, out float lifeAlpha) {
   float life=fract(seed+time*(.026+seed*.012));
   float age=max(0.,progress*${lunarTiming.erosionScale}-threshold);
-  float travel=(.04+pow(life,1.4)*(.75+seed*.65)+age*.8)*release;
+  float travel=(.04+pow(life,1.4)*(.9+seed*.85)+age*.8)*release*(.38+.62*sqrt(max(0.,1.-p.y*p.y)));
   vec3 moved=p;
   moved.x-=travel;
   moved.y+=travel*(.06+sin(p.y*8.+travel*2.+time*.22)*.065);

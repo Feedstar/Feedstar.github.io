@@ -1,5 +1,9 @@
 import { erosionGLSL } from '../lib/erosion.mjs';
-import { lunarFlowGLSL, lunarTiming } from '../lib/lunar-flow.mjs';
+import {
+  lunarFlowGLSL,
+  lunarTiming,
+  lunarNotchGLSL,
+} from '../lib/lunar-flow.mjs';
 
 export const surfaceVertex = `
 varying vec3 vPosition, vNormal, vView;
@@ -16,28 +20,31 @@ uniform sampler2D uTexture;
 varying vec3 vPosition, vNormal, vView;
 varying vec2 vUv;
 ${erosionGLSL}
+${lunarNotchGLSL}
 void main(){
   vec3 p=normalize(vPosition);
   float facing=max(0.,dot(normalize(vNormal),normalize(-vView)));
   float left=1.-smoothstep(-.65,.05,p.x);
-  // A wide, irregular feather joins the illuminated limb to the fine dust.
-  float edgeWidth=mix(.22,.59,left);
+  float edgeWidth=mix(.09,.27,left);
   float rim=smoothstep(.015,edgeWidth,facing);
+  float notch=notchAt(p.y)+(erosionNoise(p*12.)-.5)*.045;
+  float cutaway=smoothstep(notch-.075,notch+.12,p.x);
   float erosion=uProgress*${lunarTiming.erosionScale};
   float remaining=1.;
   if(erosion>.005){
     float threshold=thresholdAt(p,0.);
     remaining=1.-smoothstep(threshold-.075,threshold+.055,erosion);
   }
-  float feather=(1.-rim)+4.*remaining*(1.-remaining);
+  float feather=(1.-rim)+4.*remaining*(1.-remaining)+4.*cutaway*(1.-cutaway);
   vec2 uv=vec2(vUv.x+uSpin/6.2831853,vUv.y);
   vec3 tex=texture2D(uTexture,uv,min(3.,feather*2.7)).rgb;
   float lum=dot(tex,vec3(.299,.587,.114));
-  float light=.19+.84*pow(max(0.,dot(p,normalize(vec3(-.6,.65,1.2)))),.6);
+  float light=.48+.55*pow(max(0.,dot(p,normalize(vec3(.75,.35,1.8)))),.5);
+  float shadow=mix(.48,1.,smoothstep(-.48,.22,p.x+sin(p.y*3.)*.04));
   float grain=erosionHash(floor(p*490.));
-  float alpha=rim*remaining;
+  float alpha=rim*remaining*cutaway;
   alpha*=mix(1.,smoothstep(.08,.78,grain),clamp(feather*.68,0.,.9));
-  vec3 color=vec3(.96,.95,.91)*pow(lum,.75)*1.12*light;
+  vec3 color=vec3(.94,.95,.91)*pow(lum,.46)*1.16*light*shadow;
   gl_FragColor=vec4(color,alpha);
 }`;
 
@@ -65,7 +72,7 @@ void main(){
   float band=.58+.42*pow(.5+.5*sin(position.y*13.+seed),2.);
   float flowing=release*lifeAlpha*(.35+seed*.46)*band;
   vAlpha=mix(flowing,.42+aFlow.y*.2,gather)*(1.-handoffAt(uProgress));
-  vLight=.24+.8*pow(max(0.,dot(normalize(position),normalize(vec3(-.6,.65,1.2)))),.6);
+  vLight=.56+.4*pow(max(0.,dot(normalize(position),normalize(vec3(.75,.35,1.8)))),.5);
   vGather=gather; vTargetColor=aTargetColor; vUv=uv;
   gl_Position=projectionMatrix*mv;
   vec2 screen=(gl_Position.xy/gl_Position.w*.5+.5)*uViewport;
