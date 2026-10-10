@@ -133,12 +133,12 @@ export function createMoon(canvas: HTMLCanvasElement) {
       viewW = viewH * camera.aspect;
     const mobile = w < 700;
     const radius = mobile
-      ? Math.min(viewW * 0.37, viewH * 0.26)
+      ? Math.min(viewW * 0.33, viewH * 0.24)
       : Math.min(viewH * 0.35, viewW * 0.255);
     group.scale.setScalar(radius);
     group.position.set(
       mobile ? viewW * 0.12 : viewW * 0.185,
-      mobile ? viewH * 0.2 : viewH * 0.015,
+      mobile ? viewH * 0.21 : viewH * 0.015,
       0,
     );
     moonX = (0.5 + group.position.x / viewW) * w;
