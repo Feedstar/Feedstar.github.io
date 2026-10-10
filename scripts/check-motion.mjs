@@ -156,8 +156,8 @@ const plumeWidth = (time) => {
 };
 const tailRatio = plumeWidth(10) / plumeWidth(1);
 assert(
-  tailRatio > 0.35 && tailRatio < 0.55,
-  'The tail must taper while retaining an airy width instead of collapsing into a line.',
+  tailRatio > 0.55 && tailRatio < 0.8,
+  'The reference-shaped plume must retain a broad fan while gradually tapering.',
 );
 assert(
   states(lunarTiming.handoffStart).every((s) => s.gather === 1),

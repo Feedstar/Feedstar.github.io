@@ -51,7 +51,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
   texture.wrapS = THREE.RepeatWrapping;
   const uniforms = {
     uProgress: { value: 0 },
-    uSpin: { value: 2.05 },
+    uSpin: { value: 2.39 },
     uTexture: { value: texture },
     uDpr: { value: renderer.getPixelRatio() },
     uTime: { value: 0 },
@@ -83,12 +83,16 @@ export function createMoon(canvas: HTMLCanvasElement) {
       const value = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
       return value - Math.floor(value);
     };
-    const ambient = i < count * 0.36;
-    const y = (random(1) * 2 - 1) * (ambient ? 0.89 : 0.97);
+    const ambient = i < count * 0.42;
+    const y = (random(1) * 2 - 1) * 0.97;
     const r = Math.sqrt(1 - y * y);
     const angle = random(2) * Math.PI;
     const x = ambient
-      ? clamp(lunarNotch(y) + (random(2) - 0.5) * 0.16, -r + 0.002, r - 0.002)
+      ? clamp(
+          lunarNotch(y) + 0.07 + (random(2) - 0.5) * 0.32,
+          -r + 0.002,
+          r - 0.002,
+        )
       : Math.cos(angle) * r;
     const z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
     const seed = random(3);
@@ -134,7 +138,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
   mist.frustumCulled = false;
   mist.renderOrder = 2;
   scene.add(mist);
-  group.rotation.set(0, -0.34, 0.08);
+  // Keep the erosion contour in the image plane; the wind sets the tail angle.
+  // The lunar texture continues rotating independently through uSpin.
+  group.rotation.set(0, 0, 0);
   canvas.dataset.particles = String(count);
   canvas.dataset.particleSystem = 'continuous-wind-to-content';
   const resize = () => {

@@ -16,14 +16,14 @@ export function lunarNotch(y) {
   const latitude = Math.max(0, 1 - y * y);
   return (
     -Math.sqrt(latitude) +
-    0.42 * latitude ** 0.85 +
-    Math.sin(y * 6 + 0.4) * 0.045 * latitude
+    0.48 * Math.exp(-(((y + 0.1) / 0.7) ** 2)) * latitude ** 0.35 +
+    Math.sin(y * 11 + 0.4) * 0.035 * latitude
   );
 }
 export const lunarNotchGLSL = `
 float notchAt(float y) {
   float latitude=max(0.,1.-y*y);
-  return -sqrt(latitude)+.42*pow(latitude,.85)+sin(y*6.+.4)*.045*latitude;
+  return -sqrt(latitude)+.48*exp(-pow((y+.1)/.7,2.))*pow(latitude,.35)+sin(y*11.+.4)*.035*latitude;
 }`;
 
 // CPU reference for the shader field: scroll controls the shape, time supplies
@@ -43,10 +43,12 @@ export function lunarParticle(position, seed, progress, time, ambient = false) {
     (0.72 + 0.28 * Math.sqrt(Math.max(0, 1 - position[1] * position[1])));
   const p = [...position];
   p[0] -= travel;
-  const taper = Math.exp(-travel * 1.2);
-  const spine = -0.12 + Math.sin(travel * 1.6 - time * 0.18) * 0.05;
-  p[1] = position[1] * taper + spine * (1 - taper);
-  p[1] += Math.sin(seed * 24 + time * 0.55 + travel * 3) * 0.025 * (1 - taper);
+  // A broad fan drifts left and slightly down. Individual streamlines retain
+  // different widths instead of all collapsing onto a single central spine.
+  const taper = Math.exp(-travel * (0.59 + Math.sin(seed * 65) * 0.14));
+  const curl = Math.sin(travel * 1.6 - time * 0.18 + position[1] * 2) * 0.055;
+  p[1] = position[1] * taper - travel * 0.13 + curl * (1 - taper);
+  p[1] += Math.sin(seed * 24 + time * 0.55 + travel * 3) * 0.075 * (1 - taper);
   p[2] += (seed - 0.5) * travel * 0.1;
   const gather = smoothstep(
     lunarTiming.gatherStart + seed * 0.1,
@@ -74,10 +76,10 @@ vec3 windPosition(vec3 p, float seed, float progress, float time, float release,
   float travel=(.035+life*(1.95+seed*.7)+age*.8)*release*(.72+.28*sqrt(max(0.,1.-p.y*p.y)));
   vec3 moved=p;
   moved.x-=travel;
-  float taper=exp(-travel*1.2);
-  float spine=-.12+sin(travel*1.6-time*.18)*.05;
-  moved.y=p.y*taper+spine*(1.-taper);
-  moved.y+=sin(seed*24.+time*.55+travel*3.)*.025*(1.-taper);
+  float taper=exp(-travel*(.59+sin(seed*65.)*.14));
+  float curl=sin(travel*1.6-time*.18+p.y*2.)*.055;
+  moved.y=p.y*taper-travel*.13+curl*(1.-taper);
+  moved.y+=sin(seed*24.+time*.55+travel*3.)*.075*(1.-taper);
   moved.z+=(seed-.5)*travel*.1;
   lifeAlpha=smoothstep(0.,.045,life)*(1.-smoothstep(.48,1.,life));
   return moved;

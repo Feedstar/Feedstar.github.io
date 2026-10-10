@@ -27,9 +27,9 @@ void main(){
   float left=1.-smoothstep(-.65,.05,p.x);
   float edgeWidth=mix(.09,.27,left);
   float rim=smoothstep(.015,edgeWidth,facing);
-  float breeze=erosionNoise(p*5.+vec3(uTime*.075,0.,0.))-.5;
-  float notch=notchAt(p.y)+breeze*.075;
-  float cutaway=smoothstep(notch-.20,notch+.23,p.x);
+  float breeze=erosionNoise(p*7.+vec3(uTime*.075,0.,0.))-.5;
+  float notch=notchAt(p.y)+breeze*.13;
+  float cutaway=smoothstep(notch-.18,notch+.20,p.x);
   float erosion=uProgress*${lunarTiming.erosionScale};
   float remaining=1.;
   if(erosion>.005){
@@ -41,7 +41,7 @@ void main(){
   vec3 tex=texture2D(uTexture,uv,min(3.,feather*2.7)).rgb;
   float lum=dot(tex,vec3(.299,.587,.114));
   float light=.48+.55*pow(max(0.,dot(p,normalize(vec3(.75,.35,1.8)))),.5);
-  float shadow=mix(.48,1.,smoothstep(-.48,.22,p.x+sin(p.y*3.)*.04));
+  float shadow=mix(.30,1.,smoothstep(-.68,.15,p.x+sin(p.y*3.)*.04));
   float alpha=rim*remaining*cutaway;
   vec3 color=vec3(.94,.95,.91)*pow(lum,.46)*1.16*light*shadow;
   gl_FragColor=vec4(color,alpha);
@@ -68,8 +68,8 @@ void main(){
   float arc=sin(gather*3.14159265);
   mv.y+=arc*((seed-.5)*.28+sin(uTime*.3+seed*6.28)*.035);
   mv.z+=arc*(aFlow.y-.5)*.18;
-  float band=.58+.42*pow(.5+.5*sin(position.y*13.+seed),2.);
-  float poleFade=1.-smoothstep(.50,.97,abs(position.y));
+  float band=.76+.24*pow(.5+.5*sin(position.y*13.+seed),2.);
+  float poleFade=1.-smoothstep(.78,.995,abs(position.y));
   float flowing=release*lifeAlpha*(.35+seed*.46)*band*poleFade;
   vAlpha=mix(flowing,.42+aFlow.y*.2,gather)*(1.-handoffAt(uProgress));
   vLight=.56+.4*pow(max(0.,dot(normalize(position),normalize(vec3(.75,.35,1.8)))),.5);
