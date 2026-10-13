@@ -729,6 +729,9 @@ export default function ArmLab({
           <h3>这一次，试着这样看。</h3>
           <p>{currentLesson.try}</p>
           <p className="arm-explanation">{currentLesson.notice}</p>
+          <a className="text-link" href={`/journal/arm-${lesson}/`}>
+            阅读对应手记 <span>↗</span>
+          </a>
         </section>
       </div>
       {lesson === 'sensors' && (

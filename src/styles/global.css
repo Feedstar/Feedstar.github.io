@@ -189,16 +189,18 @@ main {
   letter-spacing: -0.035em;
   view-transition-name: brand;
 }
-.brand-mark {
-  width: 39px;
-  height: 39px;
-  fill: none;
-  stroke: var(--fg);
-  stroke-width: 1.15;
+.brand-lockup {
+  display: block;
 }
-.star-dot {
-  fill: var(--accent);
-  stroke: none;
+.feedstar-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.brand .feedstar-wordmark {
+  width: 174px;
+  height: 49px;
 }
 .brand-caption {
   display: block;
@@ -886,11 +888,10 @@ main {
   color: #83748e;
 }
 .footer-wordmark {
-  font: 500 clamp(80px, 17.2vw, 270px)/1 var(--sans);
-  letter-spacing: -0.085em;
-  margin-left: -0.02em;
-  white-space: nowrap;
-  padding-bottom: 28px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 0 36px;
 }
 .footer-bottom {
   display: flex;
@@ -1296,9 +1297,9 @@ a:focus-visible {
     font-size: 19px;
     gap: 7px;
   }
-  .brand-mark {
-    width: 28px;
-    height: 28px;
+  .brand .feedstar-wordmark {
+    width: 112px;
+    height: 34px;
   }
   .brand-caption {
     display: none;

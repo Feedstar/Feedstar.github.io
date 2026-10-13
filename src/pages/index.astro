@@ -125,18 +125,21 @@ const posts = (await getCollection('journal')).sort((a, b) =>
         </span>
       </div>
       <div class="journal-list">
-        {posts.map((post) => (
-          <a href={`/journal/${post.id}/`} data-reveal>
-            <span class="eyebrow">
-              {post.data.category} <span>NOTE / {post.data.number}</span>
-            </span>
-            <h3>{post.data.title}</h3>
-            <p>{post.data.description}</p>
-            <span class="note-arrow" aria-hidden="true">
-              ↗
-            </span>
-          </a>
-        ))}
+        {posts
+          .slice(-4)
+          .reverse()
+          .map((post) => (
+            <a href={`/journal/${post.id}/`} data-reveal>
+              <span class="eyebrow">
+                {post.data.category} <span>NOTE / {post.data.number}</span>
+              </span>
+              <h3>{post.data.title}</h3>
+              <p>{post.data.description}</p>
+              <span class="note-arrow" aria-hidden="true">
+                ↗
+              </span>
+            </a>
+          ))}
       </div>
     </div>
   </section>

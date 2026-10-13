@@ -25,7 +25,10 @@ const { Content } = await render(post);
       <p class="eyebrow">
         {post.data.number} / {post.data.category} / FEEDSTAR
       </p>
-      <a class="text-link" href={`/lab/?example=${post.data.example}`}>
+      <a
+        class="text-link"
+        href={`/lab/?example=${post.data.example}#experiment`}
+      >
         打开对应实验 <span>↗</span>
       </a>
     </header>
@@ -36,7 +39,10 @@ const { Content } = await render(post);
       <a class="text-link" href="/journal/">
         返回手记 <span>←</span>
       </a>
-      <a class="text-link" href={`/lab/?example=${post.data.example}`}>
+      <a
+        class="text-link"
+        href={`/lab/?example=${post.data.example}#experiment`}
+      >
         让它发生一次 <span>↗</span>
       </a>
     </div>

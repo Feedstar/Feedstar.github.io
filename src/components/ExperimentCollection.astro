@@ -43,10 +43,21 @@ const first = experimentCatalog[0];
         <div
           class="collection-art collection-arm"
           data-preview-art="arm"
+          data-lesson="model"
           hidden
           aria-hidden="true"
         >
-          <ArmDiagram />
+          <div class="arm-cover-fallback">
+            <ArmDiagram />
+          </div>
+          <canvas class="arm-cover-canvas"></canvas>
+          <div class="arm-cover-hud">
+            <span data-arm-caption>运动链 · 父级 → 子级</span>
+            <span data-arm-readout>body / joint / geom</span>
+          </div>
+          <small class="arm-cover-disclaimer">
+            动作示意 / 进入实验观察实时仿真
+          </small>
         </div>
         <div class="study-topline">
           <span data-preview-number>EXPERIMENT {first.number} / 07</span>
@@ -61,8 +72,22 @@ const first = experimentCatalog[0];
         </div>
       </a>
       <p class="collection-preview-note">
-        <span>动手调节，在运动中理解。</span>
-        <span>在线运行 · 观察说明 · 源码</span>
+        <a data-preview-journal href={`/journal/${first.id}/`}>
+          阅读对应手记 ↗
+        </a>
+        <span class="collection-preview-controls" aria-label="切换入口预览">
+          <button
+            type="button"
+            data-preview-previous
+            aria-label="上一个实验预览"
+          >
+            ←
+          </button>
+          <span data-preview-counter>预览 01 / 07</span>
+          <button type="button" data-preview-next aria-label="下一个实验预览">
+            →
+          </button>
+        </span>
       </p>
     </article>
     <nav class="collection-directory" aria-label="七项 MuJoCo 实验">
@@ -99,6 +124,7 @@ const first = experimentCatalog[0];
 </div>
 <script>
   import { createStudies } from '../scripts/studies';
+  import { createArmStudy } from '../scripts/arm-study';
   import { experimentCatalog, experimentHref } from '../lib/experiment-catalog';
   createStudies();
   document
@@ -112,10 +138,18 @@ const first = experimentCatalog[0];
       const link = collection.querySelector<HTMLAnchorElement>(
         '[data-preview-link]',
       )!;
+      const armCover = collection.querySelector<HTMLElement>(
+        '[data-preview-art="arm"]',
+      )!;
+      createArmStudy(armCover);
+      let previewIndex = 0;
       const setPreview = (anchor: HTMLAnchorElement) => {
         const entry = experimentCatalog.find(
           (item) => item.id === anchor.dataset.experimentId,
         )!;
+        previewIndex = experimentCatalog.indexOf(entry);
+        collection.querySelector('[data-preview-counter]')!.textContent =
+          `预览 ${entry.number} / 07`;
         entries.forEach((row) =>
           row.toggleAttribute('data-preview-selected', row === anchor),
         );
@@ -124,6 +158,13 @@ const first = experimentCatalog[0];
             panel.dataset.previewArt !==
             (entry.kind === 'basic' ? entry.id : 'arm');
         });
+        if (entry.kind === 'arm') {
+          armCover.dataset.lesson = entry.lesson;
+          armCover.dispatchEvent(new Event('arm-preview-change'));
+        }
+        collection.querySelector<HTMLAnchorElement>(
+          '[data-preview-journal]',
+        )!.href = `/journal/${entry.id}/`;
         link.href = experimentHref(entry.id);
         link.setAttribute(
           'aria-label',
@@ -136,6 +177,18 @@ const first = experimentCatalog[0];
         collection.querySelector('[data-preview-title]')!.textContent =
           entry.title;
       };
+      collection
+        .querySelector('[data-preview-previous]')
+        ?.addEventListener('click', () =>
+          setPreview(
+            entries[(previewIndex + entries.length - 1) % entries.length],
+          ),
+        );
+      collection
+        .querySelector('[data-preview-next]')
+        ?.addEventListener('click', () =>
+          setPreview(entries[(previewIndex + 1) % entries.length]),
+        );
       entries.forEach((entry) => {
         entry.addEventListener('pointerenter', (event) => {
           if (event.pointerType !== 'touch') setPreview(entry);
