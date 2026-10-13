@@ -1,3 +1,5 @@
+import { sampleInk } from '../lib/ink-samples.mjs';
+
 // Sample the real, responsive DOM typography. The final particle positions
 // coincide with the readable HTML rather than a second approximation of it.
 export function sampleArrival(arrival: HTMLElement, host: HTMLElement) {
@@ -15,6 +17,7 @@ export function sampleArrival(arrival: HTMLElement, host: HTMLElement) {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
     let node: Node | null;
     while ((node = walker.nextNode())) {
+      if (node.parentElement?.closest('.sr-only')) continue;
       const text = node.textContent ?? '';
       for (let i = 0; i < text.length; i++) {
         if (/\s/.test(text[i])) continue;
@@ -55,22 +58,5 @@ export function sampleArrival(arrival: HTMLElement, host: HTMLElement) {
     context.stroke();
   }
   const { data } = context.getImageData(0, 0, mask.width, mask.height);
-  const samples: { x: number; y: number; color: number[] }[] = [];
-  // A two-pixel grid preserves small copy as well as the large title strokes.
-  for (let y = 0; y < mask.height; y += 2) {
-    for (let x = 0; x < mask.width; x += 2) {
-      const offset = (y * mask.width + x) * 4;
-      if (data[offset + 3] < 28) continue;
-      samples.push({
-        x,
-        y,
-        color: [
-          data[offset] / 255,
-          data[offset + 1] / 255,
-          data[offset + 2] / 255,
-        ],
-      });
-    }
-  }
-  return samples;
+  return sampleInk(data, mask.width, mask.height);
 }

@@ -60,6 +60,7 @@ void main(){
   float seed=aFlow.x;
   float release=releaseAt(aFlow.w,uProgress,aFlow.z);
   float gather=gatherAt(uProgress,seed);
+  float handoff=handoffAt(uProgress);
   // Surface grains that have not been released contribute no visible pixels.
   // Skip their wind, lighting and texture work until they actually enter.
   if(release<=0. && gather<=0.){
@@ -77,7 +78,7 @@ void main(){
   float band=.76+.24*pow(.5+.5*sin(position.y*13.+seed),2.);
   float poleFade=1.-smoothstep(.78,.995,abs(position.y));
   float flowing=release*lifeAlpha*(.35+seed*.46)*band*poleFade;
-  vAlpha=mix(flowing,.42+aFlow.y*.2,gather)*(1.-handoffAt(uProgress));
+  vAlpha=mix(flowing,.42+aFlow.y*.2,gather)*(1.-handoff);
   vLight=.56+.4*pow(max(0.,dot(normalize(position),normalize(vec3(.75,.35,1.8)))),.5);
   vGather=gather; vTargetColor=aTargetColor; vUv=uv;
   gl_Position=projectionMatrix*mv;
@@ -86,7 +87,9 @@ void main(){
   float distance=length(delta);
   float influence=pow(1.-smoothstep(0.,110.,distance),2.)*(1.-gather);
   gl_Position.xy+=delta/max(1.,distance)*influence*10./uViewport*2.*gl_Position.w;
-  float grainSize=mix(.85+pow(aFlow.y,3.)*.9,2.0,gather);
+  // Keep individually varied grains; they get finer as continuous type takes
+  // over instead of inflating into equally sized pixels on the letter strokes.
+  float grainSize=mix(.85+pow(aFlow.y,3.)*.9,1.15+aFlow.y*.55,gather)*(1.-handoff*.35);
   gl_PointSize=clamp(grainSize*uDpr*(5./-mv.z),.65,2.8);
 }`;
 export const flowFragment = `

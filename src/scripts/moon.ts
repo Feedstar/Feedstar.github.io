@@ -201,8 +201,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
         const sample = samples[Math.min(index, samples.length - 1)];
         targets.set(
           [
-            ((sample.x + 0.5 + (flow[i * 4] - 0.5) * 1.4) / w - 0.5) * viewW,
-            (0.5 - (sample.y + 0.5 + positions[i * 3 + 1] * 0.7) / h) * viewH,
+            ((sample.x + (flow[i * 4] - 0.5) * 0.6) / w - 0.5) * viewW,
+            (0.5 - (sample.y + positions[i * 3 + 1] * 0.3) / h) * viewH,
             0,
           ],
           i * 3,
@@ -238,7 +238,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
         : count;
     geometry.setDrawRange(0, drawn);
     canvas.dataset.drawnParticles = String(drawn);
-    points.visible = reduced.matches || progress < 0.97;
+    points.visible = reduced.matches || progress < lunarTiming.handoffEnd;
     sphere.visible = reduced.matches || progress < 0.51;
     mist.visible = reduced.matches || progress < 0.7;
     const introOpacity = 1 - smoothstep(0.08, 0.4, progress);
@@ -261,10 +261,11 @@ export function createMoon(canvas: HTMLCanvasElement) {
       ? String(1 - smoothstep(0.25, 0.7, progress))
       : '1';
     if (arrival) {
-      arrival.inert = progress < (reduced.matches ? 0.7 : 0.92);
+      arrival.inert =
+        progress < (reduced.matches ? 0.7 : lunarTiming.handoffEnd - 0.04);
       arrival.setAttribute(
         'aria-hidden',
-        String(progress < (reduced.matches ? 0.55 : 0.87)),
+        String(progress < (reduced.matches ? 0.55 : lunarTiming.handoffStart)),
       );
     }
     if (bottom) bottom.inert = progress > 0.43;
@@ -279,7 +280,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
         ? 'moon'
         : progress < 0.5
           ? 'weathering'
-          : progress < 0.87
+          : progress < lunarTiming.handoffStart
             ? 'gathering'
             : 'content';
     if (indicator) indicator.style.transform = `scaleY(${progress})`;
@@ -349,7 +350,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     } else {
       uniforms.uPointer.value.set(-1000, -1000);
     }
-    if (dirty || (!reduced.matches && progress < 0.97)) {
+    if (dirty || (!reduced.matches && progress < lunarTiming.handoffEnd)) {
       uniforms.uTime.value = reduced.matches ? 0 : ambientTime;
       uniforms.uPaper.value = Number(
         document.documentElement.dataset.theme === 'paper',
@@ -382,7 +383,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
     const settling =
       Math.abs(progress - targetProgress) > 0.00001 ||
       Math.abs(velocity) > 0.00001;
-    if (reduced.matches || (progress >= 0.97 && !settling)) loop.remove(draw);
+    if (reduced.matches || (progress >= lunarTiming.handoffEnd && !settling))
+      loop.remove(draw);
   };
   wake = () => {
     if (!disposed && visible && (active || measureScroll)) loop.add(draw);

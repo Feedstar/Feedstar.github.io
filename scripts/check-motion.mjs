@@ -4,6 +4,7 @@ import {
   arrivalOpacity,
   lunarTiming,
 } from '../src/lib/lunar-flow.mjs';
+import { sampleInk } from '../src/lib/ink-samples.mjs';
 import { settle, titleSpring } from '../src/lib/motion.mjs';
 import { mistBufferSize } from '../src/lib/lunar-render.mjs';
 import {
@@ -282,15 +283,20 @@ assert(
   'The reference-shaped plume must retain a broad fan while gradually tapering.',
 );
 assert(
-  states(lunarTiming.handoffStart).every((s) => s.gather === 1),
-  'All particle targets must be reached before readable HTML appears.',
+  states(lunarTiming.handoffStart + 0.04).some((s) => s.gather < 0.98),
+  'Readable strokes must appear while particles are still gathering, without a static dot-matrix hold.',
+);
+assert(arrivalOpacity(lunarTiming.handoffStart + 0.04) > 0);
+assert(
+  arrivalOpacity(lunarTiming.gatherEnd + 0.03) > 0.75,
+  'Continuous HTML strokes must dominate by the time the last grains settle.',
 );
 assert.equal(arrivalOpacity(lunarTiming.handoffStart), 0);
 assert(
-  states(0.97).every((s) => s.alpha === 0),
+  states(lunarTiming.handoffEnd).every((s) => s.alpha === 0),
   'The complete HTML must have no competing particle overlay.',
 );
-assert.equal(arrivalOpacity(0.97), 1);
+assert.equal(arrivalOpacity(lunarTiming.handoffEnd), 1);
 const checkpoint = states(0.65, 8);
 states(0.97, 8);
 assert.deepEqual(
@@ -302,3 +308,41 @@ console.log(
   'PASS: intact origin, local feathered release, continuous shared wind, invisible wrapping, content convergence and reversible handoff.',
 );
 console.table(stages);
+
+// Sample an opaque patch, a half-covered edge and empty background. All pixel
+// parities must participate: the old two-pixel lattice fails this regression.
+const ink = new Uint8ClampedArray(32 * 24 * 4);
+for (let y = 0; y < 24; y++) {
+  for (let x = 0; x < 24; x++) {
+    const i = (y * 32 + x) * 4;
+    ink.set([220, 210, 200, x < 16 ? 255 : 128], i);
+  }
+}
+const inkPoints = sampleInk(ink, 32, 24);
+assert.deepEqual(
+  sampleInk(ink, 32, 24),
+  inkPoints,
+  'Resampling must be deterministic for reverse scroll and resize.',
+);
+assert.equal(inkPoints.filter((p) => p.x < 16).length, 16 * 24);
+assert(
+  inkPoints.every((p) => p.x < 24 && p.y < 24),
+  'Transparent background must never attract particles.',
+);
+assert(
+  inkPoints.every((p) => !Number.isInteger(p.x) && !Number.isInteger(p.y)),
+  'Targets need subpixel jitter, not fixed pixel centers.',
+);
+assert.equal(
+  new Set(inkPoints.map((p) => `${Math.floor(p.x) % 2},${Math.floor(p.y) % 2}`))
+    .size,
+  4,
+);
+const edgeCount = inkPoints.filter((p) => p.x >= 16).length;
+assert(
+  edgeCount > 65 && edgeCount < 125,
+  'Anti-aliased edges should carry proportionally fewer particles.',
+);
+console.log(
+  'PASS: irregular subpixel targets, coverage-weighted edges and an overlapping particle-to-type handoff.',
+);

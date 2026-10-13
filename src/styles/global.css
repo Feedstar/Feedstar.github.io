@@ -194,13 +194,12 @@ main {
 }
 .feedstar-wordmark {
   display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
+  width: fit-content;
+  font: 400 52px/1 var(--roman);
+  letter-spacing: -0.055em;
 }
 .brand .feedstar-wordmark {
-  width: 190px;
-  height: 43px;
+  font-size: 48px;
 }
 .brand-caption {
   display: block;
@@ -891,6 +890,17 @@ main {
   min-width: 0;
   width: 100%;
 }
+.article-shell,
+.article-shell * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.article-shell .sr-only,
+.article-shell .code-toolbar,
+.article-shell .code-toolbar * {
+  -webkit-user-select: none;
+  user-select: none;
+}
 .article-header,
 .prose :is(h2, h3) {
   scroll-margin-top: 44px;
@@ -983,6 +993,74 @@ main {
 .prose pre code {
   background: none;
   padding: 0;
+}
+.code-block {
+  margin: 32px 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-raised);
+}
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 46px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--line);
+  font: 11px/1.5 var(--sans);
+  letter-spacing: 0.04em;
+}
+.code-language {
+  color: var(--muted);
+}
+.copy-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 11px;
+  color: var(--fg);
+}
+.copy-code[hidden] {
+  display: none;
+}
+.copy-code[data-copied] {
+  color: var(--accent);
+}
+.copy-icon {
+  display: inline-block;
+  width: 9px;
+  height: 11px;
+  margin-left: 3px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  box-shadow:
+    -3px -3px 0 -1px var(--bg-raised),
+    -3px -3px 0 0 currentColor;
+}
+.prose .code-block pre {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.copy-feedback:not(.copy-error) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.copy-feedback.copy-error {
+  display: block;
+  padding: 10px 18px;
+  font: 12px/1.7 var(--sans);
+  color: var(--muted);
 }
 .article-bottom {
   display: flex;
@@ -1261,8 +1339,7 @@ a:focus-visible {
     gap: 7px;
   }
   .brand .feedstar-wordmark {
-    width: 112px;
-    height: 34px;
+    font-size: 34px;
   }
   .brand-caption {
     display: none;

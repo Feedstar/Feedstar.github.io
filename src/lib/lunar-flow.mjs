@@ -4,8 +4,10 @@ export const lunarTiming = {
   erosionScale: 1.8,
   gatherStart: 0.5,
   gatherEnd: 0.83,
-  handoffStart: 0.87,
-  handoffEnd: 0.97,
+  // Reveal the real strokes while grains are still arriving. Never hold a
+  // fully assembled point-cloud facsimile before revealing readable text.
+  handoffStart: 0.72,
+  handoffEnd: 0.92,
 };
 export const arrivalOpacity = (progress) =>
   smoothstep(lunarTiming.handoffStart, lunarTiming.handoffEnd, progress);
