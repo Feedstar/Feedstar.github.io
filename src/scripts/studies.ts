@@ -233,6 +233,7 @@ export function createStudies() {
       dirty = true;
       const w = host.clientWidth,
         h = host.clientHeight;
+      if (!w || !h) return;
       renderer.setPixelRatio(previewPixelRatio(w, h, devicePixelRatio));
       renderer.setSize(w, h, false);
       camera.aspect = w / h;

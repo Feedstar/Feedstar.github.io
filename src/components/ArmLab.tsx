@@ -23,13 +23,18 @@ const deg = (value: number) => (value * 180) / Math.PI;
 const fmt = (value: number | undefined, digits = 3) =>
   value === undefined ? '—' : value.toFixed(digits);
 
-export default function ArmLab() {
+export default function ArmLab({
+  lesson,
+  number,
+}: {
+  lesson: ArmLesson;
+  number: string;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const worker = useRef<Worker | null>(null),
     view = useRef<ReturnType<typeof createArmView> | null>(null);
   const history = useRef<Sample[]>([]),
     latest = useRef<ArmState | null>(null);
-  const [lesson, setLesson] = useState<ArmLesson>('model');
   const [model, setModel] = useState<ArmReady | null>(null),
     [state, setState] = useState<ArmState | null>(null);
   const [status, setStatus] = useState('准备实验环境…'),
@@ -169,14 +174,13 @@ export default function ArmLab() {
     history.current = [];
     send({ type: 'reset' });
   };
-  const selectLesson = (next: ArmLesson) => {
-    setLesson(next);
+  useEffect(() => {
     setCopied(false);
-    if (next === 'contact') {
+    if (lesson === 'contact') {
       setSettings({ ...armDefaults });
       reset();
     }
-  };
+  }, [lesson]);
   const setPose = (pose: keyof typeof armPoses) =>
     setTargets([...armPoses[pose]]);
   const sensor = (name: string) => {
@@ -243,26 +247,6 @@ export default function ArmLab() {
 
   return (
     <div className="arm-lab">
-      <div className="arm-tabs" aria-label="学习章节">
-        {armLessons.map((entry, index) => (
-          <button
-            key={entry.id}
-            aria-pressed={lesson === entry.id}
-            onClick={() => selectLesson(entry.id)}
-          >
-            <span>0{index + 1}</span>
-            {entry.label}
-            <i aria-hidden="true">↗</i>
-          </button>
-        ))}
-      </div>
-      <div className="arm-lesson-intro">
-        <div>
-          <p className="eyebrow">ONE MODEL / FOUR WAYS TO UNDERSTAND</p>
-          <h2>{currentLesson.title}</h2>
-        </div>
-        <p>{currentLesson.description}</p>
-      </div>
       <div className="arm-workspace">
         <div className="arm-viewport">
           <canvas
@@ -327,16 +311,7 @@ export default function ArmLab() {
                     ? 'STATE OBSERVER'
                     : 'CONTACT STUDY'}
             </span>
-            <span className="arm-panel-count">
-              {lesson === 'model'
-                ? '01'
-                : lesson === 'control'
-                  ? '02'
-                  : lesson === 'sensors'
-                    ? '03'
-                    : '04'}{' '}
-              / 04
-            </span>
+            <span className="arm-panel-count">{number} / 07</span>
           </div>
           {(lesson === 'model' || lesson === 'sensors') && (
             <>
@@ -524,7 +499,7 @@ export default function ArmLab() {
           {lesson === 'contact' && (
             <>
               <p className="arm-panel-note">
-                每一步稳定后再继续。进入本章会重置方块，暂停时可用单步观察。
+                每一步稳定后再继续。进入本实验会重置方块，暂停时可用单步观察。
               </p>
               <div className="arm-grasp-actions">
                 <button
@@ -835,7 +810,7 @@ export default function ArmLab() {
             Python 实现。
             <br />
             解压后执行 <code>python -m pip install mujoco</code>，再执行{' '}
-            <code>python arm.py --example contact</code>。
+            <code>python arm.py --example {lesson}</code>。
           </p>
           <a
             href="https://github.com/Feedstar/Feedstar.github.io/tree/main/public/examples"

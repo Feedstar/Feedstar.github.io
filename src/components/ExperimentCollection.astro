@@ -1,0 +1,146 @@
+---
+import ProjectArt from './ProjectArt.astro';
+import ArmDiagram from './ArmDiagram.astro';
+import { experimentCatalog, experimentHref } from '../lib/experiment-catalog';
+import '../styles/experiment-collection.css';
+const first = experimentCatalog[0];
+---
+
+<div class="experiment-collection" data-experiment-collection>
+  <header class="collection-heading" data-reveal>
+    <div>
+      <p class="eyebrow">SEVEN STUDIES / ONE LABORATORY</p>
+      <h2>MuJoCo 实验集</h2>
+    </div>
+    <p>
+      01—03 看清基础现象 <span aria-hidden="true">→</span>
+      <br class="collection-mobile-break" /> 04—07 在机械臂上综合观察
+    </p>
+  </header>
+  <div class="collection-layout">
+    <article class="study-card collection-preview">
+      <a
+        class="study-window collection-window"
+        href={experimentHref(first.id)}
+        data-preview-link
+        aria-label={`运行实验 ${first.number}：${first.title}`}
+      >
+        {experimentCatalog
+          .filter((entry) => entry.kind === 'basic')
+          .map((entry) => (
+            <div
+              class="collection-art"
+              data-preview-art={entry.id}
+              data-study={entry.example}
+              hidden={entry.id !== first.id}
+            >
+              <div class="study-art-fallback" aria-hidden="true">
+                <ProjectArt kind={entry.example} />
+              </div>
+              <canvas class="study-canvas" aria-hidden="true"></canvas>
+            </div>
+          ))}
+        <div
+          class="collection-art collection-arm"
+          data-preview-art="arm"
+          hidden
+          aria-hidden="true"
+        >
+          <ArmDiagram />
+        </div>
+        <div class="study-topline">
+          <span data-preview-number>EXPERIMENT {first.number} / 07</span>
+          <span>MUJOCO</span>
+        </div>
+        <div class="collection-preview-copy">
+          <p data-preview-english>{first.english}</p>
+          <h3 data-preview-title>{first.title}</h3>
+          <span>
+            运行实验 <i aria-hidden="true">↗</i>
+          </span>
+        </div>
+      </a>
+      <p class="collection-preview-note">
+        <span>动手调节，在运动中理解。</span>
+        <span>在线运行 · 观察说明 · 源码</span>
+      </p>
+    </article>
+    <nav class="collection-directory" aria-label="七项 MuJoCo 实验">
+      {experimentCatalog.map((entry) => (
+        <a
+          href={experimentHref(entry.id)}
+          class="collection-entry"
+          data-experiment-id={entry.id}
+          data-preview-selected={entry.id === first.id ? 'true' : undefined}
+        >
+          <span class="collection-number">{entry.number}</span>
+          <div>
+            <div class="collection-entry-heading">
+              <h3>{entry.title}</h3>
+              <span>{entry.subject}</span>
+            </div>
+            <p>{entry.description}</p>
+          </div>
+          <span class="collection-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </a>
+      ))}
+    </nav>
+  </div>
+  <div class="collection-footer" data-reveal>
+    <p>
+      七次观察，一条从基础现象到完整模型的路径。可以按顺序探索，也可以从感兴趣的问题开始。
+    </p>
+    <a class="text-link" href={experimentHref(first.id)}>
+      从实验 01 开始 <span>↗</span>
+    </a>
+  </div>
+</div>
+<script>
+  import { createStudies } from '../scripts/studies';
+  import { experimentCatalog, experimentHref } from '../lib/experiment-catalog';
+  createStudies();
+  document
+    .querySelectorAll<HTMLElement>('[data-experiment-collection]')
+    .forEach((collection) => {
+      const entries = collection.querySelectorAll<HTMLAnchorElement>(
+        '[data-experiment-id]',
+      );
+      const art =
+        collection.querySelectorAll<HTMLElement>('[data-preview-art]');
+      const link = collection.querySelector<HTMLAnchorElement>(
+        '[data-preview-link]',
+      )!;
+      const setPreview = (anchor: HTMLAnchorElement) => {
+        const entry = experimentCatalog.find(
+          (item) => item.id === anchor.dataset.experimentId,
+        )!;
+        entries.forEach((row) =>
+          row.toggleAttribute('data-preview-selected', row === anchor),
+        );
+        art.forEach((panel) => {
+          panel.hidden =
+            panel.dataset.previewArt !==
+            (entry.kind === 'basic' ? entry.id : 'arm');
+        });
+        link.href = experimentHref(entry.id);
+        link.setAttribute(
+          'aria-label',
+          `运行实验 ${entry.number}：${entry.title}`,
+        );
+        collection.querySelector('[data-preview-number]')!.textContent =
+          `EXPERIMENT ${entry.number} / 07`;
+        collection.querySelector('[data-preview-english]')!.textContent =
+          entry.english;
+        collection.querySelector('[data-preview-title]')!.textContent =
+          entry.title;
+      };
+      entries.forEach((entry) => {
+        entry.addEventListener('pointerenter', (event) => {
+          if (event.pointerType !== 'touch') setPreview(entry);
+        });
+        entry.addEventListener('focus', () => setPreview(entry));
+      });
+    });
+</script>

@@ -16,9 +16,8 @@ type SimState = {
 };
 const defaults = { ...simulationParams };
 type NumericParam = Exclude<keyof typeof defaults, 'gravityComp'>;
-export default function Simulation() {
-  const [id, setId] = useState<ExampleId>('pendulum'),
-    [ready, setReady] = useState(false),
+export default function Simulation({ id }: { id: ExampleId }) {
+  const [ready, setReady] = useState(false),
     [error, setError] = useState(''),
     [playing, setPlaying] = useState(true),
     [version, setVersion] = useState(''),
@@ -39,10 +38,6 @@ export default function Simulation() {
     latestParams = useRef(params),
     playingRef = useRef(playing);
   const [xmlOpen, setXmlOpen] = useState(false);
-  useEffect(() => {
-    const q = new URLSearchParams(location.search).get('example');
-    if (q && q in examples) setId(q as ExampleId);
-  }, []);
   useEffect(() => {
     const el = canvas.current;
     if (!el) return;
@@ -316,15 +311,6 @@ export default function Simulation() {
       worker.current?.postMessage({ type: 'reset' });
     }
   };
-  const select = (next: ExampleId) => {
-    latestParams.current = defaults;
-    setParams(defaults);
-    setPlaying(true);
-    setId(next);
-    const url = new URL(location.href);
-    url.searchParams.set('example', next);
-    window.history.replaceState(null, '', url);
-  };
   const reset = () => {
     history.current = [];
     worker.current?.postMessage({ type: 'reset' });
@@ -333,27 +319,6 @@ export default function Simulation() {
   const sliderProps = { params, ready, change };
   return (
     <div className="simulation-app">
-      <div className="experiment-tabs" role="group" aria-label="选择实验">
-        {Object.values(examples).map((e) => (
-          <button
-            key={e.id}
-            aria-pressed={id === e.id}
-            onClick={() => select(e.id)}
-          >
-            <span>{e.number}</span>
-            {e.id === 'pendulum'
-              ? '关节与阻尼'
-              : e.id === 'actuator'
-                ? 'PD 位置控制'
-                : '接触与摩擦'}
-          </button>
-        ))}
-      </div>
-      <div className="experiment-intro">
-        <p className="eyebrow">{example.subtitle}</p>
-        <h2>{example.title}</h2>
-        <p>{example.description}</p>
-      </div>
       <div className="experiment-workspace">
         <div className="simulation-view">
           <canvas
@@ -369,7 +334,7 @@ export default function Simulation() {
                   ? `MuJoCo ${version}`
                   : '正在准备实验引擎…'}
             </span>
-            <span>STUDY {example.number}</span>
+            <span>EXPERIMENT {example.number.slice(-2)} / 07</span>
           </div>
           <div className="view-bottom">
             <span>

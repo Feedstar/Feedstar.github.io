@@ -1,8 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Moon from '../components/Moon.astro';
-import StudyCard from '../components/StudyCard.astro';
-import ArmSeries from '../components/ArmSeries.astro';
+import ExperimentCollection from '../components/ExperimentCollection.astro';
 import { getCollection } from 'astro:content';
 const posts = (await getCollection('journal')).sort((a, b) =>
   a.data.number.localeCompare(b.data.number),
@@ -101,40 +100,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
           </div>
         </div>
       </div>
-      <StudyCard
-        kind="pendulum"
-        number="01"
-        english="The shape of time"
-        title="时间的形状。"
-        description="放开一枚摆，观察阻尼如何让运动慢慢安静。"
-        tags={['关节动力学', '阻尼', '能量']}
-      />
-      <div class="study-duet">
-        <StudyCard
-          kind="actuator"
-          number="02"
-          english="A quiet pursuit"
-          title="向目标靠近。"
-          description="目标、误差与响应，在一段运动里变得具体。"
-          tags={['位置执行器', '控制', '响应']}
-        />
-        <StudyCard
-          kind="contact"
-          number="03"
-          english="Where things meet"
-          title="接触的地方。"
-          description="让一个方块滑行，看见摩擦留下的痕迹。"
-          tags={['接触', '摩擦', '滑动']}
-        />
-      </div>
-      <div class="field-outro" data-reveal>
-        <span>THINK. OBSERVE. UNDERSTAND.</span>
-        <p>每个示例都有可运行的实验、解释与源码。</p>
-        <a href="/lab/" class="pill-link">
-          亲手试一次 <span>↗</span>
-        </a>
-      </div>
-      <ArmSeries />
+      <ExperimentCollection />
     </div>
   </section>
   <section class="notes-chapter" data-chapter="notes">

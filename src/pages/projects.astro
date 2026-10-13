@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import StudyCard from '../components/StudyCard.astro';
-import ArmSeries from '../components/ArmSeries.astro';
+import ExperimentCollection from '../components/ExperimentCollection.astro';
 ---
 
 <Layout title="探索 · Feedstar" page="projects">
@@ -20,33 +19,7 @@ import ArmSeries from '../components/ArmSeries.astro';
   </div>
   <section class="portfolio-field project-archive">
     <div class="wrap">
-      <ArmSeries />
-      <StudyCard
-        kind="pendulum"
-        number="01"
-        english="The shape of time"
-        title="时间的形状。"
-        description="放开一枚摆，观察阻尼如何让运动慢慢安静。"
-        tags={['关节动力学', '阻尼', '能量']}
-      />
-      <div class="study-duet">
-        <StudyCard
-          kind="actuator"
-          number="02"
-          english="A quiet pursuit"
-          title="向目标靠近。"
-          description="目标、误差与响应，在一段运动里变得具体。"
-          tags={['位置执行器', '控制', '响应']}
-        />
-        <StudyCard
-          kind="contact"
-          number="03"
-          english="Where things meet"
-          title="接触的地方。"
-          description="让一个方块滑行，看见摩擦留下的痕迹。"
-          tags={['接触', '摩擦', '滑动']}
-        />
-      </div>
+      <ExperimentCollection />
     </div>
   </section>
 </Layout>
