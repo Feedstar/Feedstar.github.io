@@ -52,19 +52,21 @@ uniform float uProgress, uTime, uDpr;
 uniform vec2 uViewport, uPointer;
 attribute vec4 aFlow;
 attribute vec3 aTarget, aTargetColor;
-varying float vAlpha, vLight, vGather;
-varying vec2 vUv;
+attribute vec2 aInkUv;
+varying float vAlpha, vLight, vGather, vInk, vFootprint;
+varying vec2 vUv, vInkUv;
 varying vec3 vTargetColor;
 ${lunarFlowGLSL}
 void main(){
   float seed=aFlow.x;
   float release=releaseAt(aFlow.w,uProgress,aFlow.z);
   float gather=gatherAt(uProgress,seed);
-  float handoff=handoffAt(uProgress);
+  float ink=inkAt(uProgress,seed,gather);
+  vInk=ink; vInkUv=aInkUv;
   // Surface grains that have not been released contribute no visible pixels.
   // Skip their wind, lighting and texture work until they actually enter.
   if(release<=0. && gather<=0.){
-    vAlpha=0.; vLight=0.; vGather=0.; vUv=uv; vTargetColor=aTargetColor;
+    vAlpha=0.; vLight=0.; vGather=0.; vFootprint=1.; vUv=uv; vTargetColor=aTargetColor;
     gl_Position=vec4(2.,2.,2.,1.); gl_PointSize=1.; return;
   }
   float lifeAlpha;
@@ -78,7 +80,7 @@ void main(){
   float band=.76+.24*pow(.5+.5*sin(position.y*13.+seed),2.);
   float poleFade=1.-smoothstep(.78,.995,abs(position.y));
   float flowing=release*lifeAlpha*(.35+seed*.46)*band*poleFade;
-  vAlpha=mix(flowing,.42+aFlow.y*.2,gather)*(1.-handoff);
+  vAlpha=mix(mix(flowing,.42+aFlow.y*.2,gather),1.,ink);
   vLight=.56+.4*pow(max(0.,dot(normalize(position),normalize(vec3(.75,.35,1.8)))),.5);
   vGather=gather; vTargetColor=aTargetColor; vUv=uv;
   gl_Position=projectionMatrix*mv;
@@ -87,16 +89,19 @@ void main(){
   float distance=length(delta);
   float influence=pow(1.-smoothstep(0.,110.,distance),2.)*(1.-gather);
   gl_Position.xy+=delta/max(1.,distance)*influence*10./uViewport*2.*gl_Position.w;
-  // Keep individually varied grains; they get finer as continuous type takes
-  // over instead of inflating into equally sized pixels on the letter strokes.
-  float grainSize=mix(.85+pow(aFlow.y,3.)*.9,1.15+aFlow.y*.55,gather)*(1.-handoff*.35);
-  gl_PointSize=clamp(grainSize*uDpr*(5./-mv.z),.65,2.8);
+  // Each arriving grain opens into its own small piece of the glyph. Their
+  // overlapping, rounded footprints physically close the spaces in a stroke.
+  float grainSize=mix(.85+pow(aFlow.y,3.)*.9,1.15+aFlow.y*.55,gather);
+  float airborneSize=clamp(grainSize*(5./-mv.z),.65/uDpr,2.8/uDpr);
+  vFootprint=mix(airborneSize,5.5,ink);
+  gl_PointSize=vFootprint*uDpr;
 }`;
 export const flowFragment = `
-uniform sampler2D uTexture;
+uniform sampler2D uTexture, uInk;
 uniform float uSpin, uPaper;
-varying float vAlpha, vLight, vGather;
-varying vec2 vUv;
+uniform vec2 uViewport;
+varying float vAlpha, vLight, vGather, vInk, vFootprint;
+varying vec2 vUv, vInkUv;
 varying vec3 vTargetColor;
 void main(){
   if(vAlpha<=0.) discard;
@@ -107,5 +112,26 @@ void main(){
   vec3 milk=vec3(.96,.95,.91)*(.4+.6*pow(lum,.75))*vLight;
   vec3 color=mix(milk,vec3(.35,.34,.32),uPaper);
   color=mix(color,vTargetColor,vGather);
-  gl_FragColor=vec4(color,vAlpha*(1.-smoothstep(.10,.5,r)));
+  float grain=1.-smoothstep(.10,.5,r);
+  if(vInk<=0.){ gl_FragColor=vec4(color,vAlpha*grain); return; }
+  float footprint=1.-smoothstep(.34,.5,r);
+  vec2 offset=(gl_PointCoord-.5)*vec2(1.,-1.)*vFootprint/uViewport;
+  // The fragment's ink cutout travels WITH this particle. It is not a static
+  // text overlay. The final composite restores only the subpixel antialiasing.
+  float ink=step(.001,texture2D(uInk,vInkUv+offset).a);
+  gl_FragColor=vec4(color,vAlpha*mix(grain,footprint*ink,smoothstep(0.,.35,vInk)));
+}`;
+
+export const inkCompositeFragment = `
+uniform sampler2D uDust, uInk;
+uniform float uProgress;
+varying vec2 vUv;
+void main(){
+  vec4 dust=texture2D(uDust,vUv);
+  vec4 ink=texture2D(uInk,vUv);
+  // Coverage comes exclusively from moving/growing particles. The glyph mask
+  // supplies edge antialiasing and color, never fills an unoccupied pixel.
+  float seal=smoothstep(${lunarTiming.gatherEnd + 0.03},${lunarTiming.inkEnd},uProgress);
+  vec4 joined=vec4(ink.rgb,1.)*(dust.a*ink.a);
+  gl_FragColor=mix(dust,joined,seal);
 }`;

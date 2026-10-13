@@ -483,6 +483,12 @@ main {
   color: var(--muted);
   margin: 0;
 }
+/* Give Chinese runs a CJK primary face in both DOM and canvas. Mixed Latin
+   fallback metrics otherwise shift the small strokes at the final handoff. */
+.arrival .arrival-bottom p,
+.arrival .pill-link > span:first-child {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
 /* The light gallery is a deliberate change in material, scale and pace. */
 .portfolio-field {
   --fg: #27252c;

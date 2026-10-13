@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { erosionThreshold, clamp, smoothstep } from '../lib/erosion.mjs';
 import { arrivalOpacity, lunarNotch, lunarTiming } from '../lib/lunar-flow.mjs';
+import { inkAssignment } from '../lib/ink-samples.mjs';
 import { sampleArrival } from './particle-targets';
 import {
   surfaceVertex,
   surfaceFragment,
   flowVertex,
   flowFragment,
+  inkCompositeFragment,
 } from './lunar-shaders';
 import { settle } from '../lib/motion.mjs';
 import { createPreviewLoop } from '../lib/preview-loop.mjs';
@@ -64,6 +66,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     uViewport: { value: new THREE.Vector2(1, 1) },
     uPointer: { value: new THREE.Vector2(-1000, -1000) },
     uMoon: { value: new THREE.Vector3(0, 0, 1) },
+    uInk: { value: new THREE.Texture() },
   };
   const surface = new THREE.ShaderMaterial({
     uniforms,
@@ -85,6 +88,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const flow = new Float32Array(count * 4);
   const targets = new Float32Array(count * 3);
   const targetColors = new Float32Array(count * 3);
+  const inkUvs = new Float32Array(count * 2);
   for (let i = 0; i < count; i++) {
     const random = (n: number) => {
       const value = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
@@ -118,8 +122,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
   geometry.setAttribute('aFlow', new THREE.BufferAttribute(flow, 4));
   const targetAttribute = new THREE.BufferAttribute(targets, 3);
   const colorAttribute = new THREE.BufferAttribute(targetColors, 3);
+  const inkUvAttribute = new THREE.BufferAttribute(inkUvs, 2);
   geometry.setAttribute('aTarget', targetAttribute);
   geometry.setAttribute('aTargetColor', colorAttribute);
+  geometry.setAttribute('aInkUv', inkUvAttribute);
   const material = new THREE.ShaderMaterial({
     uniforms,
     transparent: true,
@@ -162,6 +168,32 @@ export function createMoon(canvas: HTMLCanvasElement) {
   mist.frustumCulled = false;
   mist.renderOrder = 2;
   scene.add(mist);
+  // During assembly, accumulate the SAME particle pool into a coverage buffer.
+  // A final mask restores crisp glyph edges after the footprints have merged.
+  // No fullscreen text is drawn into empty space and no extra particles run.
+  const inkScene = new THREE.Scene();
+  const inkGroup = new THREE.Group();
+  const inkPoints = new THREE.Points(geometry, material);
+  inkPoints.frustumCulled = false;
+  inkGroup.add(inkPoints);
+  inkScene.add(inkGroup);
+  const inkTarget = new THREE.WebGLRenderTarget(1, 1, {
+    depthBuffer: false,
+    stencilBuffer: false,
+  });
+  const inkMaterial = new THREE.ShaderMaterial({
+    uniforms: { ...uniforms, uDust: { value: inkTarget.texture } },
+    transparent: true,
+    premultipliedAlpha: true,
+    depthWrite: false,
+    depthTest: false,
+    vertexShader: mistVertex,
+    fragmentShader: inkCompositeFragment,
+  });
+  const inkLayer = new THREE.Mesh(mistPlane.geometry, inkMaterial);
+  inkLayer.frustumCulled = false;
+  inkLayer.renderOrder = 1;
+  scene.add(inkLayer);
   // Keep the erosion contour in the image plane; the wind sets the tail angle.
   // The lunar texture continues rotating independently through uSpin.
   group.rotation.set(0, 0, 0);
@@ -172,6 +204,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
     const w = host.clientWidth,
       h = host.clientHeight;
     renderer.setSize(w, h, false);
+    inkTarget.setSize(
+      Math.floor(w * renderer.getPixelRatio()),
+      Math.floor(h * renderer.getPixelRatio()),
+    );
     const mistSize = mistBufferSize(w, h, renderer.getPixelRatio());
     mistTarget.setSize(mistSize.width, mistSize.height);
     canvas.dataset.mistPixels = String(mistSize.width * mistSize.height);
@@ -189,28 +225,37 @@ export function createMoon(canvas: HTMLCanvasElement) {
       mobile ? viewH * 0.22 : viewH * 0.01,
       0,
     );
+    inkGroup.position.copy(group.position);
+    inkGroup.scale.copy(group.scale);
     const moonX = (0.5 + group.position.x / viewW) * w;
     const moonY = (0.5 - group.position.y / viewH) * h;
     const moonRadius = (radius / viewH) * h;
     uniforms.uMoon.value.set(moonX, h - moonY, moonRadius);
     uniforms.uViewport.value.set(w, h);
-    const samples = sampleArrival(arrival, host);
+    const { samples, mask } = sampleArrival(
+      arrival,
+      host,
+      renderer.getPixelRatio(),
+    );
+    uniforms.uInk.value.dispose();
+    const inkTexture = new THREE.CanvasTexture(mask);
+    inkTexture.generateMipmaps = false;
+    inkTexture.minFilter = THREE.LinearFilter;
+    uniforms.uInk.value = inkTexture;
     if (samples.length) {
+      const assignment = inkAssignment(samples.length, count);
       for (let i = 0; i < count; i++) {
-        const index = Math.floor(flow[i * 4 + 1] * samples.length);
-        const sample = samples[Math.min(index, samples.length - 1)];
+        const sample = samples[assignment[i]];
         targets.set(
-          [
-            ((sample.x + (flow[i * 4] - 0.5) * 0.6) / w - 0.5) * viewW,
-            (0.5 - (sample.y + positions[i * 3 + 1] * 0.3) / h) * viewH,
-            0,
-          ],
+          [(sample.x / w - 0.5) * viewW, (0.5 - sample.y / h) * viewH, 0],
           i * 3,
         );
         targetColors.set(sample.color, i * 3);
+        inkUvs.set([sample.x / w, 1 - sample.y / h], i * 2);
       }
       targetAttribute.needsUpdate = true;
       colorAttribute.needsUpdate = true;
+      inkUvAttribute.needsUpdate = true;
     }
     canvas.dataset.targetSamples = String(samples.length);
     wake();
@@ -238,7 +283,11 @@ export function createMoon(canvas: HTMLCanvasElement) {
         : count;
     geometry.setDrawRange(0, drawn);
     canvas.dataset.drawnParticles = String(drawn);
-    points.visible = reduced.matches || progress < lunarTiming.handoffEnd;
+    points.visible = reduced.matches || progress < lunarTiming.gatherStart;
+    inkLayer.visible =
+      !reduced.matches &&
+      progress >= lunarTiming.gatherStart &&
+      progress < lunarTiming.handoffEnd;
     sphere.visible = reduced.matches || progress < 0.51;
     mist.visible = reduced.matches || progress < 0.7;
     const introOpacity = 1 - smoothstep(0.08, 0.4, progress);
@@ -262,10 +311,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
       : '1';
     if (arrival) {
       arrival.inert =
-        progress < (reduced.matches ? 0.7 : lunarTiming.handoffEnd - 0.04);
+        progress < (reduced.matches ? 0.7 : lunarTiming.handoffEnd);
       arrival.setAttribute(
         'aria-hidden',
-        String(progress < (reduced.matches ? 0.55 : lunarTiming.handoffStart)),
+        String(progress < (reduced.matches ? 0.55 : lunarTiming.handoffEnd)),
       );
     }
     if (bottom) bottom.inert = progress > 0.43;
@@ -280,9 +329,11 @@ export function createMoon(canvas: HTMLCanvasElement) {
         ? 'moon'
         : progress < 0.5
           ? 'weathering'
-          : progress < lunarTiming.handoffStart
+          : progress < lunarTiming.inkStart
             ? 'gathering'
-            : 'content';
+            : progress < lunarTiming.handoffEnd
+              ? 'forming-ink'
+              : 'content';
     if (indicator) indicator.style.transform = `scaleY(${progress})`;
     host.dataset.active = String(active && visible);
   };
@@ -350,7 +401,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     } else {
       uniforms.uPointer.value.set(-1000, -1000);
     }
-    if (dirty || (!reduced.matches && progress < lunarTiming.handoffEnd)) {
+    if (dirty || (!reduced.matches && progress < lunarTiming.inkEnd)) {
       uniforms.uTime.value = reduced.matches ? 0 : ambientTime;
       uniforms.uPaper.value = Number(
         document.documentElement.dataset.theme === 'paper',
@@ -359,6 +410,11 @@ export function createMoon(canvas: HTMLCanvasElement) {
       if (mist.visible) {
         renderer.setRenderTarget(mistTarget);
         renderer.render(mistScene, camera);
+        renderer.setRenderTarget(null);
+      }
+      if (inkLayer.visible) {
+        renderer.setRenderTarget(inkTarget);
+        renderer.render(inkScene, camera);
         renderer.setRenderTarget(null);
       }
       renderer.render(scene, camera);
@@ -383,7 +439,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     const settling =
       Math.abs(progress - targetProgress) > 0.00001 ||
       Math.abs(velocity) > 0.00001;
-    if (reduced.matches || (progress >= lunarTiming.handoffEnd && !settling))
+    if (reduced.matches || (progress >= lunarTiming.inkEnd && !settling))
       loop.remove(draw);
   };
   wake = () => {
@@ -415,7 +471,29 @@ export function createMoon(canvas: HTMLCanvasElement) {
   };
   document.fonts.ready.then(onFonts);
   document.fonts.addEventListener('loadingdone', onFonts);
-  const themeObserver = new MutationObserver(resize);
+  let themeRevision = 0;
+  const themeObserver = new MutationObserver(() => {
+    resize();
+    const revision = ++themeRevision;
+    // Pointer-light text also transitions color on a theme change. Re-sample
+    // once those transitions settle rather than freezing an intermediate ink.
+    const colors = arrival
+      .getAnimations({ subtree: true })
+      .filter(
+        (animation) =>
+          'transitionProperty' in animation &&
+          ['color', 'border-color', 'border-top-color'].includes(
+            String(animation.transitionProperty),
+          ),
+      );
+    if (colors.length) {
+      Promise.allSettled(colors.map((animation) => animation.finished)).then(
+        () => {
+          if (!disposed && revision === themeRevision) resize();
+        },
+      );
+    }
+  });
   themeObserver.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme'],
@@ -449,6 +527,9 @@ export function createMoon(canvas: HTMLCanvasElement) {
     mistMaterial.dispose();
     mistComposite.dispose();
     mistTarget.dispose();
+    inkTarget.dispose();
+    inkMaterial.dispose();
+    uniforms.uInk.value.dispose();
     texture.dispose();
     renderer.dispose();
   };

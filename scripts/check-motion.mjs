@@ -4,7 +4,7 @@ import {
   arrivalOpacity,
   lunarTiming,
 } from '../src/lib/lunar-flow.mjs';
-import { sampleInk } from '../src/lib/ink-samples.mjs';
+import { sampleInk, inkAssignment } from '../src/lib/ink-samples.mjs';
 import { settle, titleSpring } from '../src/lib/motion.mjs';
 import { mistBufferSize } from '../src/lib/lunar-render.mjs';
 import {
@@ -282,16 +282,24 @@ assert(
   tailRatio > 0.55 && tailRatio < 0.8,
   'The reference-shaped plume must retain a broad fan while gradually tapering.',
 );
+const forming = states(0.82);
 assert(
-  states(lunarTiming.handoffStart + 0.04).some((s) => s.gather < 0.98),
-  'Readable strokes must appear while particles are still gathering, without a static dot-matrix hold.',
+  forming.some((s) => s.ink > 0.4) && forming.some((s) => s.ink < 0.1),
+  'Footprints should join locally, with different regions still in flight.',
 );
-assert(arrivalOpacity(lunarTiming.handoffStart + 0.04) > 0);
+for (const p of [0.72, 0.8, 0.86, 0.91, lunarTiming.handoffEnd - 1e-5]) {
+  assert.equal(
+    arrivalOpacity(p),
+    0,
+    'HTML must never supply the forming strokes through an opacity fade.',
+  );
+}
 assert(
-  arrivalOpacity(lunarTiming.gatherEnd + 0.03) > 0.75,
-  'Continuous HTML strokes must dominate by the time the last grains settle.',
+  states(lunarTiming.inkEnd).every(
+    (s) => s.ink === 1 && s.gather === 1 && s.alpha === 1,
+  ),
+  'All particle footprints must fully connect before HTML takes over.',
 );
-assert.equal(arrivalOpacity(lunarTiming.handoffStart), 0);
 assert(
   states(lunarTiming.handoffEnd).every((s) => s.alpha === 0),
   'The complete HTML must have no competing particle overlay.',
@@ -309,8 +317,8 @@ console.log(
 );
 console.table(stages);
 
-// Sample an opaque patch, a half-covered edge and empty background. All pixel
-// parities must participate: the old two-pixel lattice fails this regression.
+// Thin, partially covered strokes also need a seed. All pixel parities must
+// participate; a balanced assignment must leave no ink seed unoccupied.
 const ink = new Uint8ClampedArray(32 * 24 * 4);
 for (let y = 0; y < 24; y++) {
   for (let x = 0; x < 24; x++) {
@@ -339,10 +347,37 @@ assert.equal(
   4,
 );
 const edgeCount = inkPoints.filter((p) => p.x >= 16).length;
-assert(
-  edgeCount > 65 && edgeCount < 125,
-  'Anti-aliased edges should carry proportionally fewer particles.',
+assert.equal(
+  edgeCount,
+  8 * 24,
+  'Every antialiased hairline must retain a particle seed.',
 );
+const assigned = inkAssignment(inkPoints.length, 2400);
+assert.deepEqual(assigned, inkAssignment(inkPoints.length, 2400));
+assert.equal(
+  new Set(assigned).size,
+  inkPoints.length,
+  'No target pixel may be missed by random duplicates.',
+);
+const visits = Array(inkPoints.length).fill(0);
+for (const i of assigned) visits[i]++;
+assert(
+  Math.max(...visits) - Math.min(...visits) <= 1,
+  'Ink occupancy must be balanced.',
+);
+// A settled footprint is opaque through radius 5.5 * .34. Each pixel's entire
+// area lies inside its own jittered seed's footprint, not just its center.
+for (const p of inkPoints) {
+  const x = Math.floor(p.x),
+    y = Math.floor(p.y);
+  for (const dx of [0, 1])
+    for (const dy of [0, 1]) {
+      assert(
+        Math.hypot(p.x - x - dx, p.y - y - dy) < 5.5 * 0.34,
+        'The complete glyph must be covered before switching to HTML.',
+      );
+    }
+}
 console.log(
-  'PASS: irregular subpixel targets, coverage-weighted edges and an overlapping particle-to-type handoff.',
+  'PASS: irregular ink seeds, complete stroke coverage, local footprint fusion and no HTML fade.',
 );

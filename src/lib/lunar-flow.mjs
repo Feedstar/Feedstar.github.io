@@ -4,13 +4,21 @@ export const lunarTiming = {
   erosionScale: 1.8,
   gatherStart: 0.5,
   gatherEnd: 0.83,
-  // Reveal the real strokes while grains are still arriving. Never hold a
-  // fully assembled point-cloud facsimile before revealing readable text.
-  handoffStart: 0.72,
-  handoffEnd: 0.92,
+  inkStart: 0.7,
+  inkEnd: 0.91,
+  // Ink is formed entirely by the particles. HTML takes over only after the
+  // overlapping footprints have already reconstructed the complete strokes.
+  handoffEnd: 0.95,
 };
 export const arrivalOpacity = (progress) =>
-  smoothstep(lunarTiming.handoffStart, lunarTiming.handoffEnd, progress);
+  Number(progress >= lunarTiming.handoffEnd);
+
+export const inkFormation = (progress, seed, gather) =>
+  smoothstep(
+    lunarTiming.inkStart + seed * 0.07,
+    lunarTiming.inkEnd - 0.03 + seed * 0.03,
+    progress,
+  ) * smoothstep(0.9, 1, gather);
 
 // The opening is already weathered along the left limb. Use this contour both
 // for the surface cutaway and the airborne particles' origins.
@@ -64,6 +72,7 @@ export function lunarParticle(position, seed, progress, time, ambient = false) {
     release,
     lifeAlpha,
     gather,
+    ink: inkFormation(progress, seed, gather),
     alpha: 1 - arrivalOpacity(progress),
   };
 }
@@ -89,6 +98,6 @@ vec3 windPosition(vec3 p, float seed, float progress, float time, float release,
 float gatherAt(float progress, float seed) {
   return smoothstep(${lunarTiming.gatherStart}+seed*.10,${lunarTiming.gatherEnd}+seed*.03,progress);
 }
-float handoffAt(float progress) {
-  return smoothstep(${lunarTiming.handoffStart},${lunarTiming.handoffEnd},progress);
+float inkAt(float progress, float seed, float gather) {
+  return smoothstep(${lunarTiming.inkStart}+seed*.07,${lunarTiming.inkEnd - 0.03}+seed*.03,progress)*smoothstep(.9,1.,gather);
 }`;
