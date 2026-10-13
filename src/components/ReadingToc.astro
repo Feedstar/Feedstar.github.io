@@ -1,0 +1,241 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+const { headings } = Astro.props;
+const sections = [
+  { depth: 2, slug: 'article-start', text: '开篇' },
+  ...headings.filter((heading) => heading.depth === 2 || heading.depth === 3),
+];
+let chapter = 0;
+---
+
+<aside class="reading-sidebar">
+  <details class="reading-toc" open>
+    <summary>
+      <span class="toc-heading">
+        <span>
+          本文目录 <small>CONTENTS</small>
+        </span>
+        <span class="toc-chevron" aria-hidden="true">
+          ⌄
+        </span>
+      </span>
+      <span class="toc-position">
+        <span data-reading-current>开篇</span>
+        <span data-reading-percent>0%</span>
+      </span>
+      <span
+        class="toc-progress"
+        role="progressbar"
+        aria-label="阅读进度"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <span data-reading-fill></span>
+      </span>
+    </summary>
+    <nav aria-label="文章目录">
+      <ol class="toc-list">
+        {sections.map((heading, index) => (
+          <li class:list={{ 'toc-subheading': heading.depth === 3 }}>
+            <a
+              href={`#${heading.slug}`}
+              data-toc-target={heading.slug}
+              aria-current={index === 0 ? 'location' : undefined}
+            >
+              <span class="toc-number" aria-hidden="true">
+                {heading.depth === 2 ? String(chapter++).padStart(2, '0') : '·'}
+              </span>
+              <span>{heading.text}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+    <a class="toc-back" href="/journal/">
+      ← 全部手记
+    </a>
+  </details>
+</aside>
+
+<script>
+  import { createReadingToc } from '../scripts/reading-toc';
+  createReadingToc();
+</script>
+
+<style>
+  .reading-sidebar {
+    min-width: 0;
+  }
+  .reading-toc {
+    position: sticky;
+    top: 145px;
+    max-height: calc(100dvh - 172px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0 0 20px;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 5px;
+  }
+  .toc-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+  .toc-heading small {
+    margin-left: 10px;
+    font-size: 8px;
+    color: var(--subtle);
+    letter-spacing: 0.12em;
+  }
+  .toc-chevron {
+    color: var(--subtle);
+    transform: rotate(-90deg);
+  }
+  details[open] .toc-chevron {
+    transform: rotate(0);
+  }
+  .toc-position {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 17px;
+  }
+  [data-reading-current] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  [data-reading-percent] {
+    font-variant-numeric: tabular-nums;
+    flex: none;
+    color: var(--accent);
+  }
+  .toc-progress {
+    display: block;
+    height: 1px;
+    margin-top: 12px;
+    background: var(--line);
+  }
+  [data-reading-fill] {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .toc-list {
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid var(--line);
+  }
+  .toc-list a {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 10px 0 10px 15px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .toc-list a::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    border-radius: 3px;
+  }
+  .toc-list a[aria-current='location'] {
+    color: var(--fg-bright);
+  }
+  .toc-list a[aria-current='location']::before {
+    opacity: 1;
+  }
+  .toc-list a:hover {
+    color: var(--fg-bright);
+  }
+  .toc-number {
+    font-size: 9px;
+    padding-top: 3px;
+    color: var(--subtle);
+    font-variant-numeric: tabular-nums;
+  }
+  .toc-list a[aria-current='location'] .toc-number {
+    color: var(--accent);
+  }
+  .toc-subheading a {
+    padding-left: 28px;
+    font-size: 11px;
+  }
+  .toc-back {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--subtle);
+  }
+  @media (max-width: 1000px) {
+    .reading-sidebar {
+      position: sticky;
+      top: 106px;
+      z-index: 15;
+      margin: 0 -10px 32px;
+    }
+    .reading-toc {
+      position: relative;
+      top: auto;
+      max-height: calc(100dvh - 145px);
+      padding: 15px 16px 0;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 12px 28px color-mix(in srgb, var(--bg) 70%, transparent);
+    }
+    summary {
+      padding-bottom: 13px;
+    }
+    .toc-heading {
+      font-size: 11px;
+    }
+    .toc-position {
+      margin-top: 8px;
+    }
+    .toc-progress {
+      margin-top: 10px;
+    }
+    .toc-list {
+      margin-bottom: 15px;
+    }
+    .toc-back {
+      display: none;
+    }
+  }
+  @media (max-width: 650px) {
+    .reading-sidebar {
+      top: 76px;
+    }
+    .reading-toc {
+      max-height: calc(100dvh - 100px);
+    }
+  }
+</style>

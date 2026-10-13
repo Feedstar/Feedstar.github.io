@@ -58,7 +58,7 @@ export function createTitleMotion() {
     wake();
   };
   const selector =
-    '.hero-english, .hero-chinese, .field-title h2, .notes-heading h2, .arrival h2, .page-intro h1, .article-header h1, .footer-statement';
+    '.hero-english, .hero-chinese, .field-title h2, .notes-heading h2, .arrival h2, .page-intro h1, .article-header h1';
   for (const title of document.querySelectorAll<HTMLElement>(selector)) {
     const accessibleText = title.textContent?.replace(/\s+/g, ' ').trim() ?? '';
     const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT);

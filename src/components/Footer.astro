@@ -1,0 +1,402 @@
+---
+import { getCollection } from 'astro:content';
+import Wordmark from './Wordmark.astro';
+import { experimentCatalog, experimentHref } from '../lib/experiment-catalog';
+
+const posts = (await getCollection('journal')).sort((a, b) =>
+  b.data.number.localeCompare(a.data.number),
+);
+const latest = posts.slice(0, 3);
+const experiments = experimentCatalog.filter((entry) => entry.kind === 'arm');
+---
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-columns">
+      <section class="footer-identity" aria-label="关于 Feedstar">
+        <a class="footer-brand" href="/" aria-label="Feedstar 首页">
+          <Wordmark />
+        </a>
+        <p class="footer-motto">在微小的实验里，理解世界。</p>
+        <p class="footer-description">
+          学习、仿真与沿途的思考。
+          <br />
+          把好奇写成手记，让想法发生一次。
+        </p>
+        <a
+          class="footer-github"
+          href="https://github.com/Feedstar"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+        <div class="footer-stats">
+          <a href="/journal/">
+            <strong>{String(posts.length).padStart(2, '0')}</strong> 篇手记
+          </a>
+          <a href="/projects/">
+            <strong>{String(experimentCatalog.length).padStart(2, '0')}</strong>{' '}
+            个实验
+          </a>
+          <span>
+            <i aria-hidden="true"></i>持续探索
+          </span>
+        </div>
+      </section>
+
+      <section class="footer-column" aria-labelledby="footer-notes">
+        <h2 id="footer-notes">
+          <span>01</span> 最新手记
+        </h2>
+        <ul class="footer-notes">
+          {latest.map((post) => (
+            <li>
+              <a href={`/journal/${post.id}/`}>
+                <span class="footer-note-title">{post.data.title}</span>
+                <span class="footer-note-meta">
+                  {post.data.number} / {post.data.category}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a class="footer-more" href="/journal/">
+          全部手记 <span aria-hidden="true">↗</span>
+        </a>
+      </section>
+
+      <section class="footer-column" aria-labelledby="footer-labs">
+        <h2 id="footer-labs">
+          <span>02</span> 在实验中理解
+        </h2>
+        <ul class="footer-experiments">
+          {experiments.map((entry) => (
+            <li>
+              <a href={experimentHref(entry.id)}>
+                <span>{entry.number}</span>
+                {entry.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a class="footer-more" href="/projects/">
+          探索全部实验 <span aria-hidden="true">↗</span>
+        </a>
+      </section>
+
+      <nav class="footer-column" aria-labelledby="footer-navigation">
+        <h2 id="footer-navigation">
+          <span>03</span> 站内漫游
+        </h2>
+        <ul class="footer-navigation">
+          <li>
+            <a href="/">首页</a>
+          </li>
+          <li>
+            <a href="/projects/">探索</a>
+          </li>
+          <li>
+            <a href="/journal/">手记</a>
+          </li>
+          <li>
+            <a href="/lab/">实验室</a>
+          </li>
+          <li>
+            <a href="/about/">关于</a>
+          </li>
+        </ul>
+        <a
+          class="footer-more"
+          href="https://github.com/Feedstar/Feedstar.github.io"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          网站源码 <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="footer-colophon">
+      <div>
+        <p>
+          © {new Date().getFullYear()} Feedstar{' '}
+          <span class="footer-divider">/</span> 记录 · 理解 · 再出发
+        </p>
+        <p class="footer-signature">
+          A PERSONAL OBSERVATORY <span aria-hidden="true">✧</span>{' '}
+          保持好奇，让微光继续。
+        </p>
+      </div>
+      <button class="back-top" aria-label="回到顶部" title="回到顶部">
+        ↑
+      </button>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    position: relative;
+    z-index: 2;
+    padding: 66px 4.4% 26px;
+    overflow: hidden;
+    color: #ddd8d0;
+    background: #191919;
+    --fg: #ddd8d0;
+    --fg-bright: #fffaf2;
+    --muted: #a7a19a;
+    --accent: #c5af8d;
+    --line: #d9c6a720;
+    --liquid-ink: #191919;
+    --text-glow: #e4c69724;
+  }
+  .site-footer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(#c5af8d1a 0.6px, transparent 0.6px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(120deg, #000, transparent 66%);
+  }
+  .site-footer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #ac815b99, #b8a89840 48%, #738aa299);
+  }
+  .footer-inner {
+    position: relative;
+    max-width: 1180px;
+    margin: auto;
+  }
+  .footer-columns {
+    display: grid;
+    grid-template-columns: 1.4fr 1.18fr 1fr 0.72fr;
+    gap: 5%;
+  }
+  .footer-brand {
+    display: block;
+    width: 184px;
+    margin: -12px 0 18px;
+  }
+  .footer-motto {
+    margin: 0 0 12px;
+    font: 15px/1.8 var(--serif);
+  }
+  .footer-description {
+    margin: 0 0 19px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 2;
+  }
+  .footer-github {
+    display: inline-flex;
+    gap: 25px;
+    border: 1px solid var(--line);
+    border-radius: 30px;
+    padding: 2px 13px;
+    font-size: 11px;
+  }
+  .footer-github:hover {
+    border-color: var(--accent);
+  }
+  .footer-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-top: 23px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .footer-stats strong {
+    font: 500 21px/1 var(--roman);
+    color: var(--accent);
+    margin-right: 3px;
+  }
+  .footer-stats i {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #b1bca6;
+    margin: 0 6px 2px 0;
+  }
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 11px/1.5 var(--sans);
+    letter-spacing: 0.08em;
+    margin: 0 0 26px;
+    color: #c9c0b5;
+  }
+  h2::before {
+    content: '';
+    height: 9px;
+    width: 2px;
+    background: var(--accent);
+  }
+  h2 > span {
+    font-size: 9px;
+    letter-spacing: 0.03em;
+    color: #a99a88;
+  }
+  ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .footer-notes li + li {
+    margin-top: 16px;
+  }
+  .footer-note-title {
+    display: block;
+    font: 13px/1.9 var(--serif);
+  }
+  .footer-note-meta {
+    display: block;
+    margin-top: 3px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .footer-experiments {
+    display: grid;
+    gap: 15px;
+  }
+  .footer-experiments a {
+    display: flex;
+    gap: 13px;
+    align-items: center;
+    font: 13px/1.8 var(--serif);
+  }
+  .footer-experiments a > span {
+    font: 10px/1 var(--sans);
+    color: var(--muted);
+  }
+  .footer-navigation {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    font-size: 12px;
+  }
+  .footer-more {
+    display: inline-flex;
+    gap: 14px;
+    align-items: center;
+    margin-top: 26px;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .footer-colophon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    margin-top: 48px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .footer-colophon p {
+    margin: 0;
+  }
+  .footer-divider {
+    margin: 0 14px;
+    color: #827a70;
+  }
+  .footer-signature {
+    margin-top: 7px !important;
+    font-size: 9px;
+    letter-spacing: 0.07em;
+  }
+  .footer-signature span {
+    margin: 0 9px;
+    color: var(--accent);
+  }
+  .back-top {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: transparent;
+    font-size: 19px;
+  }
+  @media (max-width: 1050px) {
+    .footer-columns {
+      grid-template-columns: 1.25fr 1fr;
+      gap: 44px 10%;
+    }
+    .footer-navigation {
+      grid-template-columns: repeat(3, max-content);
+    }
+  }
+  @media (max-width: 650px) {
+    .site-footer {
+      padding: 44px 22px 24px;
+    }
+    .footer-columns {
+      grid-template-columns: 1fr 1fr;
+      gap: 34px 22px;
+    }
+    .footer-identity {
+      grid-column: 1 / -1;
+    }
+    .footer-brand {
+      width: 166px;
+    }
+    .footer-description br {
+      display: none;
+    }
+    .footer-stats {
+      gap: 28px;
+    }
+    .footer-column:nth-child(2) {
+      grid-column: 1 / -1;
+    }
+    .footer-notes li + li {
+      margin-top: 12px;
+    }
+    .footer-notes a {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .footer-note-title {
+      max-width: 70%;
+    }
+    .footer-note-meta {
+      flex: none;
+      font-size: 8px;
+    }
+    .footer-navigation {
+      grid-template-columns: 1fr 1fr;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    .footer-colophon {
+      margin-top: 32px;
+      font-size: 9px;
+      gap: 12px;
+    }
+    .footer-divider {
+      margin: 0 7px;
+    }
+    .footer-signature {
+      font-size: 8px;
+      letter-spacing: 0.015em;
+    }
+  }
+</style>

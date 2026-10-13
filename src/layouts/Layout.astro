@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Wordmark from '../components/Wordmark.astro';
+import Footer from '../components/Footer.astro';
 const {
   title = 'Feedstar · 微光与秩序',
   description = 'Feedstar 的个人空间。记录学习，拆解运动，在微小的实验里理解世界。',
@@ -69,35 +70,7 @@ const {
     <main id="main">
       <slot />
     </main>
-    <footer class="site-footer">
-      <div class="footer-top">
-        <span class="eyebrow">THE OBSERVATION CONTINUES</span>
-        <a
-          class="text-link"
-          href="https://github.com/Feedstar"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub <span>↗</span>
-        </a>
-      </div>
-      <p class="footer-statement">
-        保持好奇，
-        <br />
-        <span>让微光继续。</span>
-      </p>
-      <div class="footer-wordmark" aria-hidden="true">
-        <Wordmark />
-      </div>
-      <div class="footer-bottom">
-        <a href="/">FEEDSTAR</a>
-        <span>记录 · 理解 · 再出发</span>
-        <span>© {new Date().getFullYear()} Feedstar</span>
-        <button class="back-top" aria-label="回到顶部">
-          ↑
-        </button>
-      </div>
-    </footer>
+    <Footer />
     <script>
       import { createPointer } from '../scripts/pointer';
       import { createTitleMotion } from '../scripts/title-motion';

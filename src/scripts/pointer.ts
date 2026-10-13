@@ -2,7 +2,7 @@
 export function createPointer() {
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const textSelector =
-    '.hero-english, .hero-chinese, .hero-description, .eyebrow, .field-title h2, .study-caption h3, .study-description, .notes-heading h2, .journal-list h3, .arrival h2, .arrival p, .about-quote, .about-body p, .about-fragment p, .prose p, .prose h2, .prose h3, .prose li, .footer-statement, .article-header h1, .article-description, .page-intro h1, .intro-description';
+    '.hero-english, .hero-chinese, .hero-description, .eyebrow, .field-title h2, .study-caption h3, .study-description, .notes-heading h2, .journal-list h3, .arrival h2, .arrival p, .about-quote, .about-body p, .about-fragment p, .prose p, .prose h2, .prose h3, .prose li, .article-header h1, .article-description, .page-intro h1, .intro-description';
   document
     .querySelectorAll(textSelector)
     .forEach((el) => el.setAttribute('data-pointer-light', ''));

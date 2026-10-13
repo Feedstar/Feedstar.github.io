@@ -1,12 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import ReadingToc from '../../components/ReadingToc.astro';
 import { getCollection, render } from 'astro:content';
 export async function getStaticPaths() {
   const posts = await getCollection('journal');
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 ---
 
 <Layout
@@ -15,49 +16,39 @@ const { Content } = await render(post);
   page="journal"
 >
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-  <article class="article-shell">
-    <header class="article-header">
-      <a class="eyebrow" href="/journal/">
-        ← FIELD NOTES / 手记
-      </a>
-      <h1>{post.data.title}</h1>
-      <p class="article-description">{post.data.description}</p>
-      <p class="eyebrow">
-        {post.data.number} / {post.data.category} / FEEDSTAR
-      </p>
-      <a
-        class="text-link"
-        href={`/lab/?example=${post.data.example}#experiment`}
-      >
-        打开对应实验 <span>↗</span>
-      </a>
-    </header>
-    <div class="prose">
-      <Content />
-    </div>
-    <div class="article-bottom">
-      <a class="text-link" href="/journal/">
-        返回手记 <span>←</span>
-      </a>
-      <a
-        class="text-link"
-        href={`/lab/?example=${post.data.example}#experiment`}
-      >
-        让它发生一次 <span>↗</span>
-      </a>
-    </div>
-  </article>
+  <div class="reading-layout">
+    <ReadingToc headings={headings} />
+    <article class="article-shell">
+      <header class="article-header" id="article-start">
+        <a class="eyebrow" href="/journal/">
+          ← FIELD NOTES / 手记
+        </a>
+        <h1>{post.data.title}</h1>
+        <p class="article-description">{post.data.description}</p>
+        <p class="eyebrow">
+          {post.data.number} / {post.data.category} / FEEDSTAR
+        </p>
+        <a
+          class="text-link"
+          href={`/lab/?example=${post.data.example}#experiment`}
+        >
+          打开对应实验 <span>↗</span>
+        </a>
+      </header>
+      <div class="prose">
+        <Content />
+      </div>
+      <div class="article-bottom">
+        <a class="text-link" href="/journal/">
+          返回手记 <span>←</span>
+        </a>
+        <a
+          class="text-link"
+          href={`/lab/?example=${post.data.example}#experiment`}
+        >
+          让它发生一次 <span>↗</span>
+        </a>
+      </div>
+    </article>
+  </div>
 </Layout>
-<script>
-  const update = () => {
-    const el = document.getElementById('reading-progress');
-    const article = document.querySelector('article');
-    if (el && article) {
-      const top = article.offsetTop;
-      const length = article.offsetHeight - innerHeight;
-      el.style.transform = `scaleX(${Math.max(0, Math.min(1, (scrollY - top) / Math.max(length, 1)))})`;
-    }
-  };
-  window.addEventListener('scroll', update, { passive: true });
-  update();
-</script>

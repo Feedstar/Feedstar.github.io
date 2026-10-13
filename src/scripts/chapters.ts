@@ -15,8 +15,6 @@ export function createChapters() {
   const lines = Array.from(
     document.querySelectorAll<HTMLElement>('[data-story-line]'),
   );
-  const footer = document.querySelector<HTMLElement>('.site-footer');
-  const wordmark = document.querySelector<HTMLElement>('.footer-wordmark');
   let frame = 0;
   const update = () => {
     frame = 0;
@@ -28,7 +26,6 @@ export function createChapters() {
     );
     const cardRects = cards.map((card) => card.getBoundingClientRect());
     const lineRects = lines.map((line) => line.getBoundingClientRect());
-    const footerRect = footer?.getBoundingClientRect();
     for (const [index, section] of chapters.entries()) {
       const rect = chapterRects[index];
       const p = reduced.matches
@@ -74,18 +71,6 @@ export function createChapters() {
       line.style.clipPath = reduced.matches
         ? ''
         : `inset(0 ${(1 - p) * 100}% 0 0)`;
-    }
-    if (footer && footerRect && wordmark) {
-      const p = reduced.matches
-        ? 1
-        : smoothstep(0, 1, (height - footerRect.top) / (height * 0.8));
-      wordmark.style.transform = reduced.matches
-        ? ''
-        : `translate3d(${(1 - p) * -4}%,${(1 - p) * 90}px,0)`;
-      wordmark.style.opacity = String(0.25 + p * 0.75);
-      footer.style.clipPath = reduced.matches
-        ? ''
-        : `inset(0 0 0 round ${(1 - p) * 90}px ${(1 - p) * 90}px 0 0)`;
     }
   };
   const schedule = () => {
