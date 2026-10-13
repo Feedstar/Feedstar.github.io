@@ -13,6 +13,20 @@ export const lunarTiming = {
 export const arrivalOpacity = (progress) =>
   Number(progress >= lunarTiming.handoffEnd);
 
+export const lunarInk = {
+  footprint: 3.4,
+  spreadNear: 0.75,
+  spreadFar: 8,
+  surplusStart: 0.45,
+  surplusEnd: 0.9,
+};
+export const inkRetention = (gather, owner) =>
+  owner
+    ? 1
+    : 1 - smoothstep(lunarInk.surplusStart, lunarInk.surplusEnd, gather);
+export const inkProximity = (distance) =>
+  1 - smoothstep(lunarInk.spreadNear, lunarInk.spreadFar, distance);
+
 export const inkFormation = (progress, seed, gather) =>
   smoothstep(
     lunarTiming.inkStart + seed * 0.07,
@@ -100,4 +114,7 @@ float gatherAt(float progress, float seed) {
 }
 float inkAt(float progress, float seed, float gather) {
   return smoothstep(${lunarTiming.inkStart}+seed*.07,${lunarTiming.inkEnd - 0.03}+seed*.03,progress)*smoothstep(.9,1.,gather);
+}
+float inkRetentionAt(float gather, float owner) {
+  return mix(1.-smoothstep(${lunarInk.surplusStart},${lunarInk.surplusEnd},gather),1.,owner);
 }`;

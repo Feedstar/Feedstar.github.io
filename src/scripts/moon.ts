@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { erosionThreshold, clamp, smoothstep } from '../lib/erosion.mjs';
 import { arrivalOpacity, lunarNotch, lunarTiming } from '../lib/lunar-flow.mjs';
-import { inkAssignment } from '../lib/ink-samples.mjs';
+import { inkAssignment, inkOwners } from '../lib/ink-samples.mjs';
 import { sampleArrival } from './particle-targets';
 import {
   surfaceVertex,
@@ -89,6 +89,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const targets = new Float32Array(count * 3);
   const targetColors = new Float32Array(count * 3);
   const inkUvs = new Float32Array(count * 2);
+  const inkOwnerAttribute = new THREE.BufferAttribute(
+    new Float32Array(count),
+    1,
+  );
   for (let i = 0; i < count; i++) {
     const random = (n: number) => {
       const value = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
@@ -126,6 +130,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
   geometry.setAttribute('aTarget', targetAttribute);
   geometry.setAttribute('aTargetColor', colorAttribute);
   geometry.setAttribute('aInkUv', inkUvAttribute);
+  geometry.setAttribute('aInkOwner', inkOwnerAttribute);
   const material = new THREE.ShaderMaterial({
     uniforms,
     transparent: true,
@@ -244,6 +249,12 @@ export function createMoon(canvas: HTMLCanvasElement) {
     uniforms.uInk.value = inkTexture;
     if (samples.length) {
       const assignment = inkAssignment(samples.length, count);
+      const owners = inkOwners(assignment, samples.length);
+      inkOwnerAttribute.copyArray(owners);
+      inkOwnerAttribute.needsUpdate = true;
+      canvas.dataset.inkCarriers = String(
+        owners.reduce((sum, owner) => sum + owner, 0),
+      );
       for (let i = 0; i < count; i++) {
         const sample = samples[assignment[i]];
         targets.set(

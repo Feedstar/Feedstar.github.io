@@ -2,6 +2,7 @@ import { erosionGLSL } from '../lib/erosion.mjs';
 import {
   lunarFlowGLSL,
   lunarTiming,
+  lunarInk,
   lunarNotchGLSL,
 } from '../lib/lunar-flow.mjs';
 
@@ -53,6 +54,7 @@ uniform vec2 uViewport, uPointer;
 attribute vec4 aFlow;
 attribute vec3 aTarget, aTargetColor;
 attribute vec2 aInkUv;
+attribute float aInkOwner;
 varying float vAlpha, vLight, vGather, vInk, vFootprint;
 varying vec2 vUv, vInkUv;
 varying vec3 vTargetColor;
@@ -61,11 +63,11 @@ void main(){
   float seed=aFlow.x;
   float release=releaseAt(aFlow.w,uProgress,aFlow.z);
   float gather=gatherAt(uProgress,seed);
-  float ink=inkAt(uProgress,seed,gather);
-  vInk=ink; vInkUv=aInkUv;
+  float retained=inkRetentionAt(gather,aInkOwner);
+  vInk=0.; vInkUv=aInkUv;
   // Surface grains that have not been released contribute no visible pixels.
   // Skip their wind, lighting and texture work until they actually enter.
-  if(release<=0. && gather<=0.){
+  if(retained<=0. || (release<=0. && gather<=0.)){
     vAlpha=0.; vLight=0.; vGather=0.; vFootprint=1.; vUv=uv; vTargetColor=aTargetColor;
     gl_Position=vec4(2.,2.,2.,1.); gl_PointSize=1.; return;
   }
@@ -77,13 +79,20 @@ void main(){
   float arc=sin(gather*3.14159265);
   mv.y+=arc*((seed-.5)*.28+sin(uTime*.3+seed*6.28)*.035);
   mv.z+=arc*(aFlow.y-.5)*.18;
+  vec4 clip=projectionMatrix*mv;
+  vec4 targetClip=projectionMatrix*target;
+  float remainingPx=length((clip.xy/clip.w-targetClip.xy/targetClip.w)*uViewport*.5);
+  // A grain may open into ink only once it is close to its own stroke. Distant
+  // fragments stay fine instead of swelling into overlapping white clouds.
+  float ink=inkAt(uProgress,seed,gather)*(1.-smoothstep(${lunarInk.spreadNear},${lunarInk.spreadFar.toFixed(1)},remainingPx));
+  vInk=ink;
   float band=.76+.24*pow(.5+.5*sin(position.y*13.+seed),2.);
   float poleFade=1.-smoothstep(.78,.995,abs(position.y));
   float flowing=release*lifeAlpha*(.35+seed*.46)*band*poleFade;
-  vAlpha=mix(mix(flowing,.42+aFlow.y*.2,gather),1.,ink);
+  vAlpha=mix(mix(flowing,.42+aFlow.y*.2,gather),1.,ink)*retained;
   vLight=.56+.4*pow(max(0.,dot(normalize(position),normalize(vec3(.75,.35,1.8)))),.5);
   vGather=gather; vTargetColor=aTargetColor; vUv=uv;
-  gl_Position=projectionMatrix*mv;
+  gl_Position=clip;
   vec2 screen=(gl_Position.xy/gl_Position.w*.5+.5)*uViewport;
   vec2 delta=screen-uPointer;
   float distance=length(delta);
@@ -93,7 +102,7 @@ void main(){
   // overlapping, rounded footprints physically close the spaces in a stroke.
   float grainSize=mix(.85+pow(aFlow.y,3.)*.9,1.15+aFlow.y*.55,gather);
   float airborneSize=clamp(grainSize*(5./-mv.z),.65/uDpr,2.8/uDpr);
-  vFootprint=mix(airborneSize,5.5,ink);
+  vFootprint=mix(airborneSize,${lunarInk.footprint},ink);
   gl_PointSize=vFootprint*uDpr;
 }`;
 export const flowFragment = `

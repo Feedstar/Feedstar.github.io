@@ -42,3 +42,18 @@ export function inkAssignment(sampleCount, particleCount) {
   }
   return order.map((i) => Math.floor((i * sampleCount) / particleCount));
 }
+
+// Keep one carrier for each ink sample. Choose it across the shuffled pool so
+// neither airborne nor surface particles monopolize the final strokes.
+export function inkOwners(assignment, sampleCount) {
+  const counts = new Uint32Array(sampleCount);
+  for (const sample of assignment) counts[sample]++;
+  const selected = counts.map((count, i) => {
+    const hash = Math.imul(i ^ (i >>> 16), 0x45d9f3b) >>> 0;
+    return count ? hash % count : 0;
+  });
+  const visits = new Uint32Array(sampleCount);
+  return Float32Array.from(assignment, (sample) =>
+    Number(visits[sample]++ === selected[sample]),
+  );
+}

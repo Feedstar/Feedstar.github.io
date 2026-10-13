@@ -3,8 +3,15 @@ import {
   lunarParticle,
   arrivalOpacity,
   lunarTiming,
+  lunarInk,
+  inkRetention,
+  inkProximity,
 } from '../src/lib/lunar-flow.mjs';
-import { sampleInk, inkAssignment } from '../src/lib/ink-samples.mjs';
+import {
+  sampleInk,
+  inkAssignment,
+  inkOwners,
+} from '../src/lib/ink-samples.mjs';
 import { settle, titleSpring } from '../src/lib/motion.mjs';
 import { mistBufferSize } from '../src/lib/lunar-render.mjs';
 import {
@@ -365,7 +372,7 @@ assert(
   Math.max(...visits) - Math.min(...visits) <= 1,
   'Ink occupancy must be balanced.',
 );
-// A settled footprint is opaque through radius 5.5 * .34. Each pixel's entire
+// A settled footprint is opaque through radius footprint * .34. Each pixel's entire
 // area lies inside its own jittered seed's footprint, not just its center.
 for (const p of inkPoints) {
   const x = Math.floor(p.x),
@@ -373,11 +380,62 @@ for (const p of inkPoints) {
   for (const dx of [0, 1])
     for (const dy of [0, 1]) {
       assert(
-        Math.hypot(p.x - x - dx, p.y - y - dy) < 5.5 * 0.34,
+        Math.hypot(p.x - x - dx, p.y - y - dy) < lunarInk.footprint * 0.34,
         'The complete glyph must be covered before switching to HTML.',
       );
     }
 }
 console.log(
   'PASS: irregular ink seeds, complete stroke coverage, local footprint fusion and no HTML fade.',
+);
+
+for (const [sampleCount, particleCount] of [
+  [600, 2400],
+  [21000, 96000],
+  [18000, 42000],
+  [48000, 42000],
+]) {
+  const assignment = inkAssignment(sampleCount, particleCount);
+  const owners = inkOwners(assignment, sampleCount);
+  const occupied = new Set(assignment);
+  const carriers = new Uint32Array(sampleCount);
+  for (let i = 0; i < particleCount; i++) carriers[assignment[i]] += owners[i];
+  assert.equal(
+    owners.reduce((sum, owner) => sum + owner, 0),
+    occupied.size,
+  );
+  assert(
+    [...occupied].every((sample) => carriers[sample] === 1),
+    'Each occupied stroke location must retain exactly one carrier, never a stack of replicas.',
+  );
+  assert.deepEqual(
+    owners,
+    inkOwners(assignment, sampleCount),
+    'Carrier selection must remain stable during reverse scroll and resizing.',
+  );
+}
+for (const gather of [0, 0.5, 0.8, 1]) assert.equal(inkRetention(gather, 1), 1);
+assert.equal(inkRetention(0, 0), 1, 'Opening moon dust must keep its density.');
+assert.equal(
+  inkRetention(lunarInk.surplusEnd, 0),
+  0,
+  'Surplus grains must retire before piling up on a stroke.',
+);
+assert(
+  inkRetention(0.6, 0) > inkRetention(0.8, 0),
+  'Retirement must be progressive.',
+);
+assert.equal(
+  inkProximity(12),
+  0,
+  'Distant grains must not expand into large glowing fragments.',
+);
+assert(inkProximity(2) > inkProximity(6));
+assert.equal(
+  inkProximity(0),
+  1,
+  'Settled ink must still reconstruct the complete text.',
+);
+console.log(
+  'PASS: one carrier per stroke sample, unchanged opening dust and distance-gated ink expansion.',
 );
