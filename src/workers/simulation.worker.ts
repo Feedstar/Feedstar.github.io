@@ -1,3 +1,5 @@
+import { createViewerForce, viewerBodies } from '../lib/viewer-physics.mjs';
+let viewerForce: ReturnType<typeof createViewerForce> | undefined;
 import loadMujoco from '@mujoco/mujoco';
 import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
 import { examples, type ExampleId } from '../lib/examples';
@@ -26,6 +28,8 @@ const send = () => {
     ncon: data.ncon,
     positions: Array.from(data.geom_xpos),
     matrices: Array.from(data.geom_xmat),
+    bodyPositions: Array.from(data.xpos),
+    bodyQuaternions: Array.from(data.xquat),
     control: id === 'actuator' ? readPositionServo(model, data) : null,
   });
 };
@@ -40,6 +44,7 @@ function apply() {
       model.geom_friction[i * 3] = params.friction;
 }
 function reset() {
+  viewerForce?.clear();
   mj.mj_resetDataKeyframe(model, data, 0);
   if (id === 'pendulum') data.qpos[0] = params.angle;
   apply();
@@ -60,11 +65,14 @@ async function load(next: ExampleId) {
   id = next;
   model = mj.MjModel.from_xml_string(examples[id].xml);
   data = new mj.MjData(model);
+  viewerForce = createViewerForce(mj, model, data);
   reset();
   self.postMessage({
     type: 'ready',
     id,
     version: mj.mj_versionString(),
+    bodies: viewerBodies(mj, model),
+    geomBodies: Array.from(model.geom_bodyid),
     types: Array.from(model.geom_type),
     sizes: Array.from(model.geom_size),
     colors: Array.from(model.geom_rgba),
@@ -83,6 +91,7 @@ function tick() {
     let steps = 0;
     while (accumulator >= dt && steps < 100) {
       apply();
+      viewerForce?.apply();
       mj.mj_step(model, data);
       accumulator -= dt;
       steps++;
@@ -99,6 +108,10 @@ self.onmessage = async (event) => {
       await load(message.id in examples ? message.id : 'pendulum');
       return;
     }
+    if (message.type === 'perturb') {
+      if (playing || !message.request) viewerForce?.update(message.request);
+      return;
+    }
     if (message.type === 'params') {
       params = { ...params, ...message.params };
       apply();
@@ -109,17 +122,20 @@ self.onmessage = async (event) => {
     }
     if (message.type === 'play') {
       playing = message.value;
+      if (!playing) viewerForce?.clear();
       last = performance.now();
       accumulator = 0;
     }
     if (message.type === 'reset') reset();
-    if (message.type === 'step') {
+    if (message.type === 'step' && !playing) {
       apply();
+      viewerForce?.apply();
       mj.mj_step(model, data);
       mj.mj_forward(model, data);
       send();
     }
     if (message.type === 'dispose') {
+      viewerForce?.clear();
       disposed = true;
       clearTimeout(timer);
       data?.delete();

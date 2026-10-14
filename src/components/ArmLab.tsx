@@ -1,3 +1,4 @@
+import { ViewerControls, useViewerControls } from './ViewerControls';
 import { useEffect, useRef, useState } from 'react';
 import { createArmView } from '../lib/arm-view';
 import { armDefaults, armPoses } from '../lib/arm-runtime.mjs';
@@ -47,6 +48,7 @@ export default function ArmLab({
   const [settings, setSettings] = useState({ ...armDefaults });
   const [body, setBody] = useState('wrist'),
     [axes, setAxes] = useState(true);
+  const viewer = useViewerControls(worker, playing);
   const [source, setSource] = useState<'lesson' | 'python' | 'xml'>('lesson'),
     [copied, setCopied] = useState(false);
   const currentLesson = armLessons.find((entry) => entry.id === lesson)!;
@@ -63,7 +65,14 @@ export default function ArmLab({
     let render: ReturnType<typeof createArmView>;
     const addresses: Record<string, number> = {};
     try {
-      render = createArmView(canvas.current);
+      render = createArmView(canvas.current, {
+        onForce: viewer.onForce,
+        onStatus: viewer.onStatus,
+        onSelection: (body) => {
+          if (body) setBody(body.name);
+        },
+      });
+      viewer.attach(render);
       view.current = render;
     } catch {
       setError(
@@ -152,8 +161,9 @@ export default function ArmLab({
       alive = false;
       observer.disconnect();
       document.removeEventListener('visibilitychange', syncVisibility);
-      engine.terminate();
       render.dispose();
+      engine.terminate();
+      viewer.api.current = null;
       worker.current = null;
       view.current = null;
     };
@@ -169,6 +179,7 @@ export default function ArmLab({
   }, [body, axes, model]);
 
   const reset = () => {
+    view.current?.cancel();
     setTargets([...armPoses.home]);
     setGrip(0);
     history.current = [];
@@ -251,6 +262,7 @@ export default function ArmLab({
         <div className="arm-viewport">
           <canvas
             ref={canvas}
+            tabIndex={0}
             aria-label="可拖动旋转、滚轮缩放的原创四轴机械臂仿真"
           />
           <div className="arm-view-top">
@@ -286,18 +298,10 @@ export default function ArmLab({
               )}
             </div>
           )}
+          <ViewerControls viewer={viewer} ready={ready} playing={playing} />
           <div className="arm-view-bottom">
-            <span>
-              拖动旋转 · 滚轮缩放
-              <br />
-              <small>红 X · 绿 Y · 蓝 Z</small>
-            </span>
-            <button
-              onClick={() => view.current?.resetCamera()}
-              aria-label="重置视角"
-            >
-              视角复位 ↺
-            </button>
+            <span>左键旋转 · 右键平移 · 滚轮缩放</span>
+            <span>红 X · 绿 Y · 蓝 Z</span>
           </div>
         </div>
         <aside className="arm-panel" aria-label="实验参数">

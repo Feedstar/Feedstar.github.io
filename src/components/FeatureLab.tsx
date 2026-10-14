@@ -1,3 +1,4 @@
+import { ViewerControls, useViewerControls } from './ViewerControls';
 import { useEffect, useRef, useState } from 'react';
 import { createArmView } from '../lib/arm-view';
 import { studies } from '../lib/studies';
@@ -28,6 +29,7 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
     [attempt, setAttempt] = useState(0);
   const [playing, setPlaying] = useState(true),
     [speed, setSpeed] = useState(1);
+  const viewer = useViewerControls(worker, playing);
   const [source, setSource] = useState<'xml' | 'python'>('xml'),
     [copyState, setCopyState] = useState('复制代码');
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -57,6 +59,16 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
             : [1.5, -1.85, 1.2];
       render = createArmView(canvas.current, {
         camera,
+        onForce: viewer.onForce,
+        onStatus: viewer.onStatus,
+        onMocapDrag:
+          kind === 'scanner'
+            ? (_body, point) =>
+                changeRef.current({
+                  x: Math.max(0.45, Math.min(1.1, point[0])),
+                  y: Math.max(-0.65, Math.min(0.65, point[1])),
+                })
+            : undefined,
         center:
           kind === 'scanner'
             ? [0.65, 0, 0.12]
@@ -73,6 +85,7 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
                 })
             : undefined,
       });
+      viewer.attach(render);
       view.current = render;
     } catch {
       setError('3D 画布无法启动，请重试或下载代码在本地运行。');
@@ -150,8 +163,9 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
       alive = false;
       observer.disconnect();
       document.removeEventListener('visibilitychange', sync);
-      engine.terminate();
       render.dispose();
+      engine.terminate();
+      viewer.api.current = null;
       view.current = null;
       worker.current = null;
       clearTimeout(copyTimer.current);
@@ -185,6 +199,7 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
       .join(' ');
   };
   const reset = () => {
+    view.current?.cancel();
     history.current = [];
     send({ type: 'reset' });
   };
@@ -198,6 +213,7 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
         <div className="arm-viewport">
           <canvas
             ref={canvas}
+            tabIndex={0}
             aria-label={`${spec.title}三维实时仿真，可拖动旋转与滚轮缩放`}
           />
           <div className="arm-view-top">
@@ -228,23 +244,23 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
               )}
             </div>
           )}
+          <ViewerControls
+            viewer={viewer}
+            ready={ready}
+            playing={playing}
+            target={kind === 'inverse-kinematics'}
+          />
           <div className="arm-view-bottom">
+            <span>左键旋转 · 右键平移 · 滚轮缩放</span>
             <span>
-              拖动旋转 · 滚轮缩放
-              <br />
-              <small>
-                {kind === 'inverse-kinematics'
-                  ? '金色目标 · 青色实际轨迹'
-                  : kind === 'scanner'
-                    ? '金色射线 · 青色命中点'
-                    : kind === 'tendon'
-                      ? '青色驱动端 · 金色负载'
-                      : '青色输入杆 · 金色从动杆'}
-              </small>
+              {kind === 'inverse-kinematics'
+                ? '金色目标 · 青色轨迹'
+                : kind === 'scanner'
+                  ? '金色射线 · 青色命中点'
+                  : kind === 'tendon'
+                    ? '青色驱动端 · 金色负载'
+                    : '青色输入杆 · 金色从动杆'}
             </span>
-            <button onClick={() => view.current?.resetCamera()}>
-              视角复位 ↺
-            </button>
           </div>
         </div>
         <aside className="arm-panel" aria-label="实验参数">

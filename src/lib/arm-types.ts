@@ -21,7 +21,14 @@ export type ArmReady = {
   version: string;
   timestep: number;
   joints: ArmJoint[];
-  bodies: { id: number; name: string; parent: number; mass: number }[];
+  bodies: {
+    id: number;
+    name: string;
+    parent: number;
+    mass: number;
+    movable: boolean;
+    mocap: boolean;
+  }[];
   sensors: { name: string; address: number; dimension: number }[];
   geoms: ArmGeom[];
 };

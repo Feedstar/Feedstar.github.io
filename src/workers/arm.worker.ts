@@ -1,3 +1,5 @@
+import { createViewerForce, viewerBodies } from '../lib/viewer-physics.mjs';
+let viewerForce: ReturnType<typeof createViewerForce> | undefined;
 import loadMujoco from '@mujoco/mujoco';
 import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
 import xml from '../../public/examples/arm.xml?raw';
@@ -58,6 +60,7 @@ async function load() {
   if (stopped) return;
   model = mj.MjModel.from_xml_string(xml);
   data = new mj.MjData(model);
+  viewerForce = createViewerForce(mj, model, data);
   joints = armJoints(mj, model);
   resetArm(mj, model, data, joints, settings);
   const geoms: ArmGeom[] = [];
@@ -80,12 +83,7 @@ async function load() {
       name: mj.mj_id2name(model, 5, id) || '',
     });
   }
-  const bodies = Array.from({ length: model.nbody }, (_, id) => ({
-    id,
-    name: mj.mj_id2name(model, 1, id),
-    parent: model.body_parentid[id],
-    mass: model.body_mass[id],
-  }));
+  const bodies = viewerBodies(mj, model);
   self.postMessage({
     type: 'ready',
     version: mj.mj_versionString(),
@@ -114,6 +112,7 @@ function tick() {
   const before = data.time,
     budgetStart = performance.now();
   while (accumulator >= model.opt.timestep) {
+    viewerForce?.apply();
     mj.mj_step(model, data);
     accumulator -= model.opt.timestep;
     // Keep a bounded compute budget; slow devices never build a catch-up queue.
@@ -138,12 +137,18 @@ self.onmessage = async ({ data: message }) => {
       await load();
       return;
     }
+    if (message.type === 'perturb') {
+      if (playing || !message.request) viewerForce?.update(message.request);
+      return;
+    }
     if (message.type === 'visible') {
       visible = Boolean(message.value);
+      if (!visible) viewerForce?.clear();
       schedule();
       return;
     }
     if (message.type === 'dispose') {
+      viewerForce?.clear();
       stopped = true;
       clearTimeout(timer);
       data?.delete();
@@ -161,6 +166,7 @@ self.onmessage = async ({ data: message }) => {
     }
     if (message.type === 'play') {
       playing = Boolean(message.value);
+      if (!playing) viewerForce?.clear();
       schedule();
     }
     if (message.type === 'speed') {
@@ -171,10 +177,14 @@ self.onmessage = async ({ data: message }) => {
       targets = [...armPoses.home];
       grip = 0;
       realtime = 1;
+      viewerForce?.clear();
       resetArm(mj, model, data, joints, settings);
       schedule();
     }
-    if (message.type === 'step' && !playing) mj.mj_step(model, data);
+    if (message.type === 'step' && !playing) {
+      viewerForce?.apply();
+      mj.mj_step(model, data);
+    }
     mj.mj_forward(model, data);
     sendState(true);
   } catch (error) {

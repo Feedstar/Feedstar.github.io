@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { previewPixelRatio } from './preview-loop.mjs';
 import type { ArmReady, ArmState } from './arm-types';
+import {
+  createViewerInteraction,
+  type ViewerOptions,
+} from './viewer-interaction';
 
 export function createArmView(
   canvas: HTMLCanvasElement,
@@ -9,7 +13,7 @@ export function createArmView(
     camera?: [number, number, number];
     center?: [number, number, number];
     onTargetDrag?: (point: number[]) => void;
-  } = {},
+  } & ViewerOptions = {},
 ) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -118,21 +122,37 @@ export function createArmView(
   const raycaster = new THREE.Raycaster(),
     pointer = new THREE.Vector2();
   const dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
-  const hit = new THREE.Vector3();
-  let dragging = false;
+  const hit = new THREE.Vector3(),
+    projectedGoal = new THREE.Vector3();
+  let dragging = false,
+    goalPointer: number | null = null;
   const ray = (e: PointerEvent) => {
     const rect = canvas.getBoundingClientRect();
     pointer.set(
       ((e.clientX - rect.left) / rect.width) * 2 - 1,
       (-(e.clientY - rect.top) / rect.height) * 2 + 1,
     );
+    scene.updateMatrixWorld(true);
+    camera.updateMatrixWorld();
     raycaster.setFromCamera(pointer, camera);
   };
+  let interactionMode: 'camera' | 'force' = 'camera';
   const down = (e: PointerEvent) => {
+    if (interactionMode === 'force' || e.ctrlKey || e.metaKey) return;
     if (!options.onTargetDrag || !goal.visible || e.button !== 0) return;
     ray(e);
-    if (!raycaster.intersectObject(goal).length) return;
+    projectedGoal.copy(goal.position).project(camera);
+    const rect = canvas.getBoundingClientRect();
+    // A small screen-space tolerance keeps the target usable on touchscreens.
+    const distance = Math.hypot(
+      ((pointer.x - projectedGoal.x) * rect.width) / 2,
+      ((pointer.y - projectedGoal.y) * rect.height) / 2,
+    );
+    if (distance > 14 && !raycaster.intersectObject(goal).length) return;
+    e.preventDefault();
+    canvas.focus({ preventScroll: true });
     dragging = true;
+    goalPointer = e.pointerId;
     controls.enabled = false;
     dragPlane.constant = -goal.position.z;
     canvas.setPointerCapture(e.pointerId);
@@ -148,17 +168,32 @@ export function createArmView(
   const up = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
+    goalPointer = null;
     controls.enabled = true;
     if (canvas.hasPointerCapture(e.pointerId))
       canvas.releasePointerCapture(e.pointerId);
     e.stopImmediatePropagation();
   };
+  const lostGoal = () => {
+    if (dragging) {
+      dragging = false;
+      goalPointer = null;
+      controls.enabled = true;
+    }
+  };
+  canvas.addEventListener('lostpointercapture', lostGoal);
   canvas.addEventListener('pointerdown', down, true);
   canvas.addEventListener('pointermove', move, true);
   canvas.addEventListener('pointerup', up, true);
   canvas.addEventListener('pointercancel', up, true);
+  const interaction = createViewerInteraction(
+    canvas,
+    scene,
+    camera,
+    controls,
+    options,
+  );
   const geoms = new Map<number, THREE.Mesh>();
-  const bodies = new Map<number, number>();
   const materials = new Map<string, THREE.MeshStandardMaterial>();
   let current: ArmState | null = null,
     previous: ArmState | null = null;
@@ -233,6 +268,8 @@ export function createArmView(
       }
     }
     controls.update();
+    scene.updateMatrixWorld(true);
+    interaction.draw();
     renderer.render(scene, camera);
     frame = requestAnimationFrame(draw);
   };
@@ -254,7 +291,30 @@ export function createArmView(
     camera.updateProjectionMatrix();
   });
   resize.observe(canvas);
+  const cancel = () => {
+    if (dragging) {
+      dragging = false;
+      controls.enabled = true;
+      if (goalPointer !== null && canvas.hasPointerCapture(goalPointer))
+        canvas.releasePointerCapture(goalPointer);
+      goalPointer = null;
+    }
+    interaction.cancel();
+  };
+  const clearHiddenDrag = () => {
+    if (document.hidden) cancel();
+  };
+  window.addEventListener('blur', cancel);
+  document.addEventListener('visibilitychange', clearHiddenDrag);
   return {
+    setMode(mode: 'camera' | 'force') {
+      cancel();
+      interactionMode = mode;
+      interaction.setMode(mode);
+    },
+    setRunning: interaction.setRunning,
+    focus: interaction.focus,
+    cancel,
     setOverlay(segments: number[], target?: number[], trail: number[] = []) {
       const positions = lineGeometry.getAttribute(
         'position',
@@ -307,11 +367,13 @@ export function createArmView(
         const mesh = new THREE.Mesh(geometry, materials.get(key));
         mesh.material = mesh.material.clone();
         geoms.set(geom.id, mesh);
-        bodies.set(geom.id, geom.body);
+        mesh.userData.viewerBody = geom.body;
         scene.add(mesh);
       }
+      interaction.setModel([...geoms.values()], model.bodies);
     },
     setState(state: ArmState) {
+      interaction.setState(state);
       previous =
         current && state.time >= current.time && state.time - current.time < 0.1
           ? current
@@ -324,25 +386,28 @@ export function createArmView(
     setBody(id: number, visible: boolean) {
       body = id;
       showAxes = visible;
-      geoms.forEach((mesh, geomId) => {
-        const material = mesh.material as THREE.MeshStandardMaterial;
-        material.emissive.set(
-          bodies.get(geomId) === id ? '#25443c' : '#000000',
-        );
-        material.emissiveIntensity = 0.5;
-      });
+      interaction.select(id);
     },
     setActive(value: boolean) {
       active = value;
+      if (!value) cancel();
       wake();
     },
-    resetCamera,
+    resetCamera() {
+      cancel();
+      resetCamera();
+    },
     dispose() {
       disposed = true;
       cancelAnimationFrame(frame);
       resize.disconnect();
       document.removeEventListener('visibilitychange', wake);
+      cancel();
+      window.removeEventListener('blur', cancel);
+      document.removeEventListener('visibilitychange', clearHiddenDrag);
+      interaction.dispose();
       controls.dispose();
+      canvas.removeEventListener('lostpointercapture', lostGoal);
       canvas.removeEventListener('pointerdown', down, true);
       canvas.removeEventListener('pointermove', move, true);
       canvas.removeEventListener('pointerup', up, true);

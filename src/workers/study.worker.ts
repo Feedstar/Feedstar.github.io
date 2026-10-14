@@ -1,3 +1,5 @@
+import { createViewerForce, viewerBodies } from '../lib/viewer-physics.mjs';
+let viewerForce: ReturnType<typeof createViewerForce> | undefined;
 import loadMujoco from '@mujoco/mujoco';
 import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
 import { createStudy } from '../lib/study-runtime.mjs';
@@ -54,6 +56,7 @@ function tick() {
     last = now;
     const before = runtime.data.time;
     while (accumulator >= dt) {
+      viewerForce?.apply();
       runtime.step();
       accumulator -= dt;
       if (performance.now() - now > 10) {
@@ -86,6 +89,7 @@ self.onmessage = async ({ data: message }) => {
         locateFile: (file: string) => (file.endsWith('.wasm') ? wasmUrl : file),
       });
       runtime = createStudy(mj, kind, studyXML[kind]);
+      viewerForce = createViewerForce(mj, runtime.model, runtime.data);
       const m = runtime.model,
         geoms = [];
       for (let id = 0; id < m.ngeom; id++) {
@@ -111,7 +115,7 @@ self.onmessage = async ({ data: message }) => {
         version: mj.mj_versionString(),
         timestep: m.opt.timestep,
         joints: [],
-        bodies: [],
+        bodies: viewerBodies(mj, m),
         sensors: armSensors(mj, m),
         geoms,
       });
@@ -119,33 +123,45 @@ self.onmessage = async ({ data: message }) => {
       schedule();
       return;
     }
+    if (message.type === 'perturb') {
+      if (playing || !message.request) viewerForce?.update(message.request);
+      return;
+    }
     if (message.type === 'visible') {
       visible = !!message.value;
+      if (!visible) viewerForce?.clear();
       schedule();
       return;
     }
     if (!runtime) return;
     if (message.type === 'controls') {
+      viewerForce?.clear();
       runtime.update(message.patch || {}, !!message.restart);
       // Any parameter edit starts a fresh chart/scan, avoiding mixed experiments.
       epoch++;
       if (message.restart) schedule();
     }
     if (message.type === 'reset') {
+      viewerForce?.clear();
       runtime.reset();
       epoch++;
       schedule();
     }
     if (message.type === 'play') {
       playing = !!message.value;
+      if (!playing) viewerForce?.clear();
       schedule();
     }
     if (message.type === 'speed') {
       speed = [0.25, 0.5, 1].includes(message.value) ? message.value : 1;
       schedule();
     }
-    if (message.type === 'step' && !playing) runtime.step();
+    if (message.type === 'step' && !playing) {
+      viewerForce?.apply();
+      runtime.step();
+    }
     if (message.type === 'dispose') {
+      viewerForce?.clear();
       clearTimeout(timer);
       runtime.dispose();
       self.close();

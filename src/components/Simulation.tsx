@@ -1,3 +1,5 @@
+import { ViewerControls, useViewerControls } from './ViewerControls';
+import { createViewerInteraction } from '../lib/viewer-interaction';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -11,6 +13,8 @@ type SimState = {
   qvel: number[];
   positions: number[];
   matrices: number[];
+  bodyPositions: number[];
+  bodyQuaternions: number[];
   ncon: number;
   control: ControlState | null;
 };
@@ -37,6 +41,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
     history = useRef<Sample[]>([]),
     latestParams = useRef(params),
     playingRef = useRef(playing);
+  const viewer = useViewerControls(worker, playing);
   const [xmlOpen, setXmlOpen] = useState(false);
   useEffect(() => {
     const el = canvas.current;
@@ -86,6 +91,24 @@ export default function Simulation({ id }: { id: ExampleId }) {
     controls.maxDistance = 9;
     controls.maxPolarAngle = Math.PI * 0.49;
     controls.update();
+    const initialCamera = camera.position.clone(),
+      initialTarget = controls.target.clone();
+    const interaction = createViewerInteraction(
+      el,
+      scene,
+      camera,
+      controls,
+      viewer,
+    );
+    viewer.attach({
+      ...interaction,
+      resetCamera() {
+        interaction.cancel();
+        camera.position.copy(initialCamera);
+        controls.target.copy(initialTarget);
+        controls.update();
+      },
+    });
     scene.add(new THREE.HemisphereLight('#eeeafa', '#44405a', 1));
     const light = new THREE.DirectionalLight('#f7ecfc', 2.3);
     light.position.set(-3, -2, 6);
@@ -187,11 +210,18 @@ export default function Simulation({ id }: { id: ExampleId }) {
           scene.add(mesh);
           return mesh;
         });
+        meshes.forEach((mesh, i) => {
+          mesh.userData.viewerBody = e.data.geomBodies[i];
+        });
+        interaction.setModel(meshes, e.data.bodies);
         setVersion(e.data.version);
         setReady(true);
         w.postMessage({ type: 'params', params: latestParams.current });
       }
-      if (e.data.type === 'state') latest.current = e.data;
+      if (e.data.type === 'state') {
+        latest.current = e.data;
+        interaction.setState(e.data);
+      }
       if (e.data.type === 'error') {
         setError(e.data.message);
         setReady(false);
@@ -262,6 +292,8 @@ export default function Simulation({ id }: { id: ExampleId }) {
         drawGraph(graph.current, history.current, id === 'contact' ? 2.2 : 1.6);
       }
       controls.update();
+      scene.updateMatrixWorld(true);
+      interaction.draw();
       renderer.render(scene, camera);
     };
     draw();
@@ -277,6 +309,8 @@ export default function Simulation({ id }: { id: ExampleId }) {
       ro.disconnect();
       document.removeEventListener('visibilitychange', visible);
       w.postMessage({ type: 'dispose' });
+      interaction.dispose();
+      viewer.api.current = null;
       w.terminate();
       worker.current = null;
       controls.dispose();
@@ -312,6 +346,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
     }
   };
   const reset = () => {
+    viewer.api.current?.cancel();
     history.current = [];
     worker.current?.postMessage({ type: 'reset' });
   };
@@ -323,6 +358,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
         <div className="simulation-view">
           <canvas
             ref={canvas}
+            tabIndex={0}
             aria-label={`${example.title} 三维仿真场景，可拖动旋转视角`}
           />
           <div className="view-top">
@@ -336,11 +372,12 @@ export default function Simulation({ id }: { id: ExampleId }) {
             </span>
             <span>EXPERIMENT {example.number.slice(-2)} / 11</span>
           </div>
+          <ViewerControls viewer={viewer} ready={ready} playing={playing} />
           <div className="view-bottom">
             <span>
               {id === 'actuator'
-                ? '虚线：目标姿态 · 拖动旋转 / 滚轮缩放'
-                : '拖动旋转 · 滚轮缩放'}
+                ? '虚线：目标姿态 · 右键平移 / 滚轮缩放'
+                : '左键旋转 · 右键平移 · 滚轮缩放'}
             </span>
             <span>t = {readout.time.toFixed(3)} s</span>
           </div>
