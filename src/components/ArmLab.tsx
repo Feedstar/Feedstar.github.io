@@ -311,7 +311,7 @@ export default function ArmLab({
                     ? 'STATE OBSERVER'
                     : 'CONTACT STUDY'}
             </span>
-            <span className="arm-panel-count">{number} / 07</span>
+            <span className="arm-panel-count">{number} / 11</span>
           </div>
           {(lesson === 'model' || lesson === 'sensors') && (
             <>

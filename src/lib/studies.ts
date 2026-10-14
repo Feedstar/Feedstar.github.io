@@ -1,0 +1,22 @@
+import { studySpecs } from './study-specs.mjs';
+import type { StudyId } from './study-assets';
+import type { StudySettings } from './study-types';
+export type StudySpec = {
+  number: string;
+  title: string;
+  subject: string;
+  english: string;
+  description: string;
+  connection: string;
+  defaults: StudySettings;
+  ranges: [string, string, number, number, number, string][];
+  modes: [string, string][];
+  presets: [string, StudySettings][];
+  metrics: [string, string][];
+  plot: string;
+  unit: string;
+  legends: string[];
+  try: string;
+  notice: string;
+};
+export const studies = studySpecs as unknown as Record<StudyId, StudySpec>;

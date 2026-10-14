@@ -334,7 +334,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
                   ? `MuJoCo ${version}`
                   : '正在准备实验引擎…'}
             </span>
-            <span>EXPERIMENT {example.number.slice(-2)} / 07</span>
+            <span>EXPERIMENT {example.number.slice(-2)} / 11</span>
           </div>
           <div className="view-bottom">
             <span>

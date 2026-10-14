@@ -1,0 +1,35 @@
+<!-- Feedstar original: a spatial elastic tendon routed around a cylindrical guide. -->
+<mujoco model="Feedstar elastic transmission">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <default>
+    <geom contype="0" conaffinity="0" rgba="0.8 0.84 0.81 1"/>
+    <joint type="slide" axis="1 0 0" damping="0.3"/>
+    <site size="0.008"/>
+  </default>
+  <worldbody>
+    <geom name="rail" type="box" pos="0 0 0.10" size="0.85 0.045 0.025" rgba="0.13 0.18 0.2 1"/>
+    <geom name="guide" type="cylinder" pos="0 0 0.35" size="0.13 0.035" rgba="0.4 0.68 0.63 1"/>
+    <geom type="cylinder" pos="0 0 0.18" size="0.025 0.16" rgba="0.13 0.18 0.2 1"/>
+    <site name="wrap_side" pos="0 0.2 0.35"/>
+    <body name="driver" pos="-0.5 0 0.35" gravcomp="1">
+      <joint name="drive_slide" range="-0.15 0.15"/>
+      <geom type="box" size="0.055 0.055 0.055" mass="0.6" rgba="0.4 0.68 0.63 1"/>
+      <geom type="capsule" fromto="0 0 -0.18 0 0 -0.05" size="0.012" mass="0" rgba="0.13 0.18 0.2 1"/>
+      <geom type="box" size="0.04 0.06 0.025" pos="0 0 -0.2" mass="0" rgba="0.13 0.18 0.2 1"/>
+      <site name="anchor"/>
+    </body>
+    <body name="load" pos="0.5 0 0.35" gravcomp="1">
+      <joint name="load_slide" range="-0.28 0.2" stiffness="18" springref="0"/>
+      <geom type="box" size="0.065 0.065 0.065" mass="1" rgba="0.8 0.6 0.3 1"/>
+      <geom type="capsule" fromto="0 0 -0.18 0 0 -0.06" size="0.012" mass="0" rgba="0.13 0.18 0.2 1"/>
+      <geom type="box" size="0.04 0.06 0.025" pos="0 0 -0.2" mass="0" rgba="0.13 0.18 0.2 1"/>
+      <site name="load_end"/>
+    </body>
+  </worldbody>
+  <tendon><spatial name="elastic" stiffness="120" damping="2" width="0.004" rgba="0.85 0.9 0.82 1">
+    <site site="anchor"/><geom geom="guide" sidesite="wrap_side"/><site site="load_end"/>
+  </spatial></tendon>
+  <actuator><position name="drive" joint="drive_slide" kp="700" kv="45" ctrlrange="-0.15 0.15" forcerange="-100 100"/></actuator>
+  <sensor><tendonpos name="length" tendon="elastic"/><tendonvel name="rate" tendon="elastic"/></sensor>
+</mujoco>

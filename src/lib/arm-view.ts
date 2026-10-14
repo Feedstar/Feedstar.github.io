@@ -3,7 +3,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { previewPixelRatio } from './preview-loop.mjs';
 import type { ArmReady, ArmState } from './arm-types';
 
-export function createArmView(canvas: HTMLCanvasElement) {
+export function createArmView(
+  canvas: HTMLCanvasElement,
+  options: {
+    camera?: [number, number, number];
+    center?: [number, number, number];
+    onTargetDrag?: (point: number[]) => void;
+  } = {},
+) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -24,8 +31,12 @@ export function createArmView(canvas: HTMLCanvasElement) {
   controls.maxDistance = 5;
   controls.maxPolarAngle = Math.PI * 0.49;
   const resetCamera = () => {
-    camera.position.set(1.5, -1.85, 1.2);
-    controls.target.set(0.22, 0, 0.43);
+    camera.position.set(
+      ...(options.camera ?? ([1.5, -1.85, 1.2] as [number, number, number])),
+    );
+    controls.target.set(
+      ...(options.center ?? ([0.22, 0, 0.43] as [number, number, number])),
+    );
     controls.update();
   };
   resetCamera();
@@ -62,6 +73,90 @@ export function createArmView(canvas: HTMLCanvasElement) {
   (axes.material as THREE.Material).depthTest = false;
   axes.renderOrder = 2;
   scene.add(axes);
+  const lineGeometry = new THREE.BufferGeometry();
+  lineGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(new Float32Array(1024 * 3), 3),
+  );
+  lineGeometry.setDrawRange(0, 0);
+  const overlay = new THREE.LineSegments(
+    lineGeometry,
+    new THREE.LineBasicMaterial({ color: '#e3bc77' }),
+  );
+  overlay.frustumCulled = false;
+  scene.add(overlay);
+  const traceGeometry = new THREE.BufferGeometry();
+  traceGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(new Float32Array(512 * 3), 3),
+  );
+  traceGeometry.setDrawRange(0, 0);
+  const trace = new THREE.Points(
+    traceGeometry,
+    new THREE.PointsMaterial({
+      color: '#9cd4c1',
+      size: 0.012,
+      sizeAttenuation: true,
+    }),
+  );
+  trace.frustumCulled = false;
+  scene.add(trace);
+  const goal = new THREE.Mesh(
+    new THREE.SphereGeometry(0.022, 20, 16),
+    new THREE.MeshStandardMaterial({
+      color: '#ebc27c',
+      emissive: '#61421d',
+      metalness: 0.3,
+      roughness: 0.4,
+      depthTest: false,
+      depthWrite: false,
+    }),
+  );
+  goal.visible = false;
+  goal.renderOrder = 3;
+  scene.add(goal);
+  const raycaster = new THREE.Raycaster(),
+    pointer = new THREE.Vector2();
+  const dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
+  const hit = new THREE.Vector3();
+  let dragging = false;
+  const ray = (e: PointerEvent) => {
+    const rect = canvas.getBoundingClientRect();
+    pointer.set(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      (-(e.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    raycaster.setFromCamera(pointer, camera);
+  };
+  const down = (e: PointerEvent) => {
+    if (!options.onTargetDrag || !goal.visible || e.button !== 0) return;
+    ray(e);
+    if (!raycaster.intersectObject(goal).length) return;
+    dragging = true;
+    controls.enabled = false;
+    dragPlane.constant = -goal.position.z;
+    canvas.setPointerCapture(e.pointerId);
+    e.stopImmediatePropagation();
+  };
+  const move = (e: PointerEvent) => {
+    if (!dragging) return;
+    ray(e);
+    if (raycaster.ray.intersectPlane(dragPlane, hit))
+      options.onTargetDrag?.(hit.toArray());
+    e.stopImmediatePropagation();
+  };
+  const up = (e: PointerEvent) => {
+    if (!dragging) return;
+    dragging = false;
+    controls.enabled = true;
+    if (canvas.hasPointerCapture(e.pointerId))
+      canvas.releasePointerCapture(e.pointerId);
+    e.stopImmediatePropagation();
+  };
+  canvas.addEventListener('pointerdown', down, true);
+  canvas.addEventListener('pointermove', move, true);
+  canvas.addEventListener('pointerup', up, true);
+  canvas.addEventListener('pointercancel', up, true);
   const geoms = new Map<number, THREE.Mesh>();
   const bodies = new Map<number, number>();
   const materials = new Map<string, THREE.MeshStandardMaterial>();
@@ -160,6 +255,22 @@ export function createArmView(canvas: HTMLCanvasElement) {
   });
   resize.observe(canvas);
   return {
+    setOverlay(segments: number[], target?: number[], trail: number[] = []) {
+      const positions = lineGeometry.getAttribute(
+        'position',
+      ) as THREE.BufferAttribute;
+      positions.array.set(segments.slice(0, 3072));
+      positions.needsUpdate = true;
+      lineGeometry.setDrawRange(0, Math.min(segments.length / 3, 1024));
+      goal.visible = !!target;
+      if (target) goal.position.fromArray(target);
+      const dots = traceGeometry.getAttribute(
+        'position',
+      ) as THREE.BufferAttribute;
+      dots.array.set(trail.slice(-1536));
+      dots.needsUpdate = true;
+      traceGeometry.setDrawRange(0, Math.min(trail.length / 3, 512));
+    },
     setModel(model: ArmReady) {
       for (const geom of model.geoms) {
         if (geom.type === 0) continue;
@@ -232,12 +343,17 @@ export function createArmView(canvas: HTMLCanvasElement) {
       resize.disconnect();
       document.removeEventListener('visibilitychange', wake);
       controls.dispose();
+      canvas.removeEventListener('pointerdown', down, true);
+      canvas.removeEventListener('pointermove', move, true);
+      canvas.removeEventListener('pointerup', up, true);
+      canvas.removeEventListener('pointercancel', up, true);
       const geometries = new Set<THREE.BufferGeometry>();
       const allMaterials = new Set<THREE.Material>();
       scene.traverse((object) => {
         if (
           object instanceof THREE.Mesh ||
-          object instanceof THREE.LineSegments
+          object instanceof THREE.LineSegments ||
+          object instanceof THREE.Points
         ) {
           geometries.add(object.geometry);
           (Array.isArray(object.material)

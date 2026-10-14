@@ -9,12 +9,14 @@ const first = experimentCatalog[0];
 <div class="experiment-collection" data-experiment-collection>
   <header class="collection-heading" data-reveal>
     <div>
-      <p class="eyebrow">SEVEN STUDIES / ONE LABORATORY</p>
+      <p class="eyebrow">ELEVEN STUDIES / ONE LABORATORY</p>
       <h2>MuJoCo 实验集</h2>
     </div>
     <p>
       01—03 看清基础现象 <span aria-hidden="true">→</span>
       <br class="collection-mobile-break" /> 04—07 在机械臂上综合观察
+      <br />
+      08—11 探索约束、传动与感知
     </p>
   </header>
   <div class="collection-layout">
@@ -59,8 +61,37 @@ const first = experimentCatalog[0];
             动作示意 / 进入实验观察实时仿真
           </small>
         </div>
+        <div
+          class="collection-art collection-feature"
+          data-preview-art="feature"
+          data-study-kind="inverse-kinematics"
+          hidden
+          aria-hidden="true"
+        >
+          <div class="feature-cover-fallback">
+            <span>08 — 11</span>
+            <p>运动 · 约束 · 感知</p>
+            <svg viewBox="0 0 300 170">
+              <path
+                d="M50 135 L100 45 L230 45 L180 135 Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              />
+              <circle cx="100" cy="45" r="6" fill="currentColor" />
+              <circle cx="230" cy="45" r="6" fill="currentColor" />
+            </svg>
+          </div>
+          <canvas class="arm-cover-canvas"></canvas>
+          <div class="arm-cover-hud">
+            <span data-feature-caption>模型预览 · 运动与结构</span>
+          </div>
+          <small class="arm-cover-disclaimer">
+            动作示意 / 进入实验观察实时仿真
+          </small>
+        </div>
         <div class="study-topline">
-          <span data-preview-number>EXPERIMENT {first.number} / 07</span>
+          <span data-preview-number>EXPERIMENT {first.number} / 11</span>
           <span>MUJOCO</span>
         </div>
         <div class="collection-preview-copy">
@@ -83,14 +114,14 @@ const first = experimentCatalog[0];
           >
             ←
           </button>
-          <span data-preview-counter>预览 01 / 07</span>
+          <span data-preview-counter>预览 01 / 11</span>
           <button type="button" data-preview-next aria-label="下一个实验预览">
             →
           </button>
         </span>
       </p>
     </article>
-    <nav class="collection-directory" aria-label="七项 MuJoCo 实验">
+    <nav class="collection-directory" aria-label="十一项 MuJoCo 实验">
       {experimentCatalog.map((entry) => (
         <a
           href={experimentHref(entry.id)}
@@ -115,7 +146,7 @@ const first = experimentCatalog[0];
   </div>
   <div class="collection-footer" data-reveal>
     <p>
-      七次观察，一条从基础现象到完整模型的路径。可以按顺序探索，也可以从感兴趣的问题开始。
+      十一次观察，从基础运动走向约束、传动与感知。可以按顺序探索，也可以从感兴趣的问题开始。
     </p>
     <a class="text-link" href={experimentHref(first.id)}>
       从实验 01 开始 <span>↗</span>
@@ -124,6 +155,7 @@ const first = experimentCatalog[0];
 </div>
 <script>
   import { createStudies } from '../scripts/studies';
+  import { createFeatureStudy } from '../scripts/feature-study';
   import { createArmStudy } from '../scripts/arm-study';
   import { experimentCatalog, experimentHref } from '../lib/experiment-catalog';
   createStudies();
@@ -142,6 +174,10 @@ const first = experimentCatalog[0];
         '[data-preview-art="arm"]',
       )!;
       createArmStudy(armCover);
+      const featureCover = collection.querySelector<HTMLElement>(
+        '[data-preview-art="feature"]',
+      )!;
+      createFeatureStudy(featureCover);
       let previewIndex = 0;
       const setPreview = (anchor: HTMLAnchorElement) => {
         const entry = experimentCatalog.find(
@@ -149,15 +185,23 @@ const first = experimentCatalog[0];
         )!;
         previewIndex = experimentCatalog.indexOf(entry);
         collection.querySelector('[data-preview-counter]')!.textContent =
-          `预览 ${entry.number} / 07`;
+          `预览 ${entry.number} / 11`;
         entries.forEach((row) =>
           row.toggleAttribute('data-preview-selected', row === anchor),
         );
         art.forEach((panel) => {
           panel.hidden =
             panel.dataset.previewArt !==
-            (entry.kind === 'basic' ? entry.id : 'arm');
+            (entry.kind === 'basic'
+              ? entry.id
+              : entry.kind === 'arm'
+                ? 'arm'
+                : 'feature');
         });
+        if (entry.kind === 'feature') {
+          featureCover.dataset.studyKind = entry.study;
+          featureCover.dispatchEvent(new Event('feature-preview-change'));
+        }
         if (entry.kind === 'arm') {
           armCover.dataset.lesson = entry.lesson;
           armCover.dispatchEvent(new Event('arm-preview-change'));
@@ -171,7 +215,7 @@ const first = experimentCatalog[0];
           `运行实验 ${entry.number}：${entry.title}`,
         );
         collection.querySelector('[data-preview-number]')!.textContent =
-          `EXPERIMENT ${entry.number} / 07`;
+          `EXPERIMENT ${entry.number} / 11`;
         collection.querySelector('[data-preview-english]')!.textContent =
           entry.english;
         collection.querySelector('[data-preview-title]')!.textContent =

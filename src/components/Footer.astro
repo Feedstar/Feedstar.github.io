@@ -7,7 +7,9 @@ const posts = (await getCollection('journal')).sort((a, b) =>
   b.data.number.localeCompare(a.data.number),
 );
 const latest = posts.slice(0, 3);
-const experiments = experimentCatalog.filter((entry) => entry.kind === 'arm');
+const experiments = experimentCatalog.filter(
+  (entry) => entry.kind === 'feature',
+);
 ---
 
 <footer class="site-footer">

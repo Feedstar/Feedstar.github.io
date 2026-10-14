@@ -1,0 +1,21 @@
+<!-- Feedstar original: a physical rotary sensor and movable target. -->
+<mujoco model="Feedstar range scanner">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <default><geom rgba="0.8 0.84 0.81 1" contype="0" conaffinity="0"/></default>
+  <worldbody>
+    <geom type="cylinder" size="0.12 0.04" pos="0 0 0.04" rgba="0.13 0.18 0.2 1"/>
+    <body name="scanner" pos="0 0 0.2" gravcomp="1">
+      <joint name="scan_angle" type="hinge" axis="0 0 1" damping="0.02" armature="0.001"/>
+      <geom type="cylinder" size="0.075 0.06" mass="0.1" rgba="0.4 0.68 0.63 1"/>
+      <geom type="box" size="0.04 0.023 0.025" pos="0.08 0 0" mass="0.02" rgba="0.8 0.6 0.3 1"/>
+      <site name="beam" pos="0.12 0 0" quat="0.70710678 0 0.70710678 0" size="0.007"/>
+    </body>
+    <body name="obstacle" mocap="true" pos="0.8 0 0.2"><geom name="movable_box" type="box" size="0.12 0.14 0.2" rgba="0.8 0.6 0.3 1"/></body>
+    <geom name="pillar" type="cylinder" pos="0.6 0.62 0.2" size="0.15 0.2"/>
+    <geom name="far_wall" type="box" pos="1.5 0 0.2" size="0.04 0.52 0.2" rgba="0.35 0.45 0.47 1"/>
+    <geom name="side_block" type="box" pos="0.85 -0.6 0.2" size="0.18 0.08 0.2"/>
+  </worldbody>
+  <actuator><position name="drive" joint="scan_angle" kp="30" kv="1" forcerange="-8 8"/></actuator>
+  <sensor><rangefinder name="range" site="beam"/></sensor>
+</mujoco>

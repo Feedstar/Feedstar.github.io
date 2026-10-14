@@ -1,7 +1,9 @@
 import type { ExampleId } from './examples';
 import type { ArmLesson } from './arm-types';
+import type { StudyId } from './study-assets';
+import { studies } from './studies';
 
-export type ExperimentId = ExampleId | `arm-${ArmLesson}`;
+export type ExperimentId = ExampleId | `arm-${ArmLesson}` | StudyId;
 type Entry = {
   id: ExperimentId;
   number: string;
@@ -11,7 +13,9 @@ type Entry = {
   connection: string;
   english: string;
 } & (
-  { kind: 'basic'; example: ExampleId } | { kind: 'arm'; lesson: ArmLesson }
+  | { kind: 'basic'; example: ExampleId }
+  | { kind: 'arm'; lesson: ArmLesson }
+  | { kind: 'feature'; study: StudyId }
 );
 
 // One directory drives the gallery, the lab navigation, and shareable URLs.
@@ -93,6 +97,17 @@ export const experimentCatalog: Entry[] = [
     description: '结合关节控制与摩擦，观察夹紧、抬升和滑落。',
     connection: '将前面的结构、控制、传感器和摩擦放进同一次实验。',
   },
+  ...Object.entries(studies).map(([id, spec]): Entry => ({
+    id: id as StudyId,
+    kind: 'feature',
+    study: id as StudyId,
+    number: spec.number,
+    title: spec.title,
+    subject: spec.subject,
+    english: spec.english,
+    description: spec.description,
+    connection: spec.connection,
+  })),
 ];
 export const experimentHref = (id: ExperimentId) =>
   `/lab/?example=${id}#experiment`;

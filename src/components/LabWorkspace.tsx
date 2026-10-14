@@ -16,6 +16,7 @@ import {
 } from '../lib/experiment-catalog';
 const Simulation = lazy(() => import('./Simulation'));
 const ArmLab = lazy(() => import('./ArmLab'));
+const FeatureLab = lazy(() => import('./FeatureLab'));
 
 class ExperimentBoundary extends Component<
   { children: ReactNode },
@@ -88,6 +89,8 @@ export default function LabWorkspace() {
         <span>01—03 / 看清基础现象</span>
         <i aria-hidden="true">→</i>
         <span>04—07 / 在机械臂上综合观察</span>
+        <i aria-hidden="true">→</i>
+        <span>08—11 / 约束、传动与感知</span>
       </div>
       <nav className="lab-course-nav" aria-label="选择实验">
         {experimentCatalog.map((entry) => (
@@ -99,7 +102,13 @@ export default function LabWorkspace() {
           >
             <span>
               {entry.number}{' '}
-              <small>{entry.kind === 'basic' ? '基础' : '机械臂'}</small>
+              <small>
+                {entry.kind === 'basic'
+                  ? '基础'
+                  : entry.kind === 'arm'
+                    ? '机械臂'
+                    : '进阶观察'}
+              </small>
             </span>
             <strong>{entry.title}</strong>
           </a>
@@ -108,7 +117,8 @@ export default function LabWorkspace() {
       <header className="lab-current-heading">
         <div>
           <p className="eyebrow">
-            EXPERIMENT {current.number} / 07 · {current.subject}
+            EXPERIMENT {current.number} / {experimentCatalog.length} ·{' '}
+            {current.subject}
           </p>
           <h2>{current.title}</h2>
         </div>
@@ -117,7 +127,7 @@ export default function LabWorkspace() {
           <p>{current.connection}</p>
         </div>
       </header>
-      <ExperimentBoundary key={current.kind}>
+      <ExperimentBoundary key={current.id}>
         <Suspense
           fallback={
             <div className="lab-loading" role="status">
@@ -128,8 +138,10 @@ export default function LabWorkspace() {
           {selection ? (
             current.kind === 'basic' ? (
               <Simulation key={current.example} id={current.example} />
-            ) : (
+            ) : current.kind === 'arm' ? (
               <ArmLab lesson={current.lesson} number={current.number} />
+            ) : (
+              <FeatureLab key={current.study} kind={current.study} />
             )
           ) : (
             <div className="lab-loading" role="status">
@@ -171,7 +183,7 @@ export default function LabWorkspace() {
         ) : (
           <a href="/projects/">
             <small>回到目录 ↗</small>
-            <span>全部七项实验</span>
+            <span>全部 {experimentCatalog.length} 项实验</span>
           </a>
         )}
       </nav>
