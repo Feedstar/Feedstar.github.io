@@ -69,7 +69,7 @@ export default function ArmLab({
         onForce: viewer.onForce,
         onStatus: viewer.onStatus,
         onSelection: (body) => {
-          if (body) setBody(body.name);
+          setBody(body?.name ?? '');
         },
       });
       viewer.attach(render);
@@ -326,13 +326,16 @@ export default function ArmLab({
                   disabled={!ready}
                   onChange={(e) => setBody(e.target.value)}
                 >
-                  {(model?.bodies ?? [{ id: 0, name: 'wrist' }])
-                    .filter((entry) => entry.name !== 'world')
-                    .map((entry) => (
+                  <option value="" disabled>
+                    选择刚体或双击模型
+                  </option>
+                  {(model?.bodies ?? [{ id: 0, name: 'wrist' }]).map(
+                    (entry) => (
                       <option key={entry.id} value={entry.name}>
                         {bodyLabels[entry.name]} / {entry.name}
                       </option>
-                    ))}
+                    ),
+                  )}
                 </select>
               </label>
               {lesson === 'model' && (

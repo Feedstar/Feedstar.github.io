@@ -30,13 +30,8 @@ export function useViewerControls(
       view.setRunning(playing);
     },
     onStatus: setStatus,
-    onForce: (
-      request: Parameters<
-        NonNullable<
-          import('../lib/viewer-interaction').ViewerOptions['onForce']
-        >
-      >[0],
-    ) => worker.current?.postMessage({ type: 'perturb', request }),
+    onForce: (request: Parameters<NonNullable<ViewerOptions['onForce']>>[0]) =>
+      worker.current?.postMessage({ type: 'perturb', request }),
     setMode(value: 'camera' | 'force') {
       setModeState(value);
       api.current?.setMode(value);

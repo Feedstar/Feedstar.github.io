@@ -186,13 +186,13 @@ export function createArmView(
   canvas.addEventListener('pointermove', move, true);
   canvas.addEventListener('pointerup', up, true);
   canvas.addEventListener('pointercancel', up, true);
-  const interaction = createViewerInteraction(
-    canvas,
-    scene,
-    camera,
-    controls,
-    options,
-  );
+  const interaction = createViewerInteraction(canvas, scene, camera, controls, {
+    ...options,
+    onSelection(selected) {
+      body = selected?.id ?? -1;
+      options.onSelection?.(selected);
+    },
+  });
   const geoms = new Map<number, THREE.Mesh>();
   const materials = new Map<string, THREE.MeshStandardMaterial>();
   let current: ArmState | null = null,
