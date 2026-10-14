@@ -5,6 +5,7 @@ import type { ArmReady, ArmState } from './arm-types';
 import {
   createViewerInteraction,
   type ViewerOptions,
+  type ViewerMode,
 } from './viewer-interaction';
 
 export function createArmView(
@@ -33,7 +34,7 @@ export function createArmView(
   controls.dampingFactor = 0.09;
   controls.minDistance = 0.8;
   controls.maxDistance = 5;
-  controls.maxPolarAngle = Math.PI * 0.49;
+  controls.maxPolarAngle = Math.PI - 0.01;
   const resetCamera = () => {
     camera.position.set(
       ...(options.camera ?? ([1.5, -1.85, 1.2] as [number, number, number])),
@@ -136,9 +137,9 @@ export function createArmView(
     camera.updateMatrixWorld();
     raycaster.setFromCamera(pointer, camera);
   };
-  let interactionMode: 'camera' | 'force' = 'camera';
+  let interactionMode: ViewerMode = 'camera';
   const down = (e: PointerEvent) => {
-    if (interactionMode === 'force' || e.ctrlKey || e.metaKey) return;
+    if (interactionMode !== 'camera' || e.ctrlKey || e.metaKey) return;
     if (!options.onTargetDrag || !goal.visible || e.button !== 0) return;
     ray(e);
     projectedGoal.copy(goal.position).project(camera);
@@ -307,13 +308,15 @@ export function createArmView(
   window.addEventListener('blur', cancel);
   document.addEventListener('visibilitychange', clearHiddenDrag);
   return {
-    setMode(mode: 'camera' | 'force') {
+    setMode(mode: ViewerMode) {
       cancel();
       interactionMode = mode;
       interaction.setMode(mode);
     },
     setRunning: interaction.setRunning,
     focus: interaction.focus,
+    follow: interaction.follow,
+    setDisplay: interaction.setDisplay,
     cancel,
     setOverlay(segments: number[], target?: number[], trail: number[] = []) {
       const positions = lineGeometry.getAttribute(
@@ -395,6 +398,7 @@ export function createArmView(
     },
     resetCamera() {
       cancel();
+      interaction.freeCamera();
       resetCamera();
     },
     dispose() {

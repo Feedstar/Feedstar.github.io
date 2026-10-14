@@ -20,6 +20,7 @@ function sendState(forced = false) {
   const observation = runtime.observe();
   const state = {
     type: 'state',
+    viewer: viewerForce?.read(),
     forced,
     epoch,
     time: data.time,
@@ -123,8 +124,23 @@ self.onmessage = async ({ data: message }) => {
       schedule();
       return;
     }
+    if (message.type === 'display') {
+      viewerForce?.setDisplay(message.flags);
+      if (viewerForce) {
+        sendState(true);
+      }
+      return;
+    }
     if (message.type === 'perturb') {
-      if (playing || !message.request) viewerForce?.update(message.request);
+      if (viewerForce?.update(message.request, !playing)) {
+        const pose = runtime.syncViewerPose();
+        if (pose && message.request?.kind === 'move') {
+          epoch++;
+          self.postMessage({ type: 'viewer-pose', pose });
+        }
+        mj.mj_forward(runtime.model, runtime.data);
+        sendState(true);
+      }
       return;
     }
     if (message.type === 'visible') {
@@ -153,7 +169,9 @@ self.onmessage = async ({ data: message }) => {
       schedule();
     }
     if (message.type === 'speed') {
-      speed = [0.25, 0.5, 1].includes(message.value) ? message.value : 1;
+      speed = [0.1, 0.25, 0.5, 1, 2].includes(message.value)
+        ? message.value
+        : 1;
       schedule();
     }
     if (message.type === 'step' && !playing) {
@@ -161,7 +179,7 @@ self.onmessage = async ({ data: message }) => {
       runtime.step();
     }
     if (message.type === 'dispose') {
-      viewerForce?.clear();
+      viewerForce?.dispose();
       clearTimeout(timer);
       runtime.dispose();
       self.close();

@@ -31,6 +31,7 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 function sendState(forced = false) {
   const state = {
     type: 'state',
+    viewer: viewerForce?.read(),
     forced,
     time: data.time,
     contacts: data.ncon,
@@ -137,8 +138,18 @@ self.onmessage = async ({ data: message }) => {
       await load();
       return;
     }
+    if (message.type === 'display') {
+      viewerForce?.setDisplay(message.flags);
+      if (viewerForce) {
+        sendState(true);
+      }
+      return;
+    }
     if (message.type === 'perturb') {
-      if (playing || !message.request) viewerForce?.update(message.request);
+      if (viewerForce?.update(message.request, !playing)) {
+        mj.mj_forward(model, data);
+        sendState(true);
+      }
       return;
     }
     if (message.type === 'visible') {
@@ -148,7 +159,7 @@ self.onmessage = async ({ data: message }) => {
       return;
     }
     if (message.type === 'dispose') {
-      viewerForce?.clear();
+      viewerForce?.dispose();
       stopped = true;
       clearTimeout(timer);
       data?.delete();
@@ -170,7 +181,9 @@ self.onmessage = async ({ data: message }) => {
       schedule();
     }
     if (message.type === 'speed') {
-      speed = [0.25, 0.5, 1].includes(message.value) ? message.value : 1;
+      speed = [0.1, 0.25, 0.5, 1, 2].includes(message.value)
+        ? message.value
+        : 1;
       schedule();
     }
     if (message.type === 'reset') {

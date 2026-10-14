@@ -65,7 +65,6 @@ export function createStudy(mj, kind, xml) {
     if (kind === 'scanner') {
       data.mocap_pos[0] = settings.x;
       data.mocap_pos[1] = settings.y;
-      data.mocap_pos[2] = 0.2;
     }
   }
   function control() {
@@ -305,6 +304,13 @@ export function createStudy(mj, kind, xml) {
     observe,
     reset,
     update,
+    syncViewerPose() {
+      if (kind !== 'scanner') return null;
+      // Native mocap editing keeps the lesson sliders in sync without resetting pose.
+      settings.x = data.mocap_pos[0];
+      settings.y = data.mocap_pos[1];
+      return { x: settings.x, y: settings.y };
+    },
     get settings() {
       return { ...settings };
     },

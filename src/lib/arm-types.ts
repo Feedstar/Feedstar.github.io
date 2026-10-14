@@ -26,6 +26,7 @@ export type ArmReady = {
     name: string;
     parent: number;
     mass: number;
+    editable: boolean;
     movable: boolean;
     mocap: boolean;
   }[];
@@ -33,6 +34,7 @@ export type ArmReady = {
   geoms: ArmGeom[];
 };
 export type ArmState = {
+  viewer?: import('./viewer-display').ViewerDiagnostics;
   type: 'state';
   forced: boolean;
   time: number;

@@ -15,4 +15,7 @@ export type StudyState = ArmState & {
   epoch: number;
 };
 export type StudyMessage =
-  ArmReady | StudyState | { type: 'error' | 'progress'; message: string };
+  | ArmReady
+  | StudyState
+  | { type: 'viewer-pose'; pose: { x: number; y: number } }
+  | { type: 'error' | 'progress'; message: string };

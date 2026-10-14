@@ -89,7 +89,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
     controls.enableDamping = true;
     controls.minDistance = 2;
     controls.maxDistance = 9;
-    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.maxPolarAngle = Math.PI - 0.01;
     controls.update();
     const initialCamera = camera.position.clone(),
       initialTarget = controls.target.clone();
@@ -104,6 +104,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
       ...interaction,
       resetCamera() {
         interaction.cancel();
+        interaction.freeCamera();
         camera.position.copy(initialCamera);
         controls.target.copy(initialTarget);
         controls.update();
@@ -214,6 +215,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
           mesh.userData.viewerBody = e.data.geomBodies[i];
         });
         interaction.setModel(meshes, e.data.bodies);
+        viewer.syncDisplay();
         setVersion(e.data.version);
         setReady(true);
         w.postMessage({ type: 'params', params: latestParams.current });
@@ -350,6 +352,17 @@ export default function Simulation({ id }: { id: ExampleId }) {
     history.current = [];
     worker.current?.postMessage({ type: 'reset' });
   };
+  viewer.commands.current = {
+    ready,
+    speed: params.speed,
+    reset,
+    play() {
+      setPlaying(!playing);
+    },
+    setSpeed(value) {
+      change('speed', value);
+    },
+  };
   const example = examples[id];
   const sliderProps = { params, ready, change };
   return (
@@ -476,37 +489,6 @@ export default function Simulation({ id }: { id: ExampleId }) {
               <p className="param-note">调整后重置，让方块从相同初速度出发。</p>
             </>
           )}
-          <label className="speed-control">
-            仿真速度
-            <select
-              aria-label="仿真速度"
-              value={params.speed}
-              disabled={!ready}
-              onChange={(e) => change('speed', Number(e.target.value))}
-            >
-              <option value={0.25}>¼ 倍速</option>
-              <option value={0.5}>½ 倍速</option>
-              <option value={1}>正常速度</option>
-            </select>
-          </label>
-          <div className="simulation-actions">
-            <button
-              disabled={!ready}
-              onClick={() => setPlaying((v) => !v)}
-              aria-label={playing ? '暂停仿真' : '继续仿真'}
-            >
-              {playing ? 'Ⅱ 暂停' : '▷ 继续'}
-            </button>
-            <button disabled={!ready} onClick={reset} aria-label="重置仿真">
-              ↻ 重置
-            </button>
-            <button
-              disabled={!ready || playing}
-              onClick={() => worker.current?.postMessage({ type: 'step' })}
-            >
-              单步 →
-            </button>
-          </div>
         </aside>
         <div className="live-readout">
           <span>{id === 'contact' ? '速度' : '当前角度'}</span>

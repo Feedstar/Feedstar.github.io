@@ -68,6 +68,8 @@ export default function ArmLab({
       render = createArmView(canvas.current, {
         onForce: viewer.onForce,
         onStatus: viewer.onStatus,
+        onCommand: viewer.onCommand,
+        onStats: viewer.onStats,
         onSelection: (body) => {
           setBody(body?.name ?? '');
         },
@@ -97,6 +99,7 @@ export default function ArmLab({
           addresses[sensor.name] = sensor.address;
         });
         render.setModel(data);
+        viewer.syncDisplay();
         setModel(data);
         setStatus('MuJoCo ' + data.version);
       }
@@ -184,6 +187,19 @@ export default function ArmLab({
     setGrip(0);
     history.current = [];
     send({ type: 'reset' });
+  };
+  viewer.commands.current = {
+    ready,
+    speed,
+    reset,
+    play() {
+      setPlaying(!playing);
+      send({ type: 'play', value: !playing });
+    },
+    setSpeed(value) {
+      setSpeed(value);
+      send({ type: 'speed', value });
+    },
   };
   useEffect(() => {
     setCopied(false);
@@ -578,44 +594,6 @@ export default function ArmLab({
             </>
           )}
         </aside>
-      </div>
-      <div className="arm-toolbar">
-        <div>
-          <button
-            className="arm-play"
-            disabled={!ready}
-            onClick={() => {
-              setPlaying(!playing);
-              send({ type: 'play', value: !playing });
-            }}
-          >
-            {playing ? 'Ⅱ 暂停' : '▷ 运行'}
-          </button>
-          <button disabled={!ready} onClick={reset}>
-            重置实验 ↺
-          </button>
-          <button
-            disabled={!ready || playing}
-            onClick={() => send({ type: 'step' })}
-          >
-            单步 +2 ms
-          </button>
-        </div>
-        <label>
-          仿真速度
-          <select
-            value={speed}
-            disabled={!ready}
-            onChange={(e) => {
-              setSpeed(Number(e.target.value));
-              send({ type: 'speed', value: Number(e.target.value) });
-            }}
-          >
-            <option value="1">1×</option>
-            <option value="0.5">0.5×</option>
-            <option value="0.25">0.25×</option>
-          </select>
-        </label>
       </div>
       <div className="arm-readout">
         <p>

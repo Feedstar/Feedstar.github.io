@@ -22,6 +22,7 @@ const send = () => {
   if (!data) return;
   self.postMessage({
     type: 'state',
+    viewer: viewerForce?.read(),
     time: data.time,
     qpos: Array.from(data.qpos),
     qvel: Array.from(data.qvel),
@@ -60,6 +61,7 @@ async function load(next: ExampleId) {
     });
   if (disposed) return;
   clearTimeout(timer);
+  viewerForce?.dispose();
   data?.delete();
   model?.delete();
   id = next;
@@ -108,8 +110,18 @@ self.onmessage = async (event) => {
       await load(message.id in examples ? message.id : 'pendulum');
       return;
     }
+    if (message.type === 'display') {
+      viewerForce?.setDisplay(message.flags);
+      if (viewerForce) {
+        send();
+      }
+      return;
+    }
     if (message.type === 'perturb') {
-      if (playing || !message.request) viewerForce?.update(message.request);
+      if (viewerForce?.update(message.request, !playing)) {
+        mj.mj_forward(model, data);
+        send();
+      }
       return;
     }
     if (message.type === 'params') {
@@ -135,7 +147,7 @@ self.onmessage = async (event) => {
       send();
     }
     if (message.type === 'dispose') {
-      viewerForce?.clear();
+      viewerForce?.dispose();
       disposed = true;
       clearTimeout(timer);
       data?.delete();

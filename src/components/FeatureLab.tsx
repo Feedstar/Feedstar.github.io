@@ -61,14 +61,8 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
         camera,
         onForce: viewer.onForce,
         onStatus: viewer.onStatus,
-        onMocapDrag:
-          kind === 'scanner'
-            ? (_body, point) =>
-                changeRef.current({
-                  x: Math.max(0.45, Math.min(1.1, point[0])),
-                  y: Math.max(-0.65, Math.min(0.65, point[1])),
-                })
-            : undefined,
+        onCommand: viewer.onCommand,
+        onStats: viewer.onStats,
         center:
           kind === 'scanner'
             ? [0.65, 0, 0.12]
@@ -98,6 +92,8 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
     worker.current = engine;
     engine.onmessage = ({ data }: MessageEvent<StudyMessage>) => {
       if (!alive) return;
+      if (data.type === 'viewer-pose')
+        setSettings((previous) => ({ ...previous, ...data.pose }));
       if (data.type === 'progress') setStatus(data.message);
       if (data.type === 'error') {
         setError(data.message);
@@ -105,6 +101,7 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
       }
       if (data.type === 'ready') {
         render.setModel(data);
+        viewer.syncDisplay();
         setModel(data);
         setStatus(`MuJoCo ${data.version}`);
       }
@@ -202,6 +199,19 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
     view.current?.cancel();
     history.current = [];
     send({ type: 'reset' });
+  };
+  viewer.commands.current = {
+    ready,
+    speed,
+    reset,
+    play() {
+      setPlaying(!playing);
+      send({ type: 'play', value: !playing });
+    },
+    setSpeed(value) {
+      setSpeed(value);
+      send({ type: 'speed', value });
+    },
   };
   const xmlPath =
     kind === 'inverse-kinematics'
@@ -339,44 +349,6 @@ export default function FeatureLab({ kind }: { kind: StudyId }) {
                 : '预设会重置时间、曲线和轨迹。'}
           </p>
         </aside>
-      </div>
-      <div className="arm-toolbar">
-        <div>
-          <button
-            className="arm-play"
-            disabled={!ready}
-            onClick={() => {
-              setPlaying(!playing);
-              send({ type: 'play', value: !playing });
-            }}
-          >
-            {playing ? 'Ⅱ 暂停' : '▷ 运行'}
-          </button>
-          <button disabled={!ready} onClick={reset}>
-            重置实验 ↺
-          </button>
-          <button
-            disabled={!ready || playing}
-            onClick={() => send({ type: 'step' })}
-          >
-            单步 +2 ms
-          </button>
-        </div>
-        <label>
-          仿真速度
-          <select
-            disabled={!ready}
-            value={speed}
-            onChange={(e) => {
-              setSpeed(Number(e.target.value));
-              send({ type: 'speed', value: Number(e.target.value) });
-            }}
-          >
-            <option value="1">1×</option>
-            <option value="0.5">0.5×</option>
-            <option value="0.25">0.25×</option>
-          </select>
-        </label>
       </div>
       <div className="feature-status">
         <span>{ready ? state?.observation.status : status}</span>
