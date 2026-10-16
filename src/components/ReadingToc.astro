@@ -1,11 +1,17 @@
 ---
 interface Props {
   headings: { depth: number; slug: string; text: string }[];
+  backHref?: string;
+  backLabel?: string;
 }
-const { headings } = Astro.props;
+const {
+  headings,
+  backHref = '/journal/',
+  backLabel = '全部手记',
+} = Astro.props;
 const sections = [
   { depth: 2, slug: 'article-start', text: '开篇' },
-  ...headings.filter((heading) => heading.depth === 2 || heading.depth === 3),
+  ...headings.filter((heading) => heading.depth >= 2 && heading.depth <= 4),
 ];
 let chapter = 0;
 ---
@@ -39,7 +45,7 @@ let chapter = 0;
     <nav aria-label="文章目录">
       <ol class="toc-list">
         {sections.map((heading, index) => (
-          <li class:list={{ 'toc-subheading': heading.depth === 3 }}>
+          <li class:list={{ 'toc-subheading': heading.depth >= 3 }}>
             <a
               href={`#${heading.slug}`}
               data-toc-target={heading.slug}
@@ -54,8 +60,8 @@ let chapter = 0;
         ))}
       </ol>
     </nav>
-    <a class="toc-back" href="/journal/">
-      ← 全部手记
+    <a class="toc-back" href={backHref}>
+      ← {backLabel}
     </a>
   </details>
 </aside>
@@ -232,10 +238,10 @@ let chapter = 0;
   }
   @media (max-width: 650px) {
     .reading-sidebar {
-      top: 76px;
+      top: 110px;
     }
     .reading-toc {
-      max-height: calc(100dvh - 100px);
+      max-height: calc(100dvh - 134px);
     }
   }
 </style>

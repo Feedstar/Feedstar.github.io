@@ -2,14 +2,14 @@
 import { getCollection } from 'astro:content';
 import Wordmark from './Wordmark.astro';
 import { siteNavigation } from '../lib/site-navigation';
-import { experimentCatalog, experimentHref } from '../lib/experiment-catalog';
+import { experimentCatalog } from '../lib/experiment-catalog';
 
 const posts = (await getCollection('journal')).sort((a, b) =>
   b.data.number.localeCompare(a.data.number),
 );
 const latest = posts.slice(0, 3);
-const experiments = experimentCatalog.filter(
-  (entry) => entry.kind === 'feature',
+const documents = (await getCollection('docs')).sort(
+  (a, b) => b.data.order - a.data.order,
 );
 ---
 
@@ -24,7 +24,7 @@ const experiments = experimentCatalog.filter(
         <p class="footer-description">
           学习、仿真与沿途的思考。
           <br />
-          把好奇写成手记，让想法发生一次。
+          解析实验，也记录工作中的所得。
         </p>
         <a
           class="footer-github"
@@ -42,15 +42,15 @@ const experiments = experimentCatalog.filter(
             <strong>{String(experimentCatalog.length).padStart(2, '0')}</strong>{' '}
             个实验
           </a>
-          <span>
-            <i aria-hidden="true"></i>持续探索
-          </span>
+          <a href="/docs/">
+            <strong>{String(documents.length).padStart(2, '0')}</strong> 篇文档
+          </a>
         </div>
       </section>
 
       <section class="footer-column" aria-labelledby="footer-notes">
         <h2 id="footer-notes">
-          <span>01</span> 最新手记
+          <span>01</span> 实验手记
         </h2>
         <ul class="footer-notes">
           {latest.map((post) => (
@@ -69,22 +69,22 @@ const experiments = experimentCatalog.filter(
         </a>
       </section>
 
-      <section class="footer-column" aria-labelledby="footer-labs">
-        <h2 id="footer-labs">
-          <span>02</span> 在实验中理解
+      <section class="footer-column" aria-labelledby="footer-docs">
+        <h2 id="footer-docs">
+          <span>02</span> 工作记录与心得
         </h2>
         <ul class="footer-experiments">
-          {experiments.map((entry) => (
+          {documents.slice(0, 3).map((entry) => (
             <li>
-              <a href={experimentHref(entry.id)}>
-                <span>{entry.number}</span>
-                {entry.title}
+              <a href={`/docs/${entry.id}/`}>
+                <span>{String(entry.data.order).padStart(2, '0')}</span>
+                {entry.data.title}
               </a>
             </li>
           ))}
         </ul>
-        <a class="footer-more" href="/lab/">
-          全部实验 <span aria-hidden="true">↗</span>
+        <a class="footer-more" href="/docs/">
+          全部文档 <span aria-hidden="true">↗</span>
         </a>
       </section>
 

@@ -1,0 +1,74 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import ReadingToc from '../../components/ReadingToc.astro';
+import '../../styles/documents.css';
+export async function getStaticPaths() {
+  const documents = (await getCollection('docs')).sort(
+    (a, b) => a.data.order - b.data.order,
+  );
+  return documents.map((post, index) => ({
+    params: { slug: post.id },
+    props: { post, next: documents[(index + 1) % documents.length] },
+  }));
+}
+const { post, next } = Astro.props;
+const { Content, headings } = await render(post);
+---
+
+<Layout
+  title={`${post.data.title} · Feedstar`}
+  description={post.data.description}
+  page="docs"
+>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="reading-layout">
+    <ReadingToc headings={headings} backHref="/docs/" backLabel="全部文档" />
+    <article class="article-shell document-article">
+      <header class="article-header" id="article-start">
+        <a class="eyebrow" href="/docs/">
+          ← WORK & REFLECTIONS / 工作记录与心得
+        </a>
+        <h1>{post.data.title}</h1>
+        <p class="article-description">{post.data.description}</p>
+        <div class="document-meta">
+          <span>{post.data.category}</span>
+          <span>{post.data.tags.join(' · ')}</span>
+        </div>
+      </header>
+      <div class="prose">
+        <Content />
+      </div>
+      <div class="article-bottom">
+        <a class="text-link" href="/docs/">
+          返回文档 <span>←</span>
+        </a>
+        <a class="text-link document-next" href={`/docs/${next.id}/`}>
+          继续阅读：{next.data.title} <span>↗</span>
+        </a>
+      </div>
+    </article>
+  </div>
+</Layout>
+<script>
+  import { createCodeBlocks } from '../../scripts/code-blocks';
+  createCodeBlocks();
+  // Playing one recording pauses the others; long pages never stack playback.
+  document
+    .querySelectorAll<HTMLVideoElement>('.document-video video')
+    .forEach((video) => {
+      video.addEventListener('play', () => {
+        document
+          .querySelectorAll<HTMLVideoElement>('.document-video video')
+          .forEach((other) => {
+            if (other !== video) other.pause();
+          });
+      });
+    });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden)
+      document
+        .querySelectorAll<HTMLVideoElement>('.document-video video')
+        .forEach((video) => video.pause());
+  });
+</script>

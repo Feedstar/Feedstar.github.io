@@ -19,6 +19,9 @@ export default function codeBlockTransformer() {
     javascript: 'JavaScript',
     typescript: 'TypeScript',
     json: 'JSON',
+    yaml: 'YAML',
+    cmake: 'CMake',
+    css: 'CSS',
   };
   return {
     name: 'feedstar-code-blocks',

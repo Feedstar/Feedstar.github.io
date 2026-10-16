@@ -1,20 +1,24 @@
 ---
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+const documents = (await getCollection('docs')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
 const topics = [
   {
-    number: '01',
-    title: '原理与方法',
-    description: '技术原理、算法推导与系统性的知识整理。',
+    id: 'modeling',
+    title: '建模与仿真',
+    description: '从模型文件，到能够运行的机器人。',
   },
   {
-    number: '02',
-    title: '开发与实践',
-    description: '项目说明、实现过程与可复用的开发指南。',
+    id: 'learning',
+    title: '强化学习',
+    description: '记录配置、调试与训练中的理解。',
   },
   {
-    number: '03',
-    title: '工具与环境',
-    description: '工具用法、环境配置与日常查阅的操作参考。',
+    id: 'imitation',
+    title: '动作模仿',
+    description: '从人的动作，走向机器人的运动。',
   },
 ];
 ---
@@ -22,99 +26,200 @@ const topics = [
 <Layout
   title="文档 · Feedstar"
   page="docs"
-  description="Feedstar 的技术文库。收录技术原理、开发指南与工具参考，整理可以反复查阅的知识。"
+  description="Feedstar 的工作记录与心得。记录机器人建模、仿真、强化学习与动作模仿的实践过程。"
 >
   <div class="page-intro wrap">
-    <p class="eyebrow">03 / TECHNICAL LIBRARY</p>
+    <p class="eyebrow">03 / WORK & REFLECTIONS</p>
     <h1>
-      技术文库。
+      工作里的脚印，
       <br />
-      <em>把理解，整理成路径。</em>
+      <em>也是理解的来处。</em>
     </h1>
     <p class="intro-description">
-      系统整理技术原理、实践方法与工具参考。
+      在这里存放工作记录、实践过程与一些心得。
       <br />
-      让一次积累，成为下一次出发时可以查阅的路标。
+      留下走过的步骤，也留下当时的思考。
     </p>
   </div>
-  <section class="page-content wrap docs-library" aria-labelledby="docs-status">
-    <div class="docs-status">
-      <p class="eyebrow">THE LIBRARY IS TAKING SHAPE</p>
-      <h2 id="docs-status">文档正在整理。</h2>
-      <p>
-        这里将收录工作与学习中的技术文档。
-        <br />
-        已有的学习记录与实验心得，可以先在手记中阅读。
+  <div class="page-content wrap docs-archive">
+    <div class="docs-index">
+      <p class="eyebrow">
+        {String(documents.length).padStart(2, '0')} DOCUMENTS / 持续记录
       </p>
-      <a class="text-link" href="/journal/">
-        翻开手记 <span aria-hidden="true">↗</span>
-      </a>
+      <nav aria-label="文档分类">
+        {topics.map((topic) => (
+          <a href={`#${topic.id}`}>
+            {topic.title}
+            <span>
+              {
+                documents.filter((doc) => doc.data.category === topic.title)
+                  .length
+              }
+            </span>
+          </a>
+        ))}
+      </nav>
     </div>
-    <div class="docs-topics" aria-labelledby="docs-topics-title">
-      <p class="eyebrow" id="docs-topics-title">
-        收录方向 / SUBJECTS
-      </p>
-      {topics.map((topic) => (
-        <div class="docs-topic">
-          <span class="docs-number">{topic.number}</span>
+    {topics.map((topic, index) => (
+      <section
+        class="docs-group"
+        id={topic.id}
+        aria-labelledby={`${topic.id}-title`}
+      >
+        <div class="docs-group-heading">
+          <span class="docs-group-number">0{index + 1}</span>
           <div>
-            <h3>{topic.title}</h3>
+            <h2 id={`${topic.id}-title`}>{topic.title}</h2>
             <p>{topic.description}</p>
           </div>
         </div>
-      ))}
-    </div>
-  </section>
+        <div class="docs-grid">
+          {documents
+            .filter((doc) => doc.data.category === topic.title)
+            .map((doc) => (
+              <a class="document-card" href={`/docs/${doc.id}/`} data-reveal>
+                <div class="document-cover">
+                  <img
+                    src={doc.data.cover}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width="720"
+                    height="450"
+                  />
+                </div>
+                <div class="document-card-content">
+                  <p class="eyebrow">工作记录 / {doc.data.tags[0]}</p>
+                  <h3>{doc.data.title}</h3>
+                  <p class="document-excerpt">{doc.data.description}</p>
+                  <div class="document-card-bottom">
+                    <span>{doc.data.tags.join(' · ')}</span>
+                    <span aria-hidden="true">↗</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+        </div>
+      </section>
+    ))}
+  </div>
 </Layout>
 
 <style>
-  .docs-library {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10%;
-  }
-  .docs-status {
-    border-top: 1px solid var(--line);
-    padding-top: 30px;
-  }
-  .docs-status h2 {
-    font: 28px/1.6 var(--serif);
-    margin: 25px 0 18px;
-  }
-  .docs-status > p:not(.eyebrow) {
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 2;
-  }
-  .docs-status .text-link {
-    margin-top: 26px;
-  }
-  .docs-topics > .eyebrow {
-    margin-bottom: 24px;
-  }
-  .docs-topic {
+  .docs-index {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 24px;
-    border-top: 1px solid var(--line);
-    padding: 23px 0;
+    border-block: 1px solid var(--line);
+    padding: 22px 0;
+    margin-bottom: 72px;
   }
-  .docs-number {
-    color: var(--subtle);
-    font: 22px/1.7 var(--roman);
-  }
-  .docs-topic h3 {
-    font: 19px/1.8 var(--serif);
-  }
-  .docs-topic p {
+  .docs-index nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
     font-size: 12px;
-    line-height: 1.9;
+  }
+  .docs-index nav span {
+    color: var(--subtle);
+    margin-left: 8px;
+    font-size: 10px;
+  }
+  .docs-group {
+    margin-bottom: 80px;
+    scroll-margin-top: 36px;
+  }
+  .docs-group-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+  .docs-group-number {
+    color: var(--accent);
+    font: italic 32px var(--roman);
+  }
+  .docs-group-heading h2 {
+    font: 400 26px/1.8 var(--serif);
+  }
+  .docs-group-heading p {
     color: var(--muted);
+    font-size: 12px;
     margin-top: 6px;
   }
+  .docs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+  .document-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-raised);
+  }
+  .document-cover {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #14151b;
+    border-bottom: 1px solid var(--line);
+  }
+  .document-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .document-card-content {
+    padding: 28px;
+  }
+  .document-card h3 {
+    font: 400 clamp(20px, 2vw, 26px)/1.65 var(--serif);
+    margin: 14px 0;
+    overflow-wrap: anywhere;
+  }
+  .document-excerpt {
+    font-size: 13px;
+    line-height: 2;
+    color: var(--muted);
+  }
+  .document-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 10px;
+    color: var(--subtle);
+  }
+  .document-card-bottom > span:last-child {
+    color: var(--accent);
+    font-size: 21px;
+  }
+  .document-card:hover h3,
+  .document-card:focus-visible h3 {
+    color: var(--accent);
+  }
   @media (max-width: 650px) {
-    .docs-library {
+    .docs-index {
+      align-items: flex-start;
+      flex-direction: column;
+      margin-bottom: 46px;
+    }
+    .docs-index nav {
+      gap: 20px;
+    }
+    .docs-grid {
       grid-template-columns: 1fr;
-      gap: 52px;
+      gap: 24px;
+    }
+    .document-card-content {
+      padding: 22px;
+    }
+    .docs-group {
+      margin-bottom: 55px;
     }
   }
 </style>

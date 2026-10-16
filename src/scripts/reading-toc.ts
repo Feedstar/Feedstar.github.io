@@ -20,7 +20,6 @@ export function createReadingToc() {
     document.getElementById('reading-progress'),
   ];
   const compact = matchMedia('(max-width: 1000px)');
-  const phone = matchMedia('(max-width: 650px)');
   let positions: number[] = [];
   let start = 0;
   let end = 1;
@@ -47,8 +46,7 @@ export function createReadingToc() {
     const progress = Math.max(0, Math.min(1, (y - start) / (end - start)));
     const percent = Math.round(progress * 100);
     // Match anchor landing positions below the header and compact contents bar.
-    const readingLine =
-      y + (compact.matches ? (phone.matches ? 198 : 228) : 166);
+    const readingLine = y + (compact.matches ? 228 : 166);
     let next = 0;
     for (let i = 1; i < positions.length; i++) {
       if (positions[i] <= readingLine) next = i;
@@ -81,7 +79,8 @@ export function createReadingToc() {
   };
   toc.open = !compact.matches;
   toc.addEventListener('click', (event) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
     const link = (event.target as Element).closest<HTMLAnchorElement>(
       '[data-toc-target]',
     );

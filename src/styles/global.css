@@ -925,7 +925,7 @@ main {
 @media (max-width: 650px) {
   .article-header,
   .prose :is(h2, h3) {
-    scroll-margin-top: 78px;
+    scroll-margin-top: 108px;
   }
 }
 .article-header {
