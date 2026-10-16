@@ -181,7 +181,7 @@ export default function LabWorkspace() {
             </span>
           </a>
         ) : (
-          <a href="/projects/">
+          <a href="/lab/#catalog">
             <small>回到目录 ↗</small>
             <span>全部 {experimentCatalog.length} 项实验</span>
           </a>

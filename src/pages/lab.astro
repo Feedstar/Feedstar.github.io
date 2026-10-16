@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LabWorkspace from '../components/LabWorkspace';
+import ExperimentCollection from '../components/ExperimentCollection.astro';
 import '../styles/lab.css';
 import '../styles/arm-lab.css';
 import '../styles/lab-course.css';
@@ -8,16 +9,29 @@ import '../styles/lab-course.css';
 
 <Layout title="实验室 · Feedstar" page="lab">
   <div class="page-intro wrap lab-page-intro">
-    <p class="eyebrow">03 / THE SMALL LABORATORY</p>
-    <h1>MuJoCo 实验集。</h1>
-    <p class="intro-description">
-      十一个实验，从单个关节到运动、约束与感知。
+    <p class="eyebrow">01 / THE SMALL LABORATORY</p>
+    <h1>
+      把好奇，
       <br />
-      在可运行的模型里，改变一个参数，验证一次理解。
+      <em>变成可以触碰的东西。</em>
+    </h1>
+    <p class="intro-description">
+      从一个模型、一个参数、一次观察开始。
+      <br />
+      让抽象的概念，在可运行的程序里变得具体。
     </p>
   </div>
+  <section
+    class="portfolio-field project-archive"
+    id="catalog"
+    aria-label="实验目录"
+  >
+    <div class="wrap">
+      <ExperimentCollection />
+    </div>
+  </section>
   <section class="page-content wrap">
-    <LabWorkspace client:load />
+    <LabWorkspace client:visible />
     <noscript>
       <p>
         交互实验需要启用 JavaScript。你可以直接下载
@@ -27,3 +41,9 @@ import '../styles/lab-course.css';
     </noscript>
   </section>
 </Layout>
+
+<style>
+  #catalog {
+    scroll-margin-top: 120px;
+  }
+</style>
