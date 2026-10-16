@@ -1,0 +1,223 @@
+---
+const { kind = 'pendulum', number = '01' } = Astro.props;
+const arm = kind.startsWith('arm') || kind === 'inverse-kinematics';
+const id = `specimen-${kind}`;
+---
+
+<svg class="note-specimen" viewBox="0 0 800 560" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient
+      id={id}
+      x1="200"
+      y1="100"
+      x2="570"
+      y2="450"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#fff9e9" />
+      <stop offset=".25" stop-color="#a2b5b5" />
+      <stop offset=".48" stop-color="#f6eee3" />
+      <stop offset=".6" stop-color="#5f7479" />
+      <stop offset=".82" stop-color="#c7d4cc" />
+      <stop offset="1" stop-color="#889da0" />
+    </linearGradient>
+    <radialGradient id={`${id}-ball`} cx=".3" cy=".24" r=".8">
+      <stop stop-color="#fff8e8" />
+      <stop offset=".3" stop-color="#d5d8cb" />
+      <stop offset=".7" stop-color="#647c82" />
+      <stop offset="1" stop-color="#273f4b" />
+    </radialGradient>
+  </defs>
+  <g stroke="currentColor" opacity=".22">
+    <ellipse cx="400" cy="420" rx="220" ry="70" />
+    <ellipse cx="400" cy="420" rx="160" ry="50" stroke-dasharray="2 8" />
+    <path d="M400 60V470M120 420H680" stroke-dasharray="2 8" />
+    <path d="M58 62h20m-10-10v20M722 498h20m-10-10v20" />
+  </g>
+  {kind === 'pendulum' && (
+    <g>
+      <path
+        d="M220 132H580"
+        stroke={`url(#${id})`}
+        stroke-width="10"
+        stroke-linecap="round"
+      />
+      <path
+        d="M210 132a190 190 0 0 0 380 0"
+        stroke="currentColor"
+        opacity=".25"
+        stroke-dasharray="3 9"
+      />
+      <g class="specimen-pendulum">
+        <path d="M400 132V358" stroke={`url(#${id})`} stroke-width="9" />
+        <circle cx="400" cy="365" r="39" fill={`url(#${id}-ball)`} />
+      </g>
+      <circle cx="400" cy="132" r="8" fill="currentColor" />
+    </g>
+  )}
+  {kind === 'actuator' && (
+    <g>
+      <path
+        d="M235 345C290 345 300 150 365 185S445 270 480 227S550 235 600 230"
+        stroke="currentColor"
+        stroke-width="2"
+        opacity=".5"
+      />
+      <path
+        d="M210 230H620"
+        stroke="currentColor"
+        stroke-dasharray="3 8"
+        opacity=".25"
+      />
+      <g class="specimen-link">
+        <path
+          d="M400 395L510 180"
+          stroke={`url(#${id})`}
+          stroke-width="24"
+          stroke-linecap="round"
+        />
+        <circle cx="400" cy="395" r="27" fill={`url(#${id}-ball)`} />
+        <circle cx="510" cy="180" r="17" fill={`url(#${id}-ball)`} />
+      </g>
+    </g>
+  )}
+  {kind === 'contact' && (
+    <g class="specimen-slide">
+      <path d="M310 220L420 178L510 238L400 284Z" fill="#dfe3d6" />
+      <path d="M310 220V335L400 400V284Z" fill="#789196" />
+      <path d="M400 284L510 238V352L400 400Z" fill={`url(#${id})`} />
+      <path
+        d="M400 400L570 440M400 400V450"
+        stroke="currentColor"
+        stroke-width="2"
+      />
+      <circle cx="400" cy="400" r="7" fill="#c88d5f" />
+    </g>
+  )}
+  {arm && (
+    <g>
+      <ellipse cx="375" cy="420" rx="65" ry="24" fill={`url(#${id})`} />
+      <g class="specimen-arm">
+        <path
+          d="M375 420V320L490 235L395 140"
+          stroke={`url(#${id})`}
+          stroke-width="28"
+          stroke-linejoin="round"
+        />
+        <circle cx="375" cy="320" r="26" fill={`url(#${id}-ball)`} />
+        <circle cx="490" cy="235" r="23" fill={`url(#${id}-ball)`} />
+        <path
+          d="M395 140L365 118L345 142M395 140L412 115L391 92"
+          stroke={`url(#${id})`}
+          stroke-width="9"
+          stroke-linecap="round"
+        />
+      </g>
+      {kind.includes('sensors') && (
+        <g stroke="#c28c64">
+          <path d="M395 140H570M395 140V65M395 140L305 200" />
+          <circle cx="395" cy="140" r="55" stroke-dasharray="3 8" />
+        </g>
+      )}
+      {kind.includes('control') && (
+        <path
+          d="M200 230C240 120 380 80 470 120"
+          stroke="#c28c64"
+          stroke-width="2"
+          stroke-dasharray="4 8"
+        />
+      )}
+      {kind.includes('contact') && (
+        <path
+          d="M344 95L375 80L400 98V135L370 150L344 132Z"
+          fill="#c3916b"
+          fill-opacity=".7"
+        />
+      )}
+      {kind === 'inverse-kinematics' && (
+        <g stroke="#c28c64">
+          <circle cx="270" cy="210" r="25" />
+          <path
+            d="M230 210H310M270 170V250M270 210L395 140"
+            stroke-dasharray="4 6"
+          />
+        </g>
+      )}
+    </g>
+  )}
+  {kind === 'linkage' && (
+    <g class="specimen-linkage">
+      <path
+        d="M245 395L310 175H560L495 395Z"
+        stroke={`url(#${id})`}
+        stroke-width="19"
+        stroke-linejoin="round"
+      />
+      {[
+        [245, 395],
+        [310, 175],
+        [560, 175],
+        [495, 395],
+      ].map(([x, y]) => (
+        <circle cx={x} cy={y} r="19" fill={`url(#${id}-ball)`} />
+      ))}
+    </g>
+  )}
+  {kind === 'tendon' && (
+    <g>
+      <circle
+        cx="395"
+        cy="205"
+        r="67"
+        stroke={`url(#${id})`}
+        stroke-width="22"
+      />
+      <circle cx="395" cy="205" r="20" fill={`url(#${id}-ball)`} />
+      <path
+        d="M320 380V205A75 75 0 0 1 470 205V330"
+        stroke="#be885f"
+        stroke-width="3"
+      />
+      <g class="specimen-weight">
+        <rect
+          x="287"
+          y="340"
+          width="66"
+          height="65"
+          rx="6"
+          fill={`url(#${id})`}
+        />
+        <path d="M440 330H500V370H440Z" fill={`url(#${id})`} />
+      </g>
+    </g>
+  )}
+  {kind === 'scanner' && (
+    <g>
+      <path d="M270 350L455 160L610 330Z" fill="#b5cdc1" opacity=".15" />
+      {Array.from({ length: 13 }, (_, i) => (
+        <path
+          d={`M270 350L${430 + i * 15} ${160 + i * 14}`}
+          stroke="#829c98"
+          opacity=".35"
+        />
+      ))}
+      <path d="M445 165L580 200L590 350L455 320Z" fill={`url(#${id})`} />
+      <g class="specimen-scan">
+        <path d="M270 350L580 265" stroke="#bd7951" stroke-width="2" />
+        <circle cx="580" cy="265" r="7" fill="#bd7951" />
+      </g>
+      <circle cx="270" cy="350" r="28" fill={`url(#${id}-ball)`} />
+    </g>
+  )}
+  <text
+    x="60"
+    y="510"
+    fill="currentColor"
+    opacity=".55"
+    font-family="monospace"
+    font-size="11"
+    letter-spacing="3"
+  >
+    FIG. {number} — MOTION STUDY
+  </text>
+</svg>

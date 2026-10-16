@@ -1,0 +1,56 @@
+---
+import NoteSpecimen from './NoteSpecimen.astro';
+import '../styles/reading-room.css';
+interface Props {
+  kind: 'journal' | 'docs';
+  id: string;
+  title: string;
+  description: string;
+  number: string;
+  category: string;
+  cover?: string;
+}
+const { kind, id, title, description, number, category, cover } = Astro.props;
+const notes = kind === 'journal';
+---
+
+<header class:list={['reading-frontispiece', `reading-frontispiece-${kind}`]}>
+  <div class="reading-frontispiece-inner">
+    <a class="reading-back" href={`/${kind}/`}>
+      ← {notes ? '全部手记 / NOTES ON MOTION' : '全部文档 / WORKING ARCHIVE'}
+    </a>
+    <div class="reading-edition">
+      <span>{notes ? 'EXPERIMENT NOTE' : 'FIELD RECORD'}</span>
+      <strong>{number}</strong>
+      <span>{category}</span>
+    </div>
+    <div
+      class="reading-cover"
+      data-shared-cover={id}
+      style={`view-transition-name:cover-${kind}-${id}`}
+    >
+      {notes ? (
+        <NoteSpecimen kind={id} number={number} />
+      ) : (
+        <img src={cover} alt="" width="800" height="560" fetchpriority="high" />
+      )}
+      <span aria-hidden="true">
+        {notes
+          ? 'OBSERVE · UNDERSTAND · REPEAT'
+          : 'A PAGE FROM THE WORKING ARCHIVE'}
+      </span>
+    </div>
+    <div class="reading-title-block">
+      <p>
+        {notes
+          ? '关于运动的第 ' + number + ' 次观察'
+          : '工作记录与心得 / ' + category}
+      </p>
+      <h1 style={`view-transition-name:title-${kind}-${id}`}>{title}</h1>
+      <p class="reading-deck">{description}</p>
+    </div>
+    <a class="reading-enter" href="#article-start">
+      进入正文 <span aria-hidden="true">↓</span>
+    </a>
+  </div>
+</header>

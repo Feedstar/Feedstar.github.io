@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import ReadingToc from '../../components/ReadingToc.astro';
+import ArticleMasthead from '../../components/ArticleMasthead.astro';
 import { getCollection, render } from 'astro:content';
 export async function getStaticPaths() {
   const posts = await getCollection('journal');
@@ -15,6 +16,14 @@ const { Content, headings } = await render(post);
   description={post.data.description}
   page="journal"
 >
+  <ArticleMasthead
+    kind="journal"
+    id={post.id}
+    title={post.data.title}
+    description={post.data.description}
+    number={post.data.number.slice(-2)}
+    category={post.data.category}
+  />
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="reading-layout">
     <ReadingToc headings={headings} />
@@ -23,8 +32,6 @@ const { Content, headings } = await render(post);
         <a class="eyebrow" href="/journal/">
           ← MUJOCO NOTES / 实验手记
         </a>
-        <h1>{post.data.title}</h1>
-        <p class="article-description">{post.data.description}</p>
         <p class="eyebrow">
           {post.data.number} / {post.data.category} / FEEDSTAR
         </p>

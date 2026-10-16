@@ -1,26 +1,26 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import Archive from '../components/Archive.astro';
 const documents = (await getCollection('docs')).sort(
   (a, b) => a.data.order - b.data.order,
 );
-const topics = [
-  {
-    id: 'modeling',
-    title: '建模与仿真',
-    description: '从模型文件，到能够运行的机器人。',
-  },
-  {
-    id: 'learning',
-    title: '强化学习',
-    description: '记录配置、调试与训练中的理解。',
-  },
-  {
-    id: 'imitation',
-    title: '动作模仿',
-    description: '从人的动作，走向机器人的运动。',
-  },
-];
+const groups = ['建模与仿真', '强化学习', '动作模仿'];
+const titles: Record<string, string> = {
+  'urdf-export-checklist': 'The shape of a robot',
+  'gazebo-custom-robot': 'Into the simulation',
+  'reinforcement-learning-new-robot': 'Learning to move',
+  'mini-pi-plus-beyondmimic': 'Motion, transferred',
+  'gvhmr-motion-reconstruction': 'Tracing human motion',
+  mimickit: 'A language of movement',
+};
+const items = documents.map((doc, i) => ({
+  id: doc.id,
+  ...doc.data,
+  number: String(i + 1).padStart(2, '0'),
+  english: titles[doc.id],
+  group: doc.data.category,
+}));
 ---
 
 <Layout
@@ -28,198 +28,5 @@ const topics = [
   page="docs"
   description="Feedstar 的工作记录与心得。记录机器人建模、仿真、强化学习与动作模仿的实践过程。"
 >
-  <div class="page-intro wrap">
-    <p class="eyebrow">03 / WORK & REFLECTIONS</p>
-    <h1>
-      工作里的脚印，
-      <br />
-      <em>也是理解的来处。</em>
-    </h1>
-    <p class="intro-description">
-      在这里存放工作记录、实践过程与一些心得。
-      <br />
-      留下走过的步骤，也留下当时的思考。
-    </p>
-  </div>
-  <div class="page-content wrap docs-archive">
-    <div class="docs-index">
-      <p class="eyebrow">
-        {String(documents.length).padStart(2, '0')} DOCUMENTS / 持续记录
-      </p>
-      <nav aria-label="文档分类">
-        {topics.map((topic) => (
-          <a href={`#${topic.id}`}>
-            {topic.title}
-            <span>
-              {
-                documents.filter((doc) => doc.data.category === topic.title)
-                  .length
-              }
-            </span>
-          </a>
-        ))}
-      </nav>
-    </div>
-    {topics.map((topic, index) => (
-      <section
-        class="docs-group"
-        id={topic.id}
-        aria-labelledby={`${topic.id}-title`}
-      >
-        <div class="docs-group-heading">
-          <span class="docs-group-number">0{index + 1}</span>
-          <div>
-            <h2 id={`${topic.id}-title`}>{topic.title}</h2>
-            <p>{topic.description}</p>
-          </div>
-        </div>
-        <div class="docs-grid">
-          {documents
-            .filter((doc) => doc.data.category === topic.title)
-            .map((doc) => (
-              <a class="document-card" href={`/docs/${doc.id}/`} data-reveal>
-                <div class="document-cover">
-                  <img
-                    src={doc.data.cover}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    width="720"
-                    height="450"
-                  />
-                </div>
-                <div class="document-card-content">
-                  <p class="eyebrow">工作记录 / {doc.data.tags[0]}</p>
-                  <h3>{doc.data.title}</h3>
-                  <p class="document-excerpt">{doc.data.description}</p>
-                  <div class="document-card-bottom">
-                    <span>{doc.data.tags.join(' · ')}</span>
-                    <span aria-hidden="true">↗</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-        </div>
-      </section>
-    ))}
-  </div>
+  <Archive kind="docs" items={items} groups={groups} />
 </Layout>
-
-<style>
-  .docs-index {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    border-block: 1px solid var(--line);
-    padding: 22px 0;
-    margin-bottom: 72px;
-  }
-  .docs-index nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    font-size: 12px;
-  }
-  .docs-index nav span {
-    color: var(--subtle);
-    margin-left: 8px;
-    font-size: 10px;
-  }
-  .docs-group {
-    margin-bottom: 80px;
-    scroll-margin-top: 36px;
-  }
-  .docs-group-heading {
-    display: flex;
-    align-items: baseline;
-    gap: 24px;
-    margin-bottom: 30px;
-  }
-  .docs-group-number {
-    color: var(--accent);
-    font: italic 32px var(--roman);
-  }
-  .docs-group-heading h2 {
-    font: 400 26px/1.8 var(--serif);
-  }
-  .docs-group-heading p {
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 6px;
-  }
-  .docs-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px;
-  }
-  .document-card {
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--bg-raised);
-  }
-  .document-cover {
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background: #14151b;
-    border-bottom: 1px solid var(--line);
-  }
-  .document-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  .document-card-content {
-    padding: 28px;
-  }
-  .document-card h3 {
-    font: 400 clamp(20px, 2vw, 26px)/1.65 var(--serif);
-    margin: 14px 0;
-    overflow-wrap: anywhere;
-  }
-  .document-excerpt {
-    font-size: 13px;
-    line-height: 2;
-    color: var(--muted);
-  }
-  .document-card-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid var(--line);
-    font-size: 10px;
-    color: var(--subtle);
-  }
-  .document-card-bottom > span:last-child {
-    color: var(--accent);
-    font-size: 21px;
-  }
-  .document-card:hover h3,
-  .document-card:focus-visible h3 {
-    color: var(--accent);
-  }
-  @media (max-width: 650px) {
-    .docs-index {
-      align-items: flex-start;
-      flex-direction: column;
-      margin-bottom: 46px;
-    }
-    .docs-index nav {
-      gap: 20px;
-    }
-    .docs-grid {
-      grid-template-columns: 1fr;
-      gap: 24px;
-    }
-    .document-card-content {
-      padding: 22px;
-    }
-    .docs-group {
-      margin-bottom: 55px;
-    }
-  }
-</style>

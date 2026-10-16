@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ReadingToc from '../../components/ReadingToc.astro';
+import ArticleMasthead from '../../components/ArticleMasthead.astro';
 import '../../styles/documents.css';
 export async function getStaticPaths() {
   const documents = (await getCollection('docs')).sort(
@@ -21,6 +22,15 @@ const { Content, headings } = await render(post);
   description={post.data.description}
   page="docs"
 >
+  <ArticleMasthead
+    kind="docs"
+    id={post.id}
+    title={post.data.title}
+    description={post.data.description}
+    number={String(post.data.order).padStart(2, '0')}
+    category={post.data.category}
+    cover={post.data.cover}
+  />
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="reading-layout">
     <ReadingToc headings={headings} backHref="/docs/" backLabel="全部文档" />
@@ -29,8 +39,6 @@ const { Content, headings } = await render(post);
         <a class="eyebrow" href="/docs/">
           ← WORK & REFLECTIONS / 工作记录与心得
         </a>
-        <h1>{post.data.title}</h1>
-        <p class="article-description">{post.data.description}</p>
         <div class="document-meta">
           <span>{post.data.category}</span>
           <span>{post.data.tags.join(' · ')}</span>

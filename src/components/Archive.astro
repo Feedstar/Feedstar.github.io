@@ -1,0 +1,203 @@
+---
+import NoteSpecimen from './NoteSpecimen.astro';
+import '../styles/archive.css';
+interface Item {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  group: string;
+  number: string;
+  english: string;
+  cover?: string;
+  tags?: string[];
+}
+interface Props {
+  kind: 'journal' | 'docs';
+  items: Item[];
+  groups: string[];
+}
+const { kind, items, groups } = Astro.props;
+const notes = kind === 'journal';
+---
+
+<div class:list={['archive-world', `archive-${kind}`]} data-archive={kind}>
+  <div class="archive-atmosphere" aria-hidden="true">
+    <div class="archive-orbit orbit-one"></div>
+    <div class="archive-orbit orbit-two"></div>
+    <span class="archive-glint"></span>
+  </div>
+  <section class="archive-opening" aria-labelledby="archive-title">
+    <div class="archive-stage">
+      <div class="archive-scene" aria-hidden="true">
+        <div class="sculpture-fallback">
+          <i></i>
+          <i></i>
+          <i></i>
+        </div>
+        <canvas data-archive-canvas></canvas>
+      </div>
+      <div class="archive-topline">
+        <span>FEEDSTAR / {notes ? '02' : '03'}</span>
+        <span>{notes ? 'A STUDY OF MOTION' : 'AN UNFINISHED ARCHIVE'}</span>
+        <span>{String(items.length).padStart(2, '0')} ENTRIES</span>
+      </div>
+      <h1 class="archive-title" id="archive-title">
+        <span>{notes ? 'Notes on' : 'In the'}</span>{' '}
+        <em>{notes ? 'motion.' : 'making.'}</em>
+      </h1>
+      <div class="archive-introduction">
+        <p class="archive-kicker">
+          {notes ? '手记 / 让观察，有迹可循。' : '文档 / 理解，生长于实践。'}
+        </p>
+        <p>
+          {notes ? '一次运动，一种解释。' : '那些走过的步骤，与留下的思考。'}
+          <br />
+          {notes
+            ? '在现象、原理与代码之间，重新看见细节。'
+            : '关于建模、学习，以及让想法发生的过程。'}
+        </p>
+      </div>
+      <div class="archive-interact" hidden={!notes}>
+        <button
+          type="button"
+          class="archive-hold"
+          data-archive-hold
+          aria-label="按住展开主视觉，松开收拢"
+        >
+          <span class="hold-symbol" aria-hidden="true">
+            ✳
+          </span>
+          <span>按住 · 展开{notes ? '运动' : '思绪'}</span>
+          <i aria-hidden="true"></i>
+        </button>
+        <span class="archive-object-caption">
+          {notes ? 'KINETIC SPECIMEN / 001' : 'FOLDED MEMORIES / 002'}
+        </span>
+      </div>
+      <a class="archive-scroll" href="#archive-index">
+        <span>向下浏览{notes ? '手记' : '文档'}</span>
+        <span aria-hidden="true">↓</span>
+      </a>
+      <div class="archive-folio-label" hidden={notes}>
+        <span>WORKING ARCHIVE</span>
+        <strong>工作卷宗</strong>
+        <span>MODELING · LEARNING · MOTION</span>
+      </div>
+      <div class="archive-ruler" aria-hidden="true">
+        {Array.from({ length: 21 }, (_, i) => (
+          <i class:list={{ major: i % 5 === 0 }}></i>
+        ))}
+      </div>
+    </div>
+  </section>
+  <section
+    class="archive-collection"
+    id="archive-index"
+    aria-label={notes ? '手记目录' : '文档目录'}
+  >
+    <header class="archive-collection-heading">
+      <p>{notes ? '从现象，走向理解。' : '把经历，折成一页。'}</p>
+      <span>
+        {notes ? 'Selected notes' : 'Field documents'}{' '}
+        <i>({String(items.length).padStart(2, '0')})</i>
+      </span>
+    </header>
+    <div class="archive-toolbar">
+      <nav aria-label={notes ? '筛选手记' : '筛选文档'}>
+        <button data-archive-filter="all" aria-pressed="true">
+          全部 <sup>{items.length}</sup>
+        </button>
+        {groups.map((group) => (
+          <button data-archive-filter={group} aria-pressed="false">
+            {group}{' '}
+            <sup>{items.filter((item) => item.group === group).length}</sup>
+          </button>
+        ))}
+      </nav>
+      <span data-archive-count aria-live="polite">
+        {String(items.length).padStart(2, '0')} 篇{notes ? '手记' : '文档'}
+      </span>
+    </div>
+    <div class="archive-grid">
+      {items.map((item, index) => (
+        <article
+          class="archive-item"
+          data-archive-item
+          data-group={item.group}
+          style={`--item-index:${index};--card-hue:${notes ? 165 + (index % 4) * 15 : 25 + (index % 3) * 20}`}
+        >
+          <a
+            href={`/${kind}/${item.id}/`}
+            class="archive-card"
+            data-archive-card
+          >
+            <div class="archive-card-surface" data-card-surface>
+              <div
+                class="archive-card-art"
+                data-shared-cover={item.id}
+                style={`view-transition-name:cover-${kind}-${item.id}`}
+              >
+                <div class="archive-card-grid" aria-hidden="true"></div>
+                <div class="archive-card-topline">
+                  <span>
+                    {notes ? 'EXPERIMENT' : 'FIELD RECORD'} / {item.number}
+                  </span>
+                  <span aria-hidden="true">✳</span>
+                </div>
+                {notes ? (
+                  <NoteSpecimen kind={item.id} number={item.number} />
+                ) : (
+                  <div class="archive-document-image">
+                    <img
+                      src={item.cover}
+                      alt=""
+                      width="800"
+                      height="560"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                )}
+                <span class="archive-card-english">{item.english}</span>
+                <span class="archive-card-open">
+                  阅读{notes ? '手记' : '文档'}{' '}
+                  <span aria-hidden="true">↗</span>
+                </span>
+              </div>
+            </div>
+            <div class="archive-card-meta">
+              <span>
+                {item.number} / {item.category}
+              </span>
+              <span aria-hidden="true">↗</span>
+            </div>
+            <h2 style={`view-transition-name:title-${kind}-${item.id}`}>
+              {item.title}
+            </h2>
+            <p>{item.description}</p>
+            {item.tags && (
+              <div class="archive-tags">
+                {item.tags.map((tag) => (
+                  <span>{tag}</span>
+                ))}
+              </div>
+            )}
+          </a>
+        </article>
+      ))}
+    </div>
+    <footer class="archive-end">
+      <span>TO BE CONTINUED</span>
+      <p>{notes ? '理解没有终点。' : '每一页，都是新的起点。'}</p>
+      <a href={notes ? '/lab/' : '/journal/'}>
+        {notes ? '让它发生一次 · 进入实验室' : '从观察开始 · 阅读手记'}{' '}
+        <span aria-hidden="true">↗</span>
+      </a>
+    </footer>
+  </section>
+</div>
+<script>
+  import { createArchive } from '../scripts/archive';
+  createArchive();
+</script>

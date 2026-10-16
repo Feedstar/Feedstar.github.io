@@ -1,42 +1,28 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Archive from '../../components/Archive.astro';
+import { experimentCatalog } from '../../lib/experiment-catalog';
 import { getCollection } from 'astro:content';
 const posts = (await getCollection('journal')).sort((a, b) =>
   a.data.number.localeCompare(b.data.number),
 );
+const groups = ['基础现象', '机械臂', '约束与感知'];
+const items = posts.map((post) => {
+  const entry = experimentCatalog.find((entry) => entry.id === post.id)!;
+  return {
+    id: post.id,
+    ...post.data,
+    number: entry.number,
+    english: entry.english,
+    group: groups[entry.kind === 'basic' ? 0 : entry.kind === 'arm' ? 1 : 2],
+  };
+});
 ---
 
 <Layout
   title="手记 · Feedstar"
   page="journal"
-  description="MuJoCo 实验的配套文章解析。结合现象、原理与代码，逐步理解每一项实验。"
+  description="MuJoCo 实验的配套文章解析。在现象、原理与代码之间，重新看见细节。"
 >
-  <div class="page-intro wrap">
-    <p class="eyebrow">02 / MUJOCO NOTES</p>
-    <h1>
-      让每次观察，
-      <br />
-      <em>都有迹可循。</em>
-    </h1>
-    <p class="intro-description">
-      MuJoCo 实验的配套文章解析。
-      <br />
-      把实验现象、背后的原理与实现代码，放在一起读懂。
-    </p>
-  </div>
-  <section class="page-content wrap journal-archive">
-    <div class="journal-list">
-      {posts.map((post) => (
-        <a href={`/journal/${post.id}/`} data-reveal>
-          <span class="note-number">{post.data.number}</span>
-          <div>
-            <p class="eyebrow">{post.data.category} / MUJOCO NOTES</p>
-            <h3>{post.data.title}</h3>
-            <p class="journal-excerpt">{post.data.description}</p>
-          </div>
-          <span class="note-arrow">↗</span>
-        </a>
-      ))}
-    </div>
-  </section>
+  <Archive kind="journal" items={items} groups={groups} />
 </Layout>
