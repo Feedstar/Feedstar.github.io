@@ -1,0 +1,32 @@
+Reference assets: Noomo Agency, Interactive Storytelling
+Reference website: https://storytelling.noomoagency.com/
+
+Geometry transformation for the Feedstar journal display:
+Each crystal-shell-{i}.glb retains only the Cube outer-shell mesh from the corresponding reference model.
+Icon meshes, reference logo geometry, ConvexHull collision meshes and unrelated nodes were removed.
+Only local-space geometry and all eight original shell vertex attributes are retained: POSITION, NORMAL, TANGENT, TEXCOORD_0, _peaks, _convexity, _thickness, _concavity.
+The source contains no material or image resources. The extracted GLBs contain no materials, images, animation tracks or embedded reference-site code.
+DRACO compression was decoded offline with the official glTF decoder bundled with the installed Three.js package. The output is ordinary glTF 2.0 GLB, with Float32 attributes and Uint16 triangle indices; no runtime Draco decoder is needed.
+Source dimensions and orientation are unchanged; no simplification or new lossy quantization was applied after decoding.
+
+crystal-shell-0.glb <- https://storytelling.noomoagency.com/models/crystal0.glb
+crystal-shell-1.glb <- https://storytelling.noomoagency.com/models/crystal1.glb
+crystal-shell-2.glb <- https://storytelling.noomoagency.com/models/crystal2.glb
+crystal-shell-3.glb <- https://storytelling.noomoagency.com/models/crystal3.glb
+crystal-shell-4.glb <- https://storytelling.noomoagency.com/models/crystal4.glb
+crystal-shell-5.glb <- https://storytelling.noomoagency.com/models/crystal5.glb
+crystal-shell-6.glb <- https://storytelling.noomoagency.com/models/crystal6.glb
+
+Surface normal textures (unchanged image data, paired with corresponding shell UVs):
+crystal0-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/0.jpg
+crystal1-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/1.jpg
+crystal2-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/2.jpg
+crystal3-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/3.jpg
+crystal4-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/4.jpg
+crystal5-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/5.jpg
+crystal6-normal.jpg <- https://storytelling.noomoagency.com/textures/crystals/6.jpg
+
+Environment map (unchanged HDR data):
+wooden_studio_19_1k.hdr <- https://storytelling.noomoagency.com/textures/wooden_studio_19_1k.hdr
+
+Original assets remain attributable to their respective creators. This provenance file records the sources and transformations; it does not grant or imply a new license.

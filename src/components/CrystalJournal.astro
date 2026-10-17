@@ -1,0 +1,153 @@
+---
+import '../styles/crystal-journal.css';
+interface Item {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  group: string;
+  number: string;
+  english: string;
+}
+interface Props {
+  items: Item[];
+  groups: string[];
+}
+const { items, groups } = Astro.props;
+---
+
+<div class="crystal-journal" data-crystal-journal>
+  <section class="crystal-intro" aria-labelledby="crystal-title">
+    <div class="crystal-intro-top">
+      <span>FEEDSTAR / 02</span>
+      <span>AN OBSERVATORY OF MOTION</span>
+      <span>{String(items.length).padStart(2, '0')} STUDIES</span>
+    </div>
+    <h1 id="crystal-title">
+      Notes on <em>motion.</em>
+    </h1>
+    <div class="crystal-intro-bottom">
+      <div>
+        <p>让观察，有迹可循。</p>
+        <span>
+          一次运动，一种解释。
+          <br />
+          在现象、原理与代码之间，重新看见细节。
+        </span>
+      </div>
+      <a href="#archive-index">
+        进入手记 <span aria-hidden="true">↓</span>
+      </a>
+    </div>
+    <div class="crystal-intro-light" aria-hidden="true"></div>
+  </section>
+
+  <section id="archive-index" class="crystal-collection" aria-label="手记目录">
+    <div class="crystal-runway" data-crystal-runway>
+      <div class="crystal-viewport" data-crystal-viewport>
+        <header class="crystal-toolbar">
+          <div class="crystal-index-label">
+            <span>SELECTED NOTES</span>
+            <span data-crystal-count aria-live="polite">
+              {String(items.length).padStart(2, '0')} 篇手记
+            </span>
+          </div>
+          <nav aria-label="筛选手记">
+            <button type="button" data-crystal-filter="all" aria-pressed="true">
+              全部 <sup>{items.length}</sup>
+            </button>
+            {groups.map((group) => (
+              <button
+                type="button"
+                data-crystal-filter={group}
+                aria-pressed="false"
+              >
+                {group}{' '}
+                <sup>{items.filter((item) => item.group === group).length}</sup>
+              </button>
+            ))}
+          </nav>
+        </header>
+        <canvas
+          class="crystal-canvas"
+          data-crystal-canvas
+          aria-hidden="true"
+        ></canvas>
+        <div class="crystal-grid">
+          {items.map((item, index) => (
+            <article
+              class="crystal-entry"
+              data-crystal-entry
+              data-group={item.group}
+            >
+              <a
+                class="crystal-link"
+                data-crystal-link
+                data-id={item.id}
+                data-number={item.number}
+                data-title={item.title}
+                href={`/journal/${item.id}/`}
+              >
+                <div
+                  class="crystal-static-art"
+                  style={`--crystal-hue:${205 + index * 23};--crystal-angle:${index % 2 ? 12 : -8}deg`}
+                  aria-hidden="true"
+                >
+                  <img
+                    src={`/journal-covers/${item.id}.png`}
+                    alt=""
+                    width="1280"
+                    height="1280"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="crystal-copy">
+                  <span class="crystal-meta">
+                    {item.number} / {item.category}
+                  </span>
+                  <h2>{item.title}</h2>
+                  <p>{item.description}</p>
+                  <span class="crystal-english">{item.english}</span>
+                  <span class="crystal-open" aria-hidden="true">
+                    ↗
+                  </span>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+        <div class="crystal-cursor" data-crystal-cursor aria-hidden="true">
+          <span>↗</span>
+        </div>
+        <div class="crystal-tooltip" data-crystal-tooltip aria-hidden="true">
+          <span data-crystal-tooltip-meta></span>
+          <strong data-crystal-tooltip-title></strong>
+          <p data-crystal-tooltip-description></p>
+        </div>
+        <div class="crystal-progress" aria-hidden="true">
+          <span data-crystal-position>01</span>
+          <i>
+            <b data-crystal-progress></b>
+          </i>
+          <span>{String(items.length).padStart(2, '0')}</span>
+        </div>
+        <p class="crystal-hint">
+          <span class="crystal-mouse-hint">移近，折射另一种视角。</span>
+          <span class="crystal-touch-hint">轻触水晶，阅读手记。</span>
+        </p>
+      </div>
+    </div>
+  </section>
+  <footer class="crystal-end">
+    <span>OBSERVE · UNDERSTAND · EXPERIMENT</span>
+    <p>理解没有终点。</p>
+    <a href="/lab/">
+      让它发生一次 · 进入实验室 <span aria-hidden="true">↗</span>
+    </a>
+  </footer>
+</div>
+<script>
+  import { createCrystalJournal } from '../scripts/crystal-journal';
+  createCrystalJournal();
+</script>
