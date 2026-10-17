@@ -16,7 +16,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#101117" />
+    <meta name="theme-color" content="#030512" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
     <meta property="og:title" content={title} />
@@ -27,7 +27,12 @@ const {
       document.documentElement.classList.add('js');
       try {
         const theme = localStorage.getItem('feedstar-theme');
-        if (theme === 'paper') document.documentElement.dataset.theme = 'paper';
+        if (theme === 'paper') {
+          document.documentElement.dataset.theme = 'paper';
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', '#eef0f5');
+        }
       } catch {}
     </script>
   </head>
@@ -74,6 +79,14 @@ const {
         const next =
           document.documentElement.dataset.theme === 'paper' ? 'ink' : 'paper';
         document.documentElement.dataset.theme = next;
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute(
+            'content',
+            getComputedStyle(document.documentElement)
+              .getPropertyValue('--bg')
+              .trim(),
+          );
         try {
           localStorage.setItem('feedstar-theme', next);
         } catch {}

@@ -134,22 +134,17 @@ const documents = (await getCollection('docs')).sort(
     z-index: 2;
     padding: 66px 4.4% 26px;
     overflow: hidden;
-    color: #ddd8d0;
-    background: #191919;
-    --fg: #ddd8d0;
-    --fg-bright: #fffaf2;
-    --muted: #a7a19a;
-    --accent: #c5af8d;
-    --line: #d9c6a720;
-    --liquid-ink: #191919;
-    --text-glow: #e4c69724;
+    color: var(--fg);
+    background: var(--bg);
+    --liquid-ink: var(--bg);
   }
   .site-footer::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background-image: radial-gradient(#c5af8d1a 0.6px, transparent 0.6px);
+    background-image: radial-gradient(var(--line) 0.6px, transparent 0.6px);
+    opacity: 0.35;
     background-size: 22px 22px;
     mask-image: linear-gradient(120deg, #000, transparent 66%);
   }
@@ -160,7 +155,7 @@ const documents = (await getCollection('docs')).sort(
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, #ac815b99, #b8a89840 48%, #738aa299);
+    background: var(--line);
   }
   .footer-inner {
     position: relative;
@@ -219,7 +214,7 @@ const documents = (await getCollection('docs')).sort(
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: #b1bca6;
+    background: var(--accent);
     margin: 0 6px 2px 0;
   }
   h2 {
@@ -229,7 +224,7 @@ const documents = (await getCollection('docs')).sort(
     font: 11px/1.5 var(--sans);
     letter-spacing: 0.08em;
     margin: 0 0 26px;
-    color: #c9c0b5;
+    color: var(--fg);
   }
   h2::before {
     content: '';
@@ -240,7 +235,7 @@ const documents = (await getCollection('docs')).sort(
   h2 > span {
     font-size: 9px;
     letter-spacing: 0.03em;
-    color: #a99a88;
+    color: var(--muted);
   }
   ul {
     padding: 0;
@@ -305,7 +300,7 @@ const documents = (await getCollection('docs')).sort(
   }
   .footer-divider {
     margin: 0 14px;
-    color: #827a70;
+    color: var(--subtle);
   }
   .footer-signature {
     margin-top: 7px !important;

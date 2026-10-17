@@ -3,8 +3,8 @@
   navigation: auto;
 }
 :root {
-  --bg: #101117;
-  --bg-raised: #191a24;
+  --bg: #030512;
+  --bg-raised: #111525;
   --fg: #f2f0ec;
   --fg-bright: #fff;
   --muted: #b6b5c1;
@@ -21,13 +21,13 @@
   color-scheme: dark;
 }
 :root[data-theme='paper'] {
-  --bg: #eae7e1;
-  --bg-raised: #dedbd7;
-  --fg: #25232d;
-  --fg-bright: #14101f;
-  --muted: #605a69;
-  --subtle: #746d80;
-  --line: rgba(50, 39, 69, 0.2);
+  --bg: #eef0f5;
+  --bg-raised: #e0e4ed;
+  --fg: #242b3b;
+  --fg-bright: #141c30;
+  --muted: #566176;
+  --subtle: #657086;
+  --line: rgba(48, 65, 98, 0.2);
   --accent: #78628f;
   --text-glow: rgba(90, 61, 130, 0.15);
   color-scheme: light;

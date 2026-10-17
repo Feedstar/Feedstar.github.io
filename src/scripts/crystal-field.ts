@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createCrystalFluid } from './crystal-fluid';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import {
@@ -112,6 +113,7 @@ uniform float decayFactor;
 uniform float worldScale;
 uniform vec3 backgroundColor;
 uniform float time;
+uniform float lightMode;
 vec3 surfaceNormal() {
   vec3 n = normalize(worldNormal);
   vec3 t = normalize(worldTangent - n * dot(worldTangent, n));
@@ -156,7 +158,9 @@ void main() {
   vec3 light = environment(refracted) * envRefraction;
   light *= mix(vec3(1.0), interference(1.0 - abs(dot(incident, n))), refractionIridescence);
   float curvature = convexity * convexityFactor + concavity * concavityFactor;
-  vec3 color = (backgroundColor + light) * (1.0 + curvature * abs(dot(refracted, n)));
+  // Bright studios need absorption, not the dark-stage optical gain.
+  vec3 studio = mix(backgroundColor, backgroundColor * vec3(.66, .69, .74), lightMode);
+  vec3 color = (studio + light) * (1.0 + curvature * abs(dot(refracted, n)) * mix(1., .16, lightMode));
   color = mix(color, fringeColor, edge * fringeMix);
   gl_FragColor = vec4(color, 1.0);
 }`;
@@ -186,16 +190,20 @@ void main() {
   float edge = edgeAmount(incident, n);
   color = mix(color, fringeColor, fringeMix * edge);
   float luminance = dot(color, vec3(.2126, .7152, .0722));
-  color = max(vec3(0.0), mix(vec3(luminance), color, colorBoost));
+  color = max(vec3(0.0), mix(vec3(luminance), color, mix(colorBoost, .92, lightMode)));
   vec3 tint = mix(baseColor, peaksColor, clamp(peaks * peaksFactor, 0.0, 1.0));
   float absorption = exp(-mix(thickness * distancesFactor, .1, resetDistances) * decayFactor);
-  color *= mix(tint, vec3(1.0), absorption) * colorFactor;
+  color *= mix(tint, vec3(1.0), absorption) * mix(colorFactor, min(colorFactor, 1.12), lightMode);
   vec3 curve = colorCurve * vec3(colorCurveR, colorCurveG, colorCurveB);
   color = mix(pow(max(color, vec3(.00001)), curve), color, step(vec3(1.0), color));
   float fresnel = .04 + .96 * pow(1.0 - abs(dot(incident, n)), 5.0);
   vec3 reflected = environment(reflect(incident, n));
   reflected *= mix(vec3(1.0), interference(1.0 - abs(dot(incident, n))), reflectionIridescence);
   color += reflected * envReflection * fresnel;
+  // Reflection from the dark side of the studio gives clear glass a readable edge.
+  float studioKey = pow(.5 + .5 * dot(n, normalize(vec3(-.6, .8, 1.))), 2.);
+  color *= mix(vec3(1.), mix(vec3(.48, .53, .61), vec3(1.), studioKey), lightMode);
+  color *= 1. - lightMode * edge * .22;
   gl_FragColor = vec4(clamp(color, 0.0, maxColorValue), 1.0);
   #include <colorspace_fragment>
 }`;
@@ -204,60 +212,36 @@ const screenVertex = /* glsl */ `
 varying vec2 screen;
 void main() { screen = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
 `;
-const trailFragment = /* glsl */ `
-varying vec2 screen;
-uniform sampler2D previous;
-uniform vec2 pixel;
-uniform vec2 pointerFrom;
-uniform vec2 pointerTo;
-uniform float aspect;
-uniform float moving;
-uniform float delta;
-float lineDistance(vec2 p, vec2 a, vec2 b) {
-  p.x *= aspect; a.x *= aspect; b.x *= aspect;
-  vec2 segment = b - a;
-  float t = clamp(dot(p - a, segment) / max(dot(segment, segment), .000001), 0.0, 1.0);
-  return length(p - a - segment * t);
-}
-void main() {
-  float c = texture2D(previous, screen).r;
-  vec2 reach = pixel * 3.6;
-  float left = texture2D(previous, screen - vec2(reach.x, 0.0)).r;
-  float right = texture2D(previous, screen + vec2(reach.x, 0.0)).r;
-  float down = texture2D(previous, screen - vec2(0.0, reach.y)).r;
-  float up = texture2D(previous, screen + vec2(0.0, reach.y)).r;
-  // A small perpendicular advection bends the dissipating stroke into a wake.
-  vec2 curl = vec2(up - down, left - right);
-  float advected = texture2D(previous, screen - curl * .013).r;
-  float diffuse = mix(advected, (left + right + up + down) * .25, .2);
-  float ink = smoothstep(.065, .012, lineDistance(screen, pointerFrom, pointerTo)) * moving;
-  float density = max(diffuse * pow(.977, delta * 60.0), ink * .86);
-  float wave = texture2D(previous, screen).g;
-  wave = mix(wave, density - c, .18);
-  gl_FragColor = vec4(density, wave, 0.0, 1.0);
-}`;
 const backgroundFragment = /* glsl */ `
 varying vec2 screen;
-uniform sampler2D trail;
-uniform vec2 pixel;
 uniform vec3 backgroundColor;
-uniform float time;
-uniform float displayOutput;
+void main() { gl_FragColor = vec4(backgroundColor, 1.); }
+`;
+const wakeFragment = /* glsl */ `
+varying vec2 screen;
+uniform sampler2D sceneMap;
+uniform sampler2D normalMap;
+uniform vec2 pixel;
+uniform float strength;
+uniform float lightMode;
 void main() {
-  float density = texture2D(trail, screen).r;
-  vec2 reach = pixel * 2.0;
-  vec2 gradient = vec2(
-    texture2D(trail, screen + vec2(reach.x, 0.0)).r - texture2D(trail, screen - vec2(reach.x, 0.0)).r,
-    texture2D(trail, screen + vec2(0.0, reach.y)).r - texture2D(trail, screen - vec2(0.0, reach.y)).r);
-  float phase = density * 2.4 + atan(gradient.y, gradient.x) * .12;
-  vec3 iridescent = .5 + .5 * cos(6.2831853 * (phase + vec3(.05, .38, .72)));
-  float wake = smoothstep(.035, .6, density) * (length(gradient) * 3.8 + .13);
-  vec3 color = backgroundColor + iridescent * wake * .32;
-  gl_FragColor = vec4(color, 1.0);
-  if (displayOutput > .5) {
-    #include <colorspace_fragment>
-  }
-}`;
+  vec3 n = texture2D(normalMap, screen).xyz * 2. - 1.;
+  vec3 r = texture2D(normalMap, screen + vec2(pixel.x, 0.)).xyz * 2. - 1.;
+  vec3 t = texture2D(normalMap, screen + vec2(0., pixel.y)).xyz * 2. - 1.;
+  vec3 ridge = (abs(n - r) + abs(n - t)) * strength;
+  // Separate wavelengths bend differently through the moving liquid surface.
+  vec2 bend = n.xy * .012 * strength;
+  vec3 color;
+  color.r = texture2D(sceneMap, clamp(screen + bend * .88, .001, .999)).r;
+  color.g = texture2D(sceneMap, clamp(screen + bend, .001, .999)).g;
+  color.b = texture2D(sceneMap, clamp(screen + bend * 1.14, .001, .999)).b;
+  vec3 film = ridge * vec3(.62, .74, .95);
+  // Reflected light on ink; translucent spectral absorption on pearl.
+  color = mix(color + film * .48, color * (1. - min(film.bgr * .85, vec3(.48))) + film * .05, lightMode);
+  gl_FragColor = vec4(color, 1.);
+  #include <colorspace_fragment>
+}
+`;
 
 const coverVertex = /* glsl */ `
 varying vec2 coverUV;
@@ -326,42 +310,28 @@ export async function createCrystalField(
     magFilter: THREE.LinearFilter,
   };
   const backTarget = new THREE.WebGLRenderTarget(1, 1, targetOptions);
-  let trailA = new THREE.WebGLRenderTarget(1, 1, {
-    ...targetOptions,
-    depthBuffer: false,
-  });
-  let trailB = new THREE.WebGLRenderTarget(1, 1, {
-    ...targetOptions,
-    depthBuffer: false,
-  });
-  const backgroundColor = new THREE.Color('#070b14');
-  const trailUniforms: Uniforms = {
-    previous: { value: trailA.texture },
-    pixel: { value: new THREE.Vector2(1, 1) },
-    pointerFrom: { value: new THREE.Vector2(-2, -2) },
-    pointerTo: { value: new THREE.Vector2(-2, -2) },
-    moving: { value: 0 },
-    delta: { value: 1 / 60 },
-    aspect: { value: 1 },
-  };
-  const trailMaterial = new THREE.ShaderMaterial({
-    vertexShader: screenVertex,
-    fragmentShader: trailFragment,
-    uniforms: trailUniforms,
-    depthTest: false,
-    depthWrite: false,
-  });
-  const backgroundUniforms: Uniforms = {
-    trail: { value: trailA.texture },
-    pixel: { value: new THREE.Vector2(1, 1) },
-    backgroundColor: { value: backgroundColor },
-    time: { value: 0 },
-    displayOutput: { value: 0 },
-  };
+  const sceneTarget = new THREE.WebGLRenderTarget(1, 1, targetOptions);
+  const fluid = createCrystalFluid(renderer);
+  const backgroundColor = new THREE.Color('#030512');
+  const lightMode = { value: 0 };
   const backgroundMaterial = new THREE.ShaderMaterial({
     vertexShader: screenVertex,
     fragmentShader: backgroundFragment,
-    uniforms: backgroundUniforms,
+    uniforms: { backgroundColor: { value: backgroundColor } },
+    depthTest: false,
+    depthWrite: false,
+  });
+  const wakeUniforms = {
+    sceneMap: { value: sceneTarget.texture },
+    normalMap: { value: fluid.texture },
+    pixel: { value: new THREE.Vector2(1, 1) },
+    strength: { value: 0 },
+    lightMode,
+  };
+  const wakeMaterial = new THREE.ShaderMaterial({
+    vertexShader: screenVertex,
+    fragmentShader: wakeFragment,
+    uniforms: wakeUniforms,
     depthTest: false,
     depthWrite: false,
   });
@@ -416,12 +386,12 @@ export async function createCrystalField(
   if (failed) {
     ownedTextures.forEach((texture) => texture.dispose());
     ownedGeometries.forEach((geometry) => geometry.dispose());
-    trailMaterial.dispose();
+    wakeMaterial.dispose();
+    fluid.dispose();
     backgroundMaterial.dispose();
     screenGeometry.dispose();
     backTarget.dispose();
-    trailA.dispose();
-    trailB.dispose();
+    sceneTarget.dispose();
     renderer.dispose();
     throw new Error('Crystal assets could not be loaded', {
       cause: failed.status === 'rejected' ? failed.reason : undefined,
@@ -473,6 +443,7 @@ export async function createCrystalField(
       worldScale: { value: 1 },
       time: { value: 0 },
       backgroundColor: { value: backgroundColor },
+      lightMode,
     };
     const colors: Record<string, { start: THREE.Color; end: THREE.Color }> = {};
     for (const key of numberKeys)
@@ -591,10 +562,7 @@ export async function createCrystalField(
   };
   let activeIndices = links.map((_, index) => index);
   let lastTime = -1,
-    lastScroll = 0,
-    lastPointer = new THREE.Vector2(-2, -2),
-    pointerWasActive = false;
-  let trailAccumulator = 0;
+    lastScroll = 0;
   const cameraX: Spring = { value: 0, velocity: 0 },
     cameraY: Spring = { value: 0, velocity: 0 };
   const fovSpring: Spring = { value: 25, velocity: 0 };
@@ -610,7 +578,9 @@ export async function createCrystalField(
     const css = getComputedStyle(root)
       .getPropertyValue('--crystal-stage')
       .trim();
-    backgroundColor.set(css || '#070b14');
+    backgroundColor.set(css || '#030512');
+    lightMode.value =
+      document.documentElement.dataset.theme === 'paper' ? 1 : 0;
   }
 
   function layout(options: CrystalLayout, indices: number[]) {
@@ -648,26 +618,9 @@ export async function createCrystalField(
       Math.max(1, Math.round(config.width * resolution)),
       Math.max(1, Math.round(config.height * resolution)),
     );
-    const trailResolution = Math.min(
-      0.5,
-      1024 / Math.max(config.width, config.height),
-      Math.sqrt(600_000 / (config.width * config.height)),
-    );
-    const tw = Math.max(1, Math.floor(config.width * trailResolution)),
-      th = Math.max(1, Math.floor(config.height * trailResolution));
-    trailA.setSize(tw, th);
-    trailB.setSize(tw, th);
-    trailUniforms.pixel.value.set(1 / tw, 1 / th);
-    trailUniforms.aspect.value = config.width / config.height;
-    backgroundUniforms.pixel.value.set(1 / tw, 1 / th);
-    renderer.setClearColor(0, 0);
-    renderer.setRenderTarget(trailA);
-    renderer.clear();
-    renderer.setRenderTarget(trailB);
-    renderer.clear();
-    renderer.setRenderTarget(null);
-    pointerWasActive = false;
-    trailAccumulator = 0;
+    sceneTarget.setSize(backTarget.width, backTarget.height);
+    fluid.resize(config.width, config.height);
+    wakeUniforms.pixel.value.copy(fluid.pixel);
     refreshColors();
   }
 
@@ -816,51 +769,27 @@ export async function createCrystalField(
       entry.coverGroup.updateMatrixWorld(true);
     }
 
-    const currentPointer = new THREE.Vector2(
-      pointerActive ? pointer!.x / config.width : -2,
-      pointerActive ? 1 - pointer!.y / config.height : -2,
+    fluid.update(
+      dt,
+      pointerActive ? pointer!.x / config.width : 0,
+      pointerActive ? 1 - pointer!.y / config.height : 0,
+      pointerActive,
     );
-    trailAccumulator = Math.min(trailAccumulator + dt, 5 / 60);
-    const trailSteps = Math.floor((trailAccumulator + 1e-8) * 60);
-    if (trailSteps > 0) {
-      const from =
-        pointerWasActive && pointerActive
-          ? lastPointer.clone()
-          : currentPointer.clone();
-      const moved =
-        pointerActive && pointerWasActive ? currentPointer.distanceTo(from) : 0;
-      screenMesh.material = trailMaterial;
-      trailUniforms.delta.value = 1 / 60;
-      for (let step = 0; step < trailSteps; step++) {
-        trailUniforms.pointerFrom.value
-          .copy(from)
-          .lerp(currentPointer, step / trailSteps);
-        trailUniforms.pointerTo.value
-          .copy(from)
-          .lerp(currentPointer, (step + 1) / trailSteps);
-        trailUniforms.moving.value = clamp((moved * 150) / trailSteps);
-        trailUniforms.previous.value = trailA.texture;
-        renderer.setRenderTarget(trailB);
-        renderer.render(screenScene, screenCamera);
-        [trailA, trailB] = [trailB, trailA];
-      }
-      trailAccumulator -= trailSteps / 60;
-      lastPointer.copy(currentPointer);
-      pointerWasActive = pointerActive;
-    }
-    backgroundUniforms.trail.value = trailA.texture;
-    backgroundUniforms.time.value = timeSeconds;
-    backgroundUniforms.displayOutput.value = 0;
     screenMesh.material = backgroundMaterial;
     renderer.setRenderTarget(backTarget);
     renderer.clear();
     renderer.render(screenScene, screenCamera);
     renderer.render(backScene, camera);
-    backgroundUniforms.displayOutput.value = 1;
-    renderer.setRenderTarget(null);
+    renderer.setRenderTarget(sceneTarget);
     renderer.clear();
     renderer.render(screenScene, screenCamera);
     renderer.render(frontScene, camera);
+    wakeUniforms.normalMap.value = fluid.texture;
+    wakeUniforms.strength.value = fluid.strength;
+    screenMesh.material = wakeMaterial;
+    renderer.setRenderTarget(null);
+    renderer.clear();
+    renderer.render(screenScene, screenCamera);
 
     const regions: CrystalRegion[] = entries.map((entry) => {
       const hoverAmount = clamp(entry.materialSpring.value);
@@ -919,11 +848,11 @@ export async function createCrystalField(
     ownedGeometries.forEach((geometry) => geometry.dispose());
     ownedMaterials.forEach((material) => material.dispose());
     screenGeometry.dispose();
-    trailMaterial.dispose();
+    wakeMaterial.dispose();
+    fluid.dispose();
     backgroundMaterial.dispose();
     backTarget.dispose();
-    trailA.dispose();
-    trailB.dispose();
+    sceneTarget.dispose();
     backScene.clear();
     frontScene.clear();
     screenScene.clear();

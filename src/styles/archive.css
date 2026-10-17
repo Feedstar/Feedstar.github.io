@@ -1,30 +1,15 @@
-/* A shared exhibition space. Content remains ordinary links and headings. */
+/* Shared page palette: the canvas, DOM and navigation resolve the same tokens. */
 .archive-world {
-  --space: #dce4df;
-  --space-deep: #bccfc9;
-  --ink: #20342f;
-  --ink-soft: #50635b;
-  --space-line: rgba(36, 60, 49, 0.2);
+  --space: var(--bg);
+  --space-deep: var(--bg-raised);
+  --ink: var(--fg);
+  --ink-soft: var(--muted);
+  --space-line: var(--line);
   position: relative;
   isolation: isolate;
   background: var(--space);
   color: var(--ink);
   overflow: clip;
-}
-.archive-docs {
-  --space: #e8e0d1;
-  --space-deep: #d5c5af;
-  --ink: #3a3027;
-  --ink-soft: #736351;
-  --space-line: rgba(70, 50, 30, 0.2);
-}
-:root[data-theme='paper'] .archive-world {
-  --space: #edf0e8;
-  --space-deep: #d3e0d1;
-}
-:root[data-theme='paper'] .archive-docs {
-  --space: #f3eee2;
-  --space-deep: #e2d2b5;
 }
 body:has(.archive-world) .site-header {
   color: var(--fg);
@@ -40,9 +25,7 @@ body:has(.archive-world) .site-header {
   overflow: hidden;
   pointer-events: none;
   z-index: -1;
-  background:
-    radial-gradient(ellipse at 80% 8%, #fff7dc77, transparent 33%),
-    linear-gradient(125deg, transparent 15%, #ffffff3b 35%, transparent 55%);
+  background: radial-gradient(ellipse at 80% 8%, #6175ac0a, transparent 33%);
 }
 .archive-atmosphere::after {
   content: '';
@@ -1205,7 +1188,7 @@ html[data-paused='true'] .note-specimen * {
 
 .archive-world {
   --liquid-ink: var(--space);
-  --fg: var(--ink);
+  /* Inherit --fg; aliasing it back to --ink would create a variable cycle. */
   --accent: var(--space-deep);
 }
 ::view-transition-group(*) {
