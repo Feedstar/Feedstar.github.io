@@ -1,0 +1,116 @@
+---
+import '../styles/document-gallery.css';
+interface Item {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  group: string;
+  number: string;
+  english: string;
+  cover?: string;
+  tags?: string[];
+}
+interface Props {
+  items: Item[];
+  groups: string[];
+}
+const { items, groups } = Astro.props;
+---
+
+<section
+  class="document-collection"
+  id="archive-index"
+  aria-label="文档目录"
+  data-document-gallery
+>
+  <div class="document-runway" data-document-runway>
+    <div class="document-viewport" data-document-viewport>
+      <header class="document-heading">
+        <p>把经历，折成一页。</p>
+        <h2>
+          Field documents <sup>{String(items.length).padStart(2, '0')}</sup>
+        </h2>
+      </header>
+      <div class="document-toolbar">
+        <nav aria-label="筛选文档">
+          <button type="button" data-document-filter="all" aria-pressed="true">
+            全部 <sup>{items.length}</sup>
+          </button>
+          {groups.map((group) => (
+            <button
+              type="button"
+              data-document-filter={group}
+              aria-pressed="false"
+            >
+              {group}{' '}
+              <sup>{items.filter((item) => item.group === group).length}</sup>
+            </button>
+          ))}
+        </nav>
+        <span data-document-count aria-live="polite">
+          {String(items.length).padStart(2, '0')} 篇文档
+        </span>
+      </div>
+      <canvas
+        class="document-field"
+        data-document-field
+        aria-hidden="true"
+      ></canvas>
+      <div class="document-grid">
+        {items.map((item) => (
+          <article
+            class="document-entry"
+            data-document-entry
+            data-group={item.group}
+          >
+            <a
+              href={`/docs/${item.id}/`}
+              class="document-link"
+              data-document-link
+              data-title={item.title}
+            >
+              <div class="document-cover">
+                <img
+                  src={item.cover}
+                  alt=""
+                  width="820"
+                  height="430"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="document-caption">
+                <span class="document-number">
+                  {item.number} / {item.category}
+                </span>
+                <h3 class="document-title">{item.title}</h3>
+                <p class="document-description">{item.description}</p>
+                <div class="document-tags">
+                  {item.tags?.map((tag) => (
+                    <span>{tag}</span>
+                  ))}
+                </div>
+                <span class="document-english">{item.english}</span>
+                <span class="document-open" aria-hidden="true">
+                  ↗
+                </span>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+  <footer class="document-end">
+    <span>TO BE CONTINUED</span>
+    <p>每一页，都是新的起点。</p>
+    <a href="/journal/">
+      从观察开始 · 阅读手记 <span aria-hidden="true">↗</span>
+    </a>
+  </footer>
+</section>
+<script>
+  import { createDocumentGallery } from '../scripts/document-gallery';
+  createDocumentGallery();
+</script>

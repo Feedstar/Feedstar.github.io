@@ -1250,12 +1250,6 @@ html[data-paused='true'] .note-specimen * {
       animation-range: entry 0% exit 100%;
       transform-origin: center;
     }
-    .archive-docs .archive-card {
-      animation: folio-passage linear both;
-      animation-timeline: view();
-      animation-range: entry 0% exit 100%;
-      transform-origin: left center;
-    }
   }
 }
 @keyframes specimen-passage {
@@ -1268,17 +1262,5 @@ html[data-paused='true'] .note-specimen * {
   }
   100% {
     transform: translateY(-18px) rotateX(-3deg);
-  }
-}
-@keyframes folio-passage {
-  0% {
-    transform: translateX(25px) rotateY(-4deg);
-  }
-  35%,
-  70% {
-    transform: translateX(0) rotateY(0);
-  }
-  100% {
-    transform: translateX(-10px) rotateY(2deg);
   }
 }

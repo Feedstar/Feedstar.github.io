@@ -1,4 +1,5 @@
 ---
+import DocumentGallery from "./DocumentGallery.astro";
 import NoteSpecimen from './NoteSpecimen.astro';
 import '../styles/archive.css';
 interface Item {
@@ -91,6 +92,7 @@ const notes = kind === 'journal';
       </div>
     </div>
   </section>
+  {notes ? (
   <section
     class="archive-collection"
     id="archive-index"
@@ -196,6 +198,7 @@ const notes = kind === 'journal';
       </a>
     </footer>
   </section>
+  ) : <DocumentGallery items={items} groups={groups} />}
 </div>
 <script>
   import { createArchive } from '../scripts/archive';
