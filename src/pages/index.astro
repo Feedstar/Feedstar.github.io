@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Moon from '../components/Moon.astro';
 import ExperimentCollection from '../components/ExperimentCollection.astro';
 import HomeDocuments from '../components/HomeDocuments.astro';
+import { siteProfile } from '../lib/site-profile';
 import { getCollection } from 'astro:content';
 const posts = (await getCollection('journal')).sort((a, b) =>
   a.data.number.localeCompare(b.data.number),
@@ -158,14 +159,15 @@ const posts = (await getCollection('journal')).sort((a, b) =>
       </p>
       <div>
         <p>
-          这里存放工作与学习中的思考、
+          我叫 {siteProfile.name}，有 {siteProfile.experience} 工作经验。
           <br />
-          可视化程序，以及关于运动的小实验。
+          目前从事{siteProfile.industry}行业，主攻{siteProfile.focus.join('与')}
+          。
           <br />
-          留一点空间，给新的问题。
+          在这里，记录实验、学习和工作中的思考。
         </p>
         <a class="text-link" href="/about/">
-          关于这个空间 <span>↗</span>
+          关于我与这个空间 <span>↗</span>
         </a>
       </div>
     </div>

@@ -1,47 +1,132 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import SectionIntro from '../components/SectionIntro.astro';
+import { siteProfile } from '../lib/site-profile';
+import '../styles/about.css';
 ---
 
-<Layout title="关于 · Feedstar" page="about">
+<Layout
+  title="关于 · Feedstar"
+  description="我是 Feedstar，有 2 年以上工作经验，目前从事机器人行业，主攻强化学习与物理仿真。这里记录我的实验、学习和工作中的思考。"
+  page="about"
+>
   <SectionIntro
     number="04"
     label="ABOUT"
-    first="A space"
-    second="to wonder."
-    title="关于 / 微光与秩序。"
-    description="Feedstar 的个人空间。存放工作与学习中的思考，给新的问题留一点位置。"
-    detail="A PERSONAL OBSERVATORY"
+    first="Always"
+    second="in motion."
+    title="关于 / 在实践中，慢慢理解。"
+    description="我是 Feedstar，有 2 年以上工作经验，目前从事机器人行业，主攻强化学习与物理仿真。"
+    detail="ROBOTICS · LEARNING · SIMULATION"
     href="#about-this-space"
-    action="关于这个空间"
+    action="认识一下"
     id="about-title"
   />
-  <section class="page-content wrap" id="about-this-space">
+  <section
+    class="page-content wrap"
+    id="about-this-space"
+    aria-labelledby="about-person-title"
+  >
     <div class="about-body">
-      <p class="about-quote">
-        把问题留下，
-        <br />
-        把理解慢慢补上。
+      <h2 class="about-quote" id="about-person-title">
+        你好，我是 {siteProfile.name}。
+      </h2>
+      <dl class="about-facts">
+        <div>
+          <dt>工作经验</dt>
+          <dd>{siteProfile.experience}</dd>
+        </div>
+        <div>
+          <dt>所在行业</dt>
+          <dd>{siteProfile.industry}</dd>
+        </div>
+        <div>
+          <dt>主要方向</dt>
+          <dd>{siteProfile.focus.join(' · ')}</dd>
+        </div>
+      </dl>
+      <p>
+        我在机器人行业工作，主要围绕强化学习和物理仿真展开探索。
+        比起只看到一个最终结果，我更想弄清楚：一个动作是怎样学会的，一个模型为什么会这样运动，以及参数变化之后，系统究竟发生了什么。
       </p>
       <p>
-        我想在这里存放工作与学习过程中的思考：一些文章，一些可视化程序，以及一些用来理解
-        MuJoCo 特性与基本功能的小实验。
+        从模型与关节，到奖励设计、运动控制和接触反馈，这些问题经常彼此相连。
+        我希望把训练中的现象与仿真里的物理过程放在一起看，让每一次调试都有可以追溯的依据。
       </p>
-      <p>
-        实验室让想法运行起来；手记逐篇解析 MuJoCo
-        实验的现象、原理与代码；文档则留下工作记录、实践过程和一些心得。
-      </p>
-      <p>
-        这个空间从最基础的运动开始。关于关节与阻尼，关于目标与响应，关于接触和摩擦。希望每一次观察，都能让一个抽象的概念变得具体一些。
-      </p>
-      <a
-        class="text-link"
-        href="https://github.com/Feedstar"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        在 GitHub 找到我 <span>↗</span>
-      </a>
+
+      <section class="about-topic" aria-labelledby="about-focus-title">
+        <p class="eyebrow">01 / CURRENT FOCUS</p>
+        <h2 id="about-focus-title">现在关注什么</h2>
+        <dl class="about-focus-list">
+          <div>
+            <dt>强化学习</dt>
+            <dd>
+              关注机器人策略训练中的任务设计、观测与奖励，以及训练结果的验证。想理解的不只是策略能否完成任务，还有它为什么学成了现在的样子。
+            </dd>
+          </div>
+          <div>
+            <dt>物理仿真</dt>
+            <dd>
+              从模型结构、关节与惯量，到执行器、接触与摩擦，逐步建立对仿真行为的直觉。用
+              MuJoCo 等工具，把抽象的动力学关系变成可以操作和观察的实验。
+            </dd>
+          </div>
+          <div>
+            <dt>动作模仿与迁移</dt>
+            <dd>
+              沿着人体运动重建、动作重定向与模仿学习继续探索，记录从动作数据到机器人运动的处理过程，以及训练和仿真验证中遇到的问题。
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="about-topic" aria-labelledby="about-process-title">
+        <p class="eyebrow">02 / HOW I WORK</p>
+        <h2 id="about-process-title">从一个小实验开始</h2>
+        <p>
+          面对一个复杂的问题，我倾向于先找一个能复现的小例子。把条件收窄，观察现象，改变一个参数，再回到模型和代码里寻找解释。
+        </p>
+        <p>
+          记录也是这个过程的一部分。配置步骤、报错原因、没有奏效的尝试，以及暂时没有答案的问题，都值得留下。写清楚，往往也是重新理解一次。
+        </p>
+      </section>
+
+      <section class="about-topic" aria-labelledby="about-space-title">
+        <p class="eyebrow">03 / THIS SPACE</p>
+        <h2 id="about-space-title">把过程留在这里</h2>
+        <p>
+          这个网站是我的工作与学习记录，也是一处可以动手观察的小空间。内容会随着实践不断补充，希望它既能帮我整理思路，也能给遇到相似问题的人一点参考。
+        </p>
+        <div class="about-space-links">
+          <a href="/lab/">
+            <span>实验室</span>
+            <p>让模型运行起来，直接观察参数与运动的关系。</p>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <a href="/journal/">
+            <span>手记</span>
+            <p>围绕实验，逐篇梳理现象、原理与代码。</p>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <a href="/docs/">
+            <span>文档</span>
+            <p>整理工作中的配置、实践过程与使用心得。</p>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+
+      <div class="about-contact">
+        <p>关于机器人、强化学习或物理仿真，欢迎交流。</p>
+        <a
+          class="text-link"
+          href="https://github.com/Feedstar"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          在 GitHub 找到我 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
       <div class="about-colophon">
         <p class="eyebrow">COLOPHON / 关于这个网站</p>
         <p>
@@ -53,7 +138,8 @@ import SectionIntro from '../components/SectionIntro.astro';
           >
             NASA's Scientific Visualization Studio
           </a>
-          ，基于 LRO / LROC 数据。页面、文字与交互为 Feedstar 制作。
+          ，基于 LRO / LROC 数据。网站由 Feedstar 持续维护，部分封面使用 AI
+          辅助生成。
         </p>
       </div>
     </div>

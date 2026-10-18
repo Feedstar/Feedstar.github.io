@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Wordmark from './Wordmark.astro';
+import { siteProfile } from '../lib/site-profile';
 import { siteNavigation } from '../lib/site-navigation';
 import { experimentCatalog } from '../lib/experiment-catalog';
 
@@ -22,9 +23,9 @@ const documents = (await getCollection('docs')).sort(
         </a>
         <p class="footer-motto">在微小的实验里，理解世界。</p>
         <p class="footer-description">
-          学习、仿真与沿途的思考。
+          {siteProfile.industry} · {siteProfile.focus.join(' · ')}
           <br />
-          解析实验，也记录工作中的所得。
+          记录训练、仿真与实践中的理解。
         </p>
         <a
           class="footer-github"

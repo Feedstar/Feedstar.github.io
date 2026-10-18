@@ -2,10 +2,11 @@
 import '../styles/global.css';
 import Wordmark from '../components/Wordmark.astro';
 import Footer from '../components/Footer.astro';
+import { siteProfile } from '../lib/site-profile';
 import { siteNavigation } from '../lib/site-navigation';
 const {
   title = 'Feedstar · 微光与秩序',
-  description = 'Feedstar 的个人空间。记录学习，拆解运动，在微小的实验里理解世界。',
+  description = siteProfile.description,
   page = 'home',
 } = Astro.props;
 ---
