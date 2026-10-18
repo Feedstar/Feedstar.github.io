@@ -1,3 +1,5 @@
+import { loadResource } from '../lib/load-resource.mjs';
+import { bootSignal } from './page-resources';
 import * as THREE from 'three';
 import { createCrystalFluid } from './crystal-fluid';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -297,6 +299,9 @@ export async function createCrystalField(
     alpha: false,
     powerPreference: 'high-performance',
   });
+  renderer.debug.onShaderError = () => {
+    throw new Error('Crystal shader compilation failed');
+  };
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.autoClear = false;
   const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 100);
@@ -349,7 +354,21 @@ export async function createCrystalField(
   let disposed = false;
   // Collect each resource as it arrives so failed initialization can release all of it.
   const loadGeometry = async (index: number) => {
-    const gltf = await loader.loadAsync(`${asset}crystal-shell-${index}.glb`);
+    const gltf = await loadResource(
+      loader.loadAsync(`${asset}crystal-shell-${index}.glb`),
+      {
+        signal: bootSignal,
+        dispose: (late) =>
+          late.scene.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return;
+            object.geometry.dispose();
+            (Array.isArray(object.material)
+              ? object.material
+              : [object.material]
+            ).forEach((material) => material.dispose());
+          }),
+      },
+    );
     let geometry: THREE.BufferGeometry | undefined;
     gltf.scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
@@ -364,18 +383,32 @@ export async function createCrystalField(
     return geometry;
   };
   const loadNormal = async (index: number) => {
-    const texture = await textureLoader.loadAsync(
-      `${asset}crystal${index}-normal.jpg`,
+    const texture = await loadResource(
+      textureLoader.loadAsync(`${asset}crystal${index}-normal.jpg`),
+      { signal: bootSignal, dispose: (texture) => texture.dispose() },
     );
     texture.flipY = false;
     ownedTextures.push(texture);
     return texture;
   };
   const loadEnvironment = async () => {
-    const texture = await new HDRLoader().loadAsync(
-      `${asset}wooden_studio_19_1k.hdr`,
+    const texture = await loadResource(
+      new HDRLoader().loadAsync(`${asset}wooden_studio_19_1k.hdr`),
+      { signal: bootSignal, dispose: (texture) => texture.dispose() },
     );
     texture.wrapS = THREE.RepeatWrapping;
+    ownedTextures.push(texture);
+    return texture;
+  };
+  const loadCover = async (link: HTMLAnchorElement) => {
+    const texture = await loadResource(
+      textureLoader.loadAsync(
+        '/journal-covers/' + encodeURIComponent(link.dataset.id!) + '.webp',
+      ),
+      { signal: bootSignal, dispose: (texture) => texture.dispose() },
+    );
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
     ownedTextures.push(texture);
     return texture;
   };
@@ -383,6 +416,7 @@ export async function createCrystalField(
     ...Array.from({ length: 7 }, (_, i) => loadGeometry(i)),
     ...Array.from({ length: 7 }, (_, i) => loadNormal(i)),
     loadEnvironment(),
+    ...links.map(loadCover),
   ];
   const results = await Promise.allSettled(requests);
   const failed = results.find((result) => result.status === 'rejected');
@@ -484,7 +518,7 @@ export async function createCrystalField(
       coverMap: { value: null },
       opacity: { value: 0 },
     };
-    const coverState = { loaded: false, opacity: 0 };
+    const coverState = { loaded: true, opacity: 1 };
     const coverMaterial = new THREE.ShaderMaterial({
       vertexShader: coverVertex,
       fragmentShader: coverFragment,
@@ -502,38 +536,16 @@ export async function createCrystalField(
     backScene.add(backGroup, coverGroup);
     frontScene.add(frontGroup);
 
-    // Covers are progressive enhancement too: no cover request delays ready.
-    // A late callback after disposal cannot recreate GPU resources.
-    if (link.dataset.id) {
-      const texture = textureLoader.load(
-        `/journal-covers/${encodeURIComponent(link.dataset.id)}.png`,
-        (loadedCover) => {
-          if (disposed) {
-            loadedCover.dispose();
-            return;
-          }
-          loadedCover.colorSpace = THREE.SRGBColorSpace;
-          loadedCover.anisotropy = Math.min(
-            4,
-            renderer.capabilities.getMaxAnisotropy(),
-          );
-          const image = loadedCover.image as HTMLImageElement;
-          const fit = crystalCoverFit(
-            image.naturalWidth || image.width,
-            image.naturalHeight || image.height,
-          );
-          cover.scale.set(fit.width, fit.height, 1);
-          coverUniforms.coverMap.value = loadedCover;
-          coverState.loaded = true;
-        },
-        undefined,
-        () => {
-          /* The transparent interior leaves the shell and native title usable. */
-        },
-      );
-      texture.colorSpace = THREE.SRGBColorSpace;
-      ownedTextures.push(texture);
-    }
+    // The first visible frame already contains the decoded artwork.
+    const texture = loaded[15 + index] as THREE.Texture;
+    const image = texture.image as HTMLImageElement;
+    const fit = crystalCoverFit(
+      image.naturalWidth || image.width,
+      image.naturalHeight || image.height,
+    );
+    cover.scale.set(fit.width, fit.height, 1);
+    coverUniforms.coverMap.value = texture;
+    coverUniforms.opacity.value = 1;
     return {
       index,
       front,

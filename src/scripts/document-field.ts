@@ -1,3 +1,4 @@
+import { bootCancelled, prepareFonts, prepareImage } from './page-resources';
 import * as THREE from 'three';
 import {
   DOCUMENT_CAMERA_Z,
@@ -349,39 +350,18 @@ function drawCaption(
   card.caption.texture.needsUpdate = true;
 }
 
-function loadCardImage(
+async function loadCardImage(
   link: HTMLAnchorElement,
 ): Promise<HTMLImageElement | null> {
   const original = link.querySelector('img');
-  if (!original) return Promise.resolve(null);
-  const source = original.currentSrc || original.getAttribute('src');
-  if (!source) return Promise.resolve(null);
-  let external = false;
-  try {
-    external = new URL(source, document.baseURI).origin !== location.origin;
-  } catch {
-    return Promise.resolve(null);
-  }
-  if (!external && original.complete && original.naturalWidth)
-    return Promise.resolve(original);
-  return new Promise((resolve) => {
-    const image = new Image();
-    let finished = false;
-    const finish = (value: HTMLImageElement | null) => {
-      if (finished) return;
-      finished = true;
-      clearTimeout(timeout);
-      image.onload = null;
-      image.onerror = null;
-      resolve(value);
-    };
-    const timeout = setTimeout(() => finish(null), 6000);
-    image.decoding = 'async';
-    if (external) image.crossOrigin = 'anonymous';
-    image.onload = () => finish(image);
-    image.onerror = () => finish(null);
-    image.src = source;
-  });
+  if (!original) return null;
+  const source = original.currentSrc || original.src;
+  if (new URL(source, document.baseURI).origin === location.origin)
+    return (await prepareImage(original)) ? original : null;
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.src = source;
+  return (await prepareImage(image)) ? image : null;
 }
 
 const emptyBounds = (index: number): DocumentFieldBounds => ({
@@ -405,7 +385,12 @@ export async function createDocumentField(
   root: HTMLElement,
 ) {
   const sources = await Promise.all(links.map(loadCardImage));
-  if (document.fonts) await document.fonts.ready;
+  await prepareFonts();
+  if (
+    bootCancelled() ||
+    sources.some((image, i) => !image && links[i].querySelector('img'))
+  )
+    throw new Error('Document artwork is unavailable');
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
@@ -413,6 +398,9 @@ export async function createDocumentField(
     powerPreference: 'low-power',
   });
   renderer.setClearColor(0x000000, 0);
+  renderer.debug.onShaderError = () => {
+    throw new Error('Document shader compilation failed');
+  };
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 100, 4500);

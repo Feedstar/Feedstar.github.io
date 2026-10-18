@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import Wordmark from '../components/Wordmark.astro';
 import Footer from '../components/Footer.astro';
+import BootHead from '../components/BootHead.astro';
+import SiteLoader from '../components/SiteLoader.astro';
 import { siteProfile } from '../lib/site-profile';
 import { siteNavigation } from '../lib/site-navigation';
 const {
@@ -36,8 +38,10 @@ const {
         }
       } catch {}
     </script>
+    <BootHead />
   </head>
   <body data-page={page}>
+    <SiteLoader />
     <a class="skip-link" href="#main">
       跳到正文
     </a>
@@ -69,6 +73,7 @@ const {
     </main>
     <Footer />
     <script>
+      import { startSiteLoader } from '../scripts/site-loader';
       import { createPointer } from '../scripts/pointer';
       import { createTitleMotion } from '../scripts/title-motion';
       import { createChapters } from '../scripts/chapters';
@@ -121,6 +126,7 @@ const {
       document.addEventListener('visibilitychange', () => {
         document.documentElement.dataset.paused = String(document.hidden);
       });
+      startSiteLoader();
     </script>
   </body>
 </html>

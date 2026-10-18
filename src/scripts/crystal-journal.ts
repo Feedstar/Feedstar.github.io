@@ -1,3 +1,9 @@
+import {
+  bootCancelled,
+  prepareFonts,
+  sceneState,
+  onBootCancel,
+} from './page-resources';
 import { crystalCaption } from '../lib/crystal-motion.mjs';
 import { createCrystalField } from './crystal-field';
 
@@ -199,6 +205,7 @@ export function createCrystalJournal() {
     resume();
   };
   const fallback = () => {
+    sceneState(root, 'fallback');
     ready = false;
     stop();
     hidePointer();
@@ -214,14 +221,28 @@ export function createCrystalJournal() {
       links[index].style.removeProperty('clip-path');
     });
   };
+  onBootCancel(() => {
+    fallback();
+    field?.dispose();
+    field = null;
+  });
   const enhance = async () => {
+    if (bootCancelled()) {
+      fallback();
+      return;
+    }
+    if (reduce.matches) {
+      fallback();
+      return;
+    }
     if (building || ready || disposed || contextLost || reduce.matches) return;
     building = true;
     root.dataset.sceneState = 'loading';
     try {
-      await document.fonts.ready;
+      await prepareFonts();
+      if (bootCancelled()) return;
       if (!field) field = await createCrystalField(canvas, links, root);
-      if (disposed) {
+      if (disposed || bootCancelled()) {
         field.dispose();
         field = null;
         return;
@@ -230,6 +251,7 @@ export function createCrystalJournal() {
       root.dataset.motion = 'ready';
       ready = true;
       measure();
+      sceneState(root, 'ready');
       root.dataset.sceneState = 'ready';
     } catch (error) {
       fallback();
@@ -258,6 +280,7 @@ export function createCrystalJournal() {
     { rootMargin: '300px' },
   );
   intersection.observe(viewport);
+  void enhance();
   const resize = new ResizeObserver(() => {
     if (width !== viewport.clientWidth || height !== viewport.clientHeight)
       measure();

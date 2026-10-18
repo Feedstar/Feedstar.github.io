@@ -1,0 +1,15 @@
+---
+import css from '../styles/site-loader.css?raw';
+import bootstrap from '../lib/boot-bootstrap.js?raw';
+---
+
+<style is:inline set:html={css} />
+<script is:inline set:html={bootstrap} />
+<link
+  data-site-fonts
+  rel="stylesheet"
+  media="print"
+  href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Serif+SC:wght@400;500;600&display=swap"
+  onload="if(!document.documentElement.hasAttribute('data-font-fallback'))this.media='all';this.dataset.settled='ready'"
+  onerror="this.dataset.settled='failed'"
+/>

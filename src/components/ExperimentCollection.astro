@@ -34,6 +34,7 @@ const first = experimentCatalog[0];
               class="collection-art"
               data-preview-art={entry.id}
               data-study={entry.example}
+              data-boot-scene={entry.id === first.id ? 'experiment' : undefined}
               hidden={entry.id !== first.id}
             >
               <div class="study-art-fallback" aria-hidden="true">

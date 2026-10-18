@@ -1,3 +1,4 @@
+import { bootCancelled, onBootCancel, sceneState } from './page-resources';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -13,6 +14,10 @@ export function createStudies() {
   let disposed = false;
   const windows = document.querySelectorAll<HTMLElement>('[data-study]');
   const mount = async (host: HTMLElement) => {
+    if (host.hasAttribute('data-boot-scene') && bootCancelled()) {
+      sceneState(host, 'fallback');
+      return;
+    }
     let dirty = true;
     const canvas = host.querySelector<HTMLCanvasElement>('canvas')!;
     let renderer: THREE.WebGLRenderer;
@@ -24,8 +29,12 @@ export function createStudies() {
         powerPreference: 'high-performance',
       });
     } catch {
+      sceneState(host, 'fallback');
       return;
     }
+    renderer.debug.onShaderError = () => {
+      throw new Error('Preview shader compilation failed');
+    };
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35;
     const scene = new THREE.Scene();
@@ -336,7 +345,11 @@ export function createStudies() {
     };
     reduced.addEventListener('change', change);
     fine.addEventListener('change', change);
-    cleanup.push(() => {
+    let coverDisposed = false;
+    const disposeCover = () => {
+      if (coverDisposed) return;
+      coverDisposed = true;
+      ready = false;
       loop.remove(update);
       resizeObserver.disconnect();
       intersection.disconnect();
@@ -355,22 +368,37 @@ export function createStudies() {
       });
       environment.dispose();
       renderer.dispose();
-    });
+    };
+    cleanup.push(disposeCover);
+    if (host.hasAttribute('data-boot-scene'))
+      onBootCancel(() => {
+        if (!ready) disposeCover();
+      });
     resizeObserver.observe(host);
     resize();
     // Compile before the cover enters, using parallel shader compilation when
     // supported. No synchronous first-use compilation during its entrance.
     try {
       await renderer.compileAsync(scene, camera);
-      if (disposed) return;
+      if (
+        disposed ||
+        coverDisposed ||
+        (host.hasAttribute('data-boot-scene') && bootCancelled())
+      ) {
+        disposeCover();
+        return;
+      }
       world.rotation.y = -0.18;
       animate(reduced.matches ? 1.2 : 0);
       renderer.render(scene, camera);
       ready = true;
       host.dataset.ready = 'true';
+      sceneState(host, 'ready');
       intersection.observe(host);
     } catch {
+      disposeCover();
       host.dataset.ready = 'false';
+      sceneState(host, 'fallback');
     }
   };
   // Prepare one cover per idle task; two adjacent cards must not allocate their
@@ -396,6 +424,7 @@ export function createStudies() {
         await mount(host);
       } catch {
         host.dataset.ready = 'false';
+        sceneState(host, 'fallback');
       } finally {
         preparing = false;
         scheduleMount();
@@ -417,7 +446,15 @@ export function createStudies() {
     },
     { rootMargin: '700px' },
   );
-  windows.forEach((host) => preload.observe(host));
+  windows.forEach((host) => {
+    if (host.hasAttribute('data-boot-scene')) {
+      onBootCancel(() => {
+        if (host.dataset.bootState !== 'ready') sceneState(host, 'fallback');
+      });
+      pending.push(host);
+    } else preload.observe(host);
+  });
+  scheduleMount();
   cleanup.push(() => preload.disconnect());
   const visibility = () => {
     loop.suspend(document.hidden);

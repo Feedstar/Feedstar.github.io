@@ -1,0 +1,288 @@
+.site-loader {
+  display: none;
+}
+html[data-boot='loading'],
+html[data-boot='leaving'] {
+  overflow: hidden;
+}
+html[data-boot='loading']
+  body
+  > :is(header, main, footer, .skip-link, .paper-grain) {
+  visibility: hidden;
+}
+html:is([data-boot='loading'], [data-boot='leaving']) .site-loader {
+  --boot-bg: #030512;
+  --boot-ink: #edf0f7;
+  --boot-muted: #aeb6cb;
+  --boot-accent: #b6b5e6;
+  --boot-line: #b6bfd62e;
+  --boot-progress: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: clamp(24px, 5vw, 64px);
+  min-height: 100svh;
+  color: var(--boot-ink);
+  background: var(--boot-bg);
+  font-family: Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  isolation: isolate;
+  transition:
+    opacity 500ms ease,
+    visibility 500ms;
+}
+html[data-theme='paper'] .site-loader {
+  --boot-bg: #eef0f5;
+  --boot-ink: #252c40;
+  --boot-muted: #566179;
+  --boot-accent: #625b91;
+  --boot-line: #485b802b;
+}
+.site-loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 43%,
+    color-mix(in srgb, var(--boot-accent) 9%, transparent),
+    transparent 50%
+  );
+}
+.boot-topline,
+.boot-bottomline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 9px;
+  line-height: 1.8;
+  letter-spacing: 0.14em;
+  color: var(--boot-muted);
+}
+.boot-topline > span:first-child {
+  color: var(--boot-ink);
+  letter-spacing: 0.28em;
+}
+.boot-bottomline button {
+  border: 0;
+  border-bottom: 1px solid var(--boot-line);
+  border-radius: 0;
+  background: none;
+  padding: 10px 0;
+  color: var(--boot-muted);
+  font:
+    11px/1.6 Arial,
+    'Microsoft YaHei',
+    sans-serif;
+  cursor: pointer;
+}
+.boot-bottomline button > span {
+  margin-left: 22px;
+}
+.boot-bottomline button:focus-visible {
+  outline: 2px solid var(--boot-accent);
+  outline-offset: 6px;
+}
+.boot-observatory {
+  align-self: center;
+  justify-self: center;
+  width: min(330px, 100%);
+  text-align: center;
+  padding: 22px 0;
+}
+.boot-instrument {
+  position: relative;
+  width: clamp(170px, 28vh, 240px);
+  margin: 0 auto 26px;
+  aspect-ratio: 1;
+}
+.boot-instrument svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.boot-guide,
+.boot-cross {
+  stroke: var(--boot-line);
+  stroke-width: 1;
+}
+.boot-progress {
+  stroke: var(--boot-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - var(--boot-progress));
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 420ms ease;
+}
+.boot-orbits {
+  stroke: var(--boot-accent);
+  stroke-width: 0.7;
+  opacity: 0.5;
+  transform-origin: center;
+  animation: boot-orbit 15s linear infinite;
+}
+.boot-orbits circle,
+.boot-seeds {
+  fill: var(--boot-accent);
+}
+.boot-seeds {
+  transform-origin: center;
+  animation: boot-breathe 4s ease-in-out infinite alternate;
+}
+.boot-moon {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  inset: 0;
+  margin: auto;
+  background: radial-gradient(
+    circle at 32% 32%,
+    #f6f4ff,
+    #a9aec8 35%,
+    #464b6c 65%,
+    #171d30 85%
+  );
+  box-shadow: 0 0 36px color-mix(in srgb, var(--boot-accent) 14%, transparent);
+}
+.boot-coordinate {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  width: 100%;
+  color: var(--boot-muted);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+}
+.boot-wordmark {
+  margin: 0;
+  color: var(--boot-ink);
+  font:
+    400 clamp(48px, 6vw, 64px)/1.25 Georgia,
+    'Times New Roman',
+    serif;
+  letter-spacing: -0.065em;
+}
+.boot-motto {
+  margin: 12px 0 32px;
+  font:
+    12px/1.8 'Songti SC',
+    SimSun,
+    serif;
+  letter-spacing: 0.12em;
+  color: var(--boot-muted);
+}
+.boot-readout {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--boot-line);
+  text-align: left;
+}
+[data-boot-status] {
+  font-size: 11px;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+}
+[data-boot-progress] {
+  font:
+    400 28px/1 Georgia,
+    serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--boot-accent);
+}
+[data-boot-progress] > span {
+  margin-left: 4px;
+  font:
+    9px Arial,
+    sans-serif;
+}
+.boot-stages {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 17px;
+  color: var(--boot-muted);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+.boot-stages i {
+  width: 18px;
+  height: 1px;
+  background: var(--boot-line);
+}
+.boot-stages [data-settled='true'] {
+  color: var(--boot-accent);
+}
+html[data-boot='leaving'] .site-loader {
+  opacity: 0;
+  pointer-events: none;
+}
+html[data-font-fallback] {
+  --serif: 'Songti SC', SimSun, serif;
+  --roman: Georgia, 'Times New Roman', serif;
+}
+img[data-boot-image='failed'] {
+  visibility: hidden;
+}
+@keyframes boot-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes boot-breathe {
+  from {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+  to {
+    transform: scale(0.66);
+    opacity: 0.9;
+  }
+}
+@media (max-width: 600px) {
+  .boot-topline,
+  .boot-bottomline {
+    font-size: 7px;
+    letter-spacing: 0.06em;
+  }
+  .boot-bottomline > span {
+    max-width: 150px;
+  }
+  .boot-observatory {
+    width: min(290px, 100%);
+  }
+}
+@media (max-height: 650px) {
+  .boot-instrument {
+    width: 140px;
+    margin-bottom: 24px;
+  }
+  .boot-wordmark {
+    font-size: 42px;
+  }
+  .boot-motto {
+    margin: 8px 0 18px;
+  }
+  .boot-observatory {
+    padding: 10px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-orbits,
+  .boot-seeds {
+    animation: none;
+  }
+  .boot-progress,
+  html:is([data-boot='loading'], [data-boot='leaving']) .site-loader {
+    transition: none;
+  }
+}

@@ -1,3 +1,9 @@
+import {
+  bootCancelled,
+  prepareFonts,
+  onBootCancel,
+  sceneState,
+} from './page-resources';
 import * as THREE from 'three';
 import { erosionThreshold, clamp, smoothstep } from '../lib/erosion.mjs';
 import { arrivalOpacity, lunarNotch, lunarTiming } from '../lib/lunar-flow.mjs';
@@ -18,6 +24,23 @@ import { mistVertex, mistFragment, mistCompositeFragment } from './lunar-mist';
 export function createMoon(canvas: HTMLCanvasElement) {
   const host = canvas.parentElement!;
   const journey = document.getElementById('orbit-journey')!;
+  let failed = false,
+    textureReady = false,
+    fontsReady = false,
+    preparing = true;
+  let stopFailed = () => {};
+  const fallback = () => {
+    failed = true;
+    host.dataset.fallback = 'true';
+    host.dataset.ready = 'false';
+    journey.dataset.static = 'true';
+    sceneState(host, 'fallback');
+    stopFailed();
+  };
+  if (bootCancelled()) {
+    fallback();
+    return () => {};
+  }
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   let renderer: THREE.WebGLRenderer;
@@ -29,16 +52,11 @@ export function createMoon(canvas: HTMLCanvasElement) {
       powerPreference: 'high-performance',
     });
   } catch {
-    host.dataset.fallback = 'true';
-    journey.dataset.static = 'true';
+    fallback();
     return () => {};
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-  renderer.debug.onShaderError = () => {
-    host.dataset.fallback = 'true';
-    host.dataset.ready = 'false';
-    journey.dataset.static = 'true';
-  };
+  renderer.debug.onShaderError = fallback;
   const scene = new THREE.Scene();
   const loop = createPreviewLoop(requestAnimationFrame, cancelAnimationFrame);
   let dirty = true,
@@ -49,11 +67,20 @@ export function createMoon(canvas: HTMLCanvasElement) {
   camera.position.z = 6;
   const group = new THREE.Group();
   scene.add(group);
-  const texture = new THREE.TextureLoader().load('/assets/moon.jpg', () => {
-    host.dataset.ready = 'true';
-    dirty = true;
-    wake();
-  });
+  const texture = new THREE.TextureLoader().load(
+    '/assets/moon.jpg',
+    () => {
+      if (failed || disposed) {
+        texture.dispose();
+        return;
+      }
+      textureReady = true;
+      dirty = true;
+      wake();
+    },
+    undefined,
+    fallback,
+  );
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   const uniforms = {
@@ -374,7 +401,13 @@ export function createMoon(canvas: HTMLCanvasElement) {
   let pointer: { x: number; y: number } | null = null;
   const draw = (dt: number, now: number) => {
     if (measureScroll) measure();
-    if (!active || !visible) {
+    if (
+      failed ||
+      !textureReady ||
+      !fontsReady ||
+      (!active && !preparing) ||
+      !visible
+    ) {
       loop.remove(draw);
       return;
     }
@@ -429,6 +462,11 @@ export function createMoon(canvas: HTMLCanvasElement) {
         renderer.setRenderTarget(null);
       }
       renderer.render(scene, camera);
+      if (!failed) {
+        preparing = false;
+        host.dataset.ready = 'true';
+        sceneState(host, 'ready');
+      }
       if (dt === 0) {
         reportAt = now;
         reportFrames = reportCost = 0;
@@ -454,7 +492,13 @@ export function createMoon(canvas: HTMLCanvasElement) {
       loop.remove(draw);
   };
   wake = () => {
-    if (!disposed && visible && (active || measureScroll)) loop.add(draw);
+    if (
+      !disposed &&
+      !failed &&
+      visible &&
+      (active || measureScroll || preparing)
+    )
+      loop.add(draw);
   };
   const onVisibility = () => {
     visible = !document.hidden;
@@ -480,8 +524,12 @@ export function createMoon(canvas: HTMLCanvasElement) {
   const onFonts = () => {
     if (!disposed) resize();
   };
-  document.fonts.ready.then(onFonts);
-  document.fonts.addEventListener('loadingdone', onFonts);
+  prepareFonts().then(() => {
+    if (failed || disposed) return;
+    fontsReady = true;
+    onFonts();
+    wake();
+  });
   let themeRevision = 0;
   const themeObserver = new MutationObserver(() => {
     resize();
@@ -518,7 +566,8 @@ export function createMoon(canvas: HTMLCanvasElement) {
   measure();
   progress = targetProgress;
   wake();
-  return () => {
+  const dispose = () => {
+    if (disposed) return;
     disposed = true;
     loop.dispose();
     document.fonts.removeEventListener('loadingdone', onFonts);
@@ -544,4 +593,10 @@ export function createMoon(canvas: HTMLCanvasElement) {
     texture.dispose();
     renderer.dispose();
   };
+  stopFailed = dispose;
+  onBootCancel(() => {
+    if (preparing) fallback();
+  });
+  if (failed) dispose();
+  return dispose;
 }

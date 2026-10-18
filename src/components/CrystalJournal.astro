@@ -17,7 +17,7 @@ interface Props {
 const { items, groups } = Astro.props;
 ---
 
-<div class="crystal-journal" data-crystal-journal>
+<div class="crystal-journal" data-crystal-journal data-boot-scene="crystals">
   <SectionIntro
     number="02"
     label="JOURNAL"
@@ -83,7 +83,7 @@ const { items, groups } = Astro.props;
                   aria-hidden="true"
                 >
                   <img
-                    src={`/journal-covers/${item.id}.png`}
+                    src={`/journal-covers/${item.id}.webp`}
                     alt=""
                     width="1280"
                     height="1280"

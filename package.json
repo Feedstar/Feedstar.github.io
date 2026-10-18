@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview --host 127.0.0.1",
     "check:motion": "node scripts/check-motion.mjs",
-    "test": "node scripts/check-motion.mjs && node scripts/check-document-motion.mjs && node scripts/check-crystal-motion.mjs && node scripts/check-crystal-idle.mjs && node scripts/check-simulations.mjs && node scripts/check-arm.mjs && node scripts/check-studies.mjs && node scripts/check-viewer.mjs",
+    "test": "node scripts/check-boot.mjs && node scripts/check-motion.mjs && node scripts/check-document-motion.mjs && node scripts/check-crystal-motion.mjs && node scripts/check-crystal-idle.mjs && node scripts/check-simulations.mjs && node scripts/check-arm.mjs && node scripts/check-studies.mjs && node scripts/check-viewer.mjs",
     "check": "astro sync && tsc --noEmit"
   },
   "dependencies": {

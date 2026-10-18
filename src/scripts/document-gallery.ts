@@ -1,3 +1,4 @@
+import { bootCancelled, sceneState, onBootCancel } from './page-resources';
 import { createDocumentField } from './document-field';
 import { dampDocumentScroll } from '../lib/document-motion.mjs';
 
@@ -152,6 +153,7 @@ export function createDocumentGallery() {
     resume();
   };
   const fallback = () => {
+    sceneState(root, 'fallback');
     ready = false;
     stop();
     delete root.dataset.motion;
@@ -164,12 +166,25 @@ export function createDocumentGallery() {
       links[i].style.removeProperty('clip-path');
     });
   };
+  onBootCancel(() => {
+    fallback();
+    field?.dispose();
+    field = null;
+  });
   const enhance = async () => {
+    if (bootCancelled()) {
+      fallback();
+      return;
+    }
+    if (reduce.matches) {
+      fallback();
+      return;
+    }
     if (building || disposed || reduce.matches || ready) return;
     building = true;
     try {
       if (!field) field = await createDocumentField(canvas, links, root);
-      if (disposed) {
+      if (disposed || bootCancelled()) {
         field.dispose();
         field = null;
         return;
@@ -178,6 +193,7 @@ export function createDocumentGallery() {
       root.dataset.motion = 'ready';
       ready = true;
       measure();
+      sceneState(root, 'ready');
     } catch (error) {
       fallback();
       field?.dispose();
