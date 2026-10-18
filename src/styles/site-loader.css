@@ -1,16 +1,24 @@
 .site-loader {
   display: none;
 }
-html[data-boot='loading'],
-html[data-boot='leaving'] {
+html[data-boot-mode='intro']:is(
+    [data-boot='loading'],
+    [data-boot='awaiting'],
+    [data-boot='leaving']
+  ) {
   overflow: hidden;
 }
-html[data-boot='loading']
+html[data-boot-mode='intro']:is([data-boot='loading'], [data-boot='awaiting'])
   body
   > :is(header, main, footer, .skip-link, .paper-grain) {
   visibility: hidden;
 }
-html:is([data-boot='loading'], [data-boot='leaving']) .site-loader {
+html[data-boot-mode='intro']:is(
+    [data-boot='loading'],
+    [data-boot='awaiting'],
+    [data-boot='leaving']
+  )
+  .site-loader {
   --boot-bg: #030512;
   --boot-ink: #edf0f7;
   --boot-muted: #aeb6cb;
@@ -24,6 +32,7 @@ html:is([data-boot='loading'], [data-boot='leaving']) .site-loader {
   z-index: 9999;
   padding: clamp(24px, 5vw, 64px);
   min-height: 100svh;
+  overflow-y: auto;
   color: var(--boot-ink);
   background: var(--boot-bg);
   font-family: Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -32,7 +41,7 @@ html:is([data-boot='loading'], [data-boot='leaving']) .site-loader {
     opacity 500ms ease,
     visibility 500ms;
 }
-html[data-theme='paper'] .site-loader {
+html[data-theme='paper'][data-boot-mode='intro'] .site-loader {
   --boot-bg: #eef0f5;
   --boot-ink: #252c40;
   --boot-muted: #566179;
@@ -66,25 +75,40 @@ html[data-theme='paper'] .site-loader {
   color: var(--boot-ink);
   letter-spacing: 0.28em;
 }
-.boot-bottomline button {
-  border: 0;
-  border-bottom: 1px solid var(--boot-line);
-  border-radius: 0;
-  background: none;
-  padding: 10px 0;
-  color: var(--boot-muted);
+.boot-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 20px;
+  border: 1px solid var(--boot-accent);
+  border-radius: 999px;
+  color: var(--boot-ink);
+  background: color-mix(in srgb, var(--boot-accent) 8%, transparent);
   font:
-    11px/1.6 Arial,
+    12px/1.5 Arial,
     'Microsoft YaHei',
     sans-serif;
+  letter-spacing: 0.1em;
   cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
-.boot-bottomline button > span {
-  margin-left: 22px;
+.boot-entry:disabled {
+  color: var(--boot-muted);
+  border-color: var(--boot-line);
+  background: transparent;
+  cursor: wait;
 }
-.boot-bottomline button:focus-visible {
+.boot-entry:enabled:hover {
+  background: color-mix(in srgb, var(--boot-accent) 18%, transparent);
+}
+.boot-entry:focus-visible {
   outline: 2px solid var(--boot-accent);
-  outline-offset: 6px;
+  outline-offset: 5px;
 }
 .boot-observatory {
   align-self: center;
@@ -95,7 +119,7 @@ html[data-theme='paper'] .site-loader {
 }
 .boot-instrument {
   position: relative;
-  width: clamp(170px, 28vh, 240px);
+  width: clamp(150px, 24vh, 220px);
   margin: 0 auto 26px;
   aspect-ratio: 1;
 }
@@ -169,7 +193,7 @@ html[data-theme='paper'] .site-loader {
   letter-spacing: -0.065em;
 }
 .boot-motto {
-  margin: 12px 0 32px;
+  margin: 12px 0 24px;
   font:
     12px/1.8 'Songti SC',
     SimSun,
@@ -263,7 +287,7 @@ img[data-boot-image='failed'] {
 }
 @media (max-height: 650px) {
   .boot-instrument {
-    width: 140px;
+    width: 110px;
     margin-bottom: 24px;
   }
   .boot-wordmark {
@@ -282,7 +306,39 @@ img[data-boot-image='failed'] {
     animation: none;
   }
   .boot-progress,
-  html:is([data-boot='loading'], [data-boot='leaving']) .site-loader {
+  html[data-boot-mode='intro']:is(
+      [data-boot='loading'],
+      [data-boot='awaiting'],
+      [data-boot='leaving']
+    )
+    .site-loader {
     transition: none;
   }
+}
+
+.site-loading-hint {
+  display: none;
+}
+html[data-boot-mode='navigation'][data-boot='loading'][data-boot-hint]
+  .site-loading-hint {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  pointer-events: none;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font: 11px/1.5 var(--sans);
+}
+.site-loading-hint > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
 }

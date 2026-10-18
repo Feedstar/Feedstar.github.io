@@ -1,21 +1,29 @@
 import { bootSignal, prepareFonts, prepareImage } from './page-resources';
 declare global {
   interface Window {
-    __feedstarBoot?: { started: number; release: (reason?: string) => void };
+    __feedstarBoot?: {
+      started: number;
+      mode: 'intro' | 'navigation';
+      finish: (reason?: string) => void;
+      enter: () => void;
+    };
   }
 }
 
 export function startSiteLoader() {
   const boot = window.__feedstarBoot;
   if (!boot || document.documentElement.dataset.boot !== 'loading') return;
-  document
-    .querySelectorAll<HTMLElement>('body > header, body > main, body > footer')
-    .forEach((element) => {
-      if (!element.inert) {
-        element.inert = true;
-        element.setAttribute('data-boot-inert', '');
-      }
-    });
+  if (boot.mode === 'intro')
+    document
+      .querySelectorAll<HTMLElement>(
+        'body > header, body > main, body > footer',
+      )
+      .forEach((element) => {
+        if (!element.inert) {
+          element.inert = true;
+          element.setAttribute('data-boot-inert', '');
+        }
+      });
   const scenes = [
     ...document.querySelectorAll<HTMLElement>('[data-boot-scene]'),
   ];
@@ -45,6 +53,10 @@ export function startSiteLoader() {
     failed ||= !ok;
     const percent = Math.round((++completed / total) * 100);
     loader?.style.setProperty('--boot-progress', String(percent));
+    document.documentElement.style.setProperty(
+      '--boot-progress',
+      String(percent),
+    );
     if (count) {
       count.innerHTML = String(percent).padStart(2, '0') + '<span>%</span>';
       count.setAttribute('aria-valuenow', String(percent));
@@ -88,26 +100,15 @@ export function startSiteLoader() {
   Promise.all([fontTask, imageTask, sceneTask])
     .then(() => {
       if (bootSignal.aborted) return;
-      let minimum = 950;
-      try {
-        if (sessionStorage.getItem('feedstar-visited')) minimum = 180;
-        sessionStorage.setItem('feedstar-visited', '1');
-      } catch {}
       document.documentElement.dataset.bootQuality = failed
         ? 'static'
         : 'complete';
-      setTimeout(
-        () => {
-          if (bootSignal.aborted) return;
-          // Let the prepared canvas, fonts and decoded images reach a paint boundary.
-          requestAnimationFrame(() =>
-            requestAnimationFrame(() => {
-              if (!bootSignal.aborted) boot.release('ready');
-            }),
-          );
-        },
-        Math.max(0, minimum - (performance.now() - boot.started)),
+      // Await a paint boundary, then let the first-visit controller offer entry.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!bootSignal.aborted) boot.finish('ready');
+        }),
       );
     })
-    .catch(() => boot.release('error'));
+    .catch(() => boot.finish('error'));
 }

@@ -67,11 +67,23 @@
       <i></i>
       <span data-boot-stage="scenes">场景</span>
     </div>
+    <button
+      class="boot-entry"
+      data-boot-enter
+      type="button"
+      disabled
+      onclick="window.__feedstarBoot?.enter()"
+    >
+      <span data-boot-enter-label>正在准备</span>
+      <span aria-hidden="true">↗</span>
+    </button>
   </div>
   <div class="boot-bottomline">
     <span>OBSERVE · UNDERSTAND · REPEAT</span>
-    <button type="button" onclick="window.__feedstarBoot?.release('skipped')">
-      先阅读内容 <span aria-hidden="true">↗</span>
-    </button>
+    <span>保持好奇，让微光继续。</span>
   </div>
+</div>
+
+<div class="site-loading-hint" role="status" aria-live="polite">
+  <span aria-hidden="true"></span>正在准备页面影像
 </div>
