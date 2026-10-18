@@ -40,7 +40,12 @@ export function dampDocumentScroll(
 export function documentBendRange(width, height) {
   if (width >= 1024)
     return { start: (100 * height) / 1100, end: (700 * height) / 1100 };
-  return { start: 100, end: width >= 768 ? 500 : 600 };
+  // The canvas excludes the navigation/filters. A fixed 600-world-unit end
+  // put the entire curl above a phone's visible canvas; scale both thresholds
+  // to that remaining height so the fold, retreat and fade stay on screen.
+  return width >= 768
+    ? { start: height * 0.08, end: height * 0.6 }
+    : { start: height * 0.06, end: height * 0.52 };
 }
 
 /**

@@ -199,7 +199,7 @@
   height: 78%;
   object-fit: contain;
   transform: rotate(calc(-1 * var(--crystal-angle)));
-  mask-image: radial-gradient(ellipse, #000 45%, transparent 72%);
+  mask-image: radial-gradient(ellipse, #000 66%, transparent 76%);
 }
 .crystal-static-art span {
   font: 500 94px var(--roman);
@@ -505,34 +505,6 @@
     right: 24px;
     gap: 10px;
   }
-  .crystal-journal[data-motion='ready'] .crystal-link {
-    clip-path: none !important;
-  }
-  .crystal-journal[data-motion='ready'] .crystal-tooltip {
-    display: none;
-  }
-  .crystal-journal[data-motion='ready'] .crystal-copy {
-    opacity: 1;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 6%;
-    text-align: center;
-    padding: 8px 14px;
-    text-shadow:
-      0 2px 7px var(--bg),
-      0 0 25px var(--bg);
-  }
-  .crystal-journal[data-motion='ready'] .crystal-copy h2 {
-    font-size: 17px;
-    margin: 5px 0;
-    line-height: 1.6;
-  }
-  .crystal-journal[data-motion='ready'] .crystal-copy p,
-  .crystal-journal[data-motion='ready'] .crystal-english,
-  .crystal-journal[data-motion='ready'] .crystal-open {
-    display: none;
-  }
   .crystal-journal[data-motion='ready'] .crystal-progress {
     right: 24px;
     bottom: 20px;
@@ -552,7 +524,7 @@
     padding: 80px 24px;
   }
 }
-@media (hover: none), (pointer: coarse) {
+@media (max-width: 767px), (hover: none), (pointer: coarse) {
   .crystal-journal[data-motion='ready'] .crystal-link {
     clip-path: none !important;
   }
@@ -560,21 +532,31 @@
     display: none;
   }
   .crystal-journal[data-motion='ready'] .crystal-copy {
-    opacity: 1;
+    opacity: var(--caption-opacity, 0);
+    visibility: hidden;
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 6%;
+    left: var(--caption-x);
+    top: var(--caption-y);
+    width: var(--caption-width);
+    box-sizing: border-box;
     text-align: center;
-    padding: 8px 14px;
+    padding: 8px 10px;
+    writing-mode: horizontal-tb;
     text-shadow:
       0 2px 7px var(--bg),
       0 0 25px var(--bg);
+  }
+  .crystal-journal[data-motion='ready']
+    .crystal-entry[data-onstage][data-caption-visible]
+    .crystal-copy {
+    visibility: visible;
+    pointer-events: auto;
   }
   .crystal-journal[data-motion='ready'] .crystal-copy h2 {
     font-size: 17px;
     margin: 5px 0;
     line-height: 1.6;
+    text-wrap: balance;
   }
   .crystal-journal[data-motion='ready'] .crystal-copy p,
   .crystal-journal[data-motion='ready'] .crystal-english,

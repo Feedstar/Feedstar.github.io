@@ -313,3 +313,34 @@ assert.deepEqual(
 console.log(
   'PASS: perspective matches native CSS coordinates, offscreen polygons disappear and all projected hit regions stay finite and inside the viewport.',
 );
+
+// Use the actual canvas AFTER mobile navigation and filters, not window height.
+for (const [width, height] of [
+  [320, 310],
+  [390, 590],
+  [430, 680],
+  [768, 720],
+]) {
+  const bend = documentBendRange(width, height);
+  const imageHeight = (width - 48) / DOCUMENT_IMAGE_RATIO / 2;
+  let visibleCurl = false;
+  for (let y = height * 0.15; y <= height * 0.65; y += 2) {
+    const vertex = bendDocumentVertex(width / 8, y, 2.3, imageHeight, bend);
+    const screen = projectDocumentVertex(vertex, width, height);
+    if (
+      screen.y > 0 &&
+      screen.y < height &&
+      vertex.opacity > 0.3 &&
+      vertex.z < DOCUMENT_PLANE_Z - 250 &&
+      y - vertex.y > imageHeight * 0.5
+    )
+      visibleCurl = true;
+  }
+  assert(
+    visibleCurl,
+    'Phones must show a substantial curved/retreating edge inside the visible canvas',
+  );
+}
+console.log(
+  'PASS: mobile document curl remains visible below the toolbar, including short screens.',
+);

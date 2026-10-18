@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   crystalIdle,
   crystalCoverFit,
+  crystalCaption,
   crystalPose,
 } from '../src/lib/crystal-motion.mjs';
 
@@ -123,4 +124,37 @@ assert.deepEqual(
 );
 console.log(
   'PASS: photographic covers preserve aspect ratio, fit the interior, and handle unavailable image dimensions safely.',
+);
+
+// Captions keep a readable measure as their shell enters/exits or turns edge-on.
+for (const width of [320, 375, 390, 430, 768]) {
+  const size = Math.min(430, width * 0.78);
+  let prior;
+  for (let centerY = 900; centerY >= -400; centerY -= 4) {
+    const caption = crystalCaption(width / 2, centerY, size, width, 844, 185);
+    assert(caption.width >= 272 && caption.width <= width - 48);
+    assert(caption.left >= 24 && caption.left + caption.width <= width - 24);
+    if (prior) {
+      close(
+        caption.width,
+        prior.width,
+        'Scrolling must never squeeze a caption into a vertical string',
+      );
+      close(
+        caption.top - prior.top,
+        -4,
+        'The title moves upward with the crystal, without an entry drop',
+      );
+    }
+    if (caption.top <= 185 || caption.top >= 812)
+      close(
+        caption.opacity,
+        0,
+        'Captions outside the reading area must be hidden',
+      );
+    prior = caption;
+  }
+}
+console.log(
+  'PASS: mobile crystal captions keep their width and follow the unclipped centre continuously.',
 );

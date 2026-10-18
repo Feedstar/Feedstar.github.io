@@ -1,3 +1,4 @@
+import { crystalCaption } from '../lib/crystal-motion.mjs';
 import { createCrystalField } from './crystal-field';
 
 /** Native page scroll, native article links, and a single progressive WebGL scene. */
@@ -52,7 +53,9 @@ export function createCrystalJournal() {
     travel = 0,
     step = 1,
     width = 0,
-    height = 0;
+    height = 0,
+    cardSize = 0,
+    captionSafeTop = 0;
   let hovered = -1,
     focused = -1,
     tooltipIndex = -1;
@@ -100,6 +103,22 @@ export function createCrystalJournal() {
         entry.style.width = `${region.width}px`;
         entry.style.height = `${region.height}px`;
         links[region.index].style.clipPath = region.polygon;
+        const caption = crystalCaption(
+          region.centerX,
+          region.centerY,
+          cardSize,
+          width,
+          height,
+          captionSafeTop,
+        );
+        entry.style.setProperty(
+          '--caption-x',
+          `${caption.left - region.left}px`,
+        );
+        entry.style.setProperty('--caption-y', `${caption.top - region.top}px`);
+        entry.style.setProperty('--caption-width', `${caption.width}px`);
+        entry.style.setProperty('--caption-opacity', String(caption.opacity));
+        entry.toggleAttribute('data-caption-visible', caption.opacity > 0.05);
       } else entry.style.top = '-10000px';
     }
     const index = focused >= 0 ? focused : hovered;
@@ -157,10 +176,12 @@ export function createCrystalJournal() {
     height = viewport.clientHeight;
     if (!width || !height) return;
     const columns: 1 | 2 = width >= 768 ? 2 : 1;
-    const cardSize =
+    cardSize =
       columns === 2
         ? Math.max(240, Math.min(600, width * 0.38, height - 240))
         : Math.min(430, width * 0.78, height - 240);
+    const toolbar = root.querySelector<HTMLElement>('.crystal-toolbar')!;
+    captionSafeTop = toolbar.offsetTop + toolbar.offsetHeight + 18;
     const rowGap = columns === 2 ? -cardSize * 0.38 : 100;
     const startY = Math.max(height * 0.58, 195 + cardSize * 0.5);
     step = cardSize + rowGap;
@@ -189,6 +210,7 @@ export function createCrystalJournal() {
     entries.forEach((entry, index) => {
       entry.removeAttribute('style');
       entry.removeAttribute('data-onstage');
+      entry.removeAttribute('data-caption-visible');
       links[index].style.removeProperty('clip-path');
     });
   };

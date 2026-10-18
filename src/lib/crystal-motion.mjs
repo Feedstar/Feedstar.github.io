@@ -157,6 +157,25 @@ export function crystalCoverFit(width, height, interiorFraction = 0.66) {
   };
 }
 
+/** A stable, horizontal caption independent of the clipped crystal silhouette. */
+export function crystalCaption(
+  centerX,
+  centerY,
+  cardSize,
+  width,
+  height,
+  safeTop,
+) {
+  const captionWidth = Math.min(420, width - 48);
+  const top = centerY + cardSize * 0.4;
+  return {
+    left: clamp(centerX - captionWidth / 2, 24, width - captionWidth - 24),
+    top,
+    width: captionWidth,
+    opacity: clamp((top - safeTop) / 40) * clamp((height - 32 - top) / 60),
+  };
+}
+
 /** Convex silhouette, in CSS pixels, used for native keyboard/link hit regions. */
 export function convexHull(points) {
   if (points.length < 3) return points;

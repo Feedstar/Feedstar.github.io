@@ -33,6 +33,8 @@ export interface CrystalRegion {
   polygon: string;
   opacity: number;
   hoverAmount: number;
+  centerX: number;
+  centerY: number;
 }
 export interface CrystalPointer {
   x: number;
@@ -255,15 +257,14 @@ uniform sampler2D coverMap;
 uniform float opacity;
 void main() {
   vec4 photograph = texture2D(coverMap, coverUV);
-  // A soft rounded silhouette removes the rectangular picture-card edge.
-  // It multiplies the artwork's original alpha rather than replacing it.
+  // Feather only the outer rim. The transparent artwork already has a soft
+  // silhouette; a second radial mask washed out the entire photograph.
   vec2 p = abs(coverUV - .5) * 2.0;
   vec2 corner = p - vec2(.74);
   float roundedDistance = length(max(corner, 0.0))
     + min(max(corner.x, corner.y), 0.0) - .26;
-  float edge = 1.0 - smoothstep(-.23, .012, roundedDistance);
-  float radial = 1.0 - smoothstep(.58, 1.38, length(p));
-  float alpha = photograph.a * edge * radial * opacity;
+  float edge = 1.0 - smoothstep(-.075, .0, roundedDistance);
+  float alpha = photograph.a * edge * opacity;
   if (alpha < .001) discard;
   // sRGB image textures decode to linear on upload; the back RT stays linear.
   // Leave highlight headroom for the surrounding glass's optical gain.
@@ -280,6 +281,8 @@ function emptyRegion(index: number, hoverAmount = 0): CrystalRegion {
     polygon: 'polygon(0 0,0 0,0 0)',
     opacity: 0,
     hoverAmount,
+    centerX: 0,
+    centerY: 0,
   };
 }
 
@@ -822,7 +825,11 @@ export async function createCrystalField(
         height = Math.max(...ys) - top;
       if (width < 1 || height < 1) return emptyRegion(entry.index, hoverAmount);
       const polygon = `polygon(${hull.map((point) => `${(((point[0] - left) / width) * 100).toFixed(2)}% ${(((point[1] - top) / height) * 100).toFixed(2)}%`).join(',')})`;
+      // The caption follows the object centre, never its clipped/rotating hull.
+      projected.copy(entry.frontGroup.position).project(camera);
       return {
+        centerX: ((projected.x + 1) * config.width) / 2,
+        centerY: ((1 - projected.y) * config.height) / 2,
         index: entry.index,
         left,
         top,

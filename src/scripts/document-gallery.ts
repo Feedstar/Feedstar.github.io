@@ -116,6 +116,10 @@ export function createDocumentGallery() {
             80,
             toolbar.offsetTop + toolbar.offsetHeight - height * 0.19 + 22,
           );
+    // Start the first phone/tablet sheet below the bend so it can be read flat
+    // before scrolling carries its leading edge into the visible curl.
+    if (columns === 1)
+      startY = Math.max(startY, fieldInset + (height - fieldInset) * 0.4);
     root.style.setProperty('--document-field-inset', `${fieldInset}px`);
     rowPitch = (cardWidth * 430) / 820 + captionHeight + rowGap;
     const cardHeight = (cardWidth * 430) / 820 + captionHeight;
