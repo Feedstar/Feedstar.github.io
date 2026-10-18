@@ -56,7 +56,7 @@
   background: var(--bg-raised);
 }
 .lab-course-nav a[aria-current] {
-  box-shadow: inset 0 -2px #a2c8bd;
+  box-shadow: inset 0 -2px var(--accent);
 }
 .lab-course-nav a[aria-current] strong {
   color: var(--fg);

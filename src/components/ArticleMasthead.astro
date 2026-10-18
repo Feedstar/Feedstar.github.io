@@ -1,5 +1,4 @@
 ---
-import NoteSpecimen from './NoteSpecimen.astro';
 import '../styles/reading-room.css';
 interface Props {
   kind: 'journal' | 'docs';
@@ -29,11 +28,13 @@ const notes = kind === 'journal';
       data-shared-cover={id}
       style={`view-transition-name:cover-${kind}-${id}`}
     >
-      {notes ? (
-        <NoteSpecimen kind={id} number={number} />
-      ) : (
-        <img src={cover} alt="" width="800" height="560" fetchpriority="high" />
-      )}
+      <img
+        src={notes ? '/journal-covers/' + id + '.png' : cover}
+        alt=""
+        width="1280"
+        height="1280"
+        fetchpriority="high"
+      />
       <span aria-hidden="true">
         {notes
           ? 'OBSERVE · UNDERSTAND · REPEAT'

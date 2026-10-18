@@ -1,0 +1,53 @@
+/* Feedstar's shared palette. Page styles inherit these; scene controls stay
+   legible over dark simulation canvases in either reading theme. */
+:root {
+  --bg: #030512;
+  --bg-raised: #101527;
+  --fg: #edf0f7;
+  --fg-bright: #ffffff;
+  --muted: #aeb6cb;
+  --subtle: #8d98b1;
+  --line: #b6bfd62e;
+  --accent: #b6b5e6;
+  --accent-soft: #b6b5e614;
+  --art-bg: #171d30;
+  --text-glow: #b6b5e62e;
+  --shadow: 0 20px 65px -35px #0009;
+  --surface: color-mix(in srgb, var(--bg-raised) 70%, var(--bg));
+  --scene-bg: #101522;
+  --scene-fg: #edf0f7;
+  --scene-muted: #adb7d0;
+  --scene-line: #b6bfd638;
+  --scene-accent: #b6b5e6;
+  --scene-panel: #101522ed;
+  --space: var(--bg);
+  --space-deep: var(--bg-raised);
+  --ink: var(--fg);
+  --ink-soft: var(--muted);
+  --space-line: var(--line);
+  --page-gutter: clamp(22px, 5vw, 88px);
+  --page-width: 1320px;
+  --panel-radius: 16px;
+  --control-radius: 999px;
+  --serif: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  --roman: 'Cormorant Garamond', Georgia, serif;
+  --sans: Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  color-scheme: dark;
+}
+:root[data-theme='paper'] {
+  --bg: #eef0f5;
+  --bg-raised: #e4e8f0;
+  --fg: #252c40;
+  --fg-bright: #131b30;
+  --muted: #566179;
+  --subtle: #59657c;
+  --line: #485b802b;
+  --accent: #625b91;
+  --accent-soft: #625b910c;
+  --art-bg: #dce2ee;
+  --text-glow: #625b9120;
+  --shadow: 0 20px 65px -35px #29334a3b;
+  color-scheme: light;
+}

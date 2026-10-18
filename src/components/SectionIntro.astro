@@ -1,0 +1,53 @@
+---
+import '../styles/section-intro.css';
+interface Props {
+  number: string;
+  label: string;
+  first: string;
+  second: string;
+  title: string;
+  description: string;
+  detail: string;
+  href: string;
+  action: string;
+  id: string;
+  icon?: string;
+}
+const {
+  number,
+  label,
+  first,
+  second,
+  title,
+  description,
+  detail,
+  href,
+  action,
+  id,
+  icon = '↓',
+} = Astro.props;
+---
+
+<section class="section-intro" aria-labelledby={id}>
+  <div class="section-intro-inner">
+    <div class="section-intro-meta">
+      <span>
+        FEEDSTAR / {number} <i aria-hidden="true">—</i> {label}
+      </span>
+      <span>{detail}</span>
+    </div>
+    <h1 id={id}>
+      <span>{first}</span> <em>{second}</em>
+    </h1>
+    <div class="section-intro-bottom">
+      <div>
+        <p class="section-intro-title">{title}</p>
+        <p class="section-intro-description">{description}</p>
+      </div>
+      <a class="section-intro-link" href={href}>
+        {action}
+        <span aria-hidden="true">{icon}</span>
+      </a>
+    </div>
+  </div>
+</section>

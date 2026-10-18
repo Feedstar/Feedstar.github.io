@@ -1,5 +1,6 @@
 ---
 import '../styles/crystal-journal.css';
+import SectionIntro from './SectionIntro.astro';
 interface Item {
   id: string;
   title: string;
@@ -17,30 +18,18 @@ const { items, groups } = Astro.props;
 ---
 
 <div class="crystal-journal" data-crystal-journal>
-  <section class="crystal-intro" aria-labelledby="crystal-title">
-    <div class="crystal-intro-top">
-      <span>FEEDSTAR / 02</span>
-      <span>AN OBSERVATORY OF MOTION</span>
-      <span>{String(items.length).padStart(2, '0')} STUDIES</span>
-    </div>
-    <h1 id="crystal-title">
-      Notes on <em>motion.</em>
-    </h1>
-    <div class="crystal-intro-bottom">
-      <div>
-        <p>让观察，有迹可循。</p>
-        <span>
-          一次运动，一种解释。
-          <br />
-          在现象、原理与代码之间，重新看见细节。
-        </span>
-      </div>
-      <a href="#archive-index">
-        进入手记 <span aria-hidden="true">↓</span>
-      </a>
-    </div>
-    <div class="crystal-intro-light" aria-hidden="true"></div>
-  </section>
+  <SectionIntro
+    number="02"
+    label="JOURNAL"
+    first="Notes on"
+    second="motion."
+    title="手记 / 让观察，有迹可循。"
+    description="一次运动，一种解释。在现象、原理与代码之间，重新看见细节。"
+    detail={String(items.length).padStart(2, '0') + ' STUDIES'}
+    href="#archive-index"
+    action="进入手记"
+    id="crystal-title"
+  />
 
   <section id="archive-index" class="crystal-collection" aria-label="手记目录">
     <div class="crystal-runway" data-crystal-runway>

@@ -54,25 +54,25 @@ export function createArmStudy(host: HTMLElement) {
       camera.up.set(0, 0, 1);
       camera.position.set(0.95, -1.85, 1.25);
       camera.lookAt(0.27, 0, 0.39);
-      scene.add(new THREE.HemisphereLight(0xe7fff5, 0x233138, 2.1));
-      const light = new THREE.DirectionalLight(0xffedcd, 3.4);
+      scene.add(new THREE.HemisphereLight(0xe7edff, 0x1b2138, 2.1));
+      const light = new THREE.DirectionalLight(0xf0efff, 3.4);
       light.position.set(-2, -3, 4);
       scene.add(light);
-      const rim = new THREE.DirectionalLight(0x82cbbb, 2.4);
+      const rim = new THREE.DirectionalLight(0xb6b5e6, 2.4);
       rim.position.set(1, 2, 2);
       scene.add(rim);
       const ivory = new THREE.MeshStandardMaterial({
-        color: 0xdde1d6,
+        color: 0xdde3ef,
         metalness: 0.6,
         roughness: 0.28,
       });
       const graphite = new THREE.MeshStandardMaterial({
-        color: 0x263536,
+        color: 0x232b40,
         metalness: 0.7,
         roughness: 0.32,
       });
       const mint = new THREE.MeshStandardMaterial({
-        color: 0x7ea89d,
+        color: 0x929bc4,
         metalness: 0.65,
         roughness: 0.25,
       });
@@ -82,7 +82,7 @@ export function createArmStudy(host: HTMLElement) {
         roughness: 0.28,
       });
       const ghostMaterial = new THREE.MeshBasicMaterial({
-        color: 0xa6e0cd,
+        color: 0xc3c7f1,
         wireframe: true,
         transparent: true,
         opacity: 0.2,
@@ -228,7 +228,7 @@ export function createArmStudy(host: HTMLElement) {
       const toolAxes = new THREE.AxesHelper(0.19);
       arm.tip.add(toolAxes);
       const pulseMaterial = new THREE.MeshBasicMaterial({
-        color: 0xb1dccb,
+        color: 0xb6bfdc,
         transparent: true,
         opacity: 0.45,
         depthWrite: false,

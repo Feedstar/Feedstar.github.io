@@ -45,8 +45,8 @@ export function createFeatureStudy(host: HTMLElement) {
       camera.up.set(0, 0, 1);
       camera.position.set(1.25, -1.95, 1.65);
       camera.lookAt(0.25, 0, 0.3);
-      scene.add(new THREE.HemisphereLight(0xe7fff5, 0x233138, 2));
-      const key = new THREE.DirectionalLight(0xffebce, 3.2);
+      scene.add(new THREE.HemisphereLight(0xe7edff, 0x1b2138, 2));
+      const key = new THREE.DirectionalLight(0xf0efff, 3.2);
       key.position.set(-2, -3, 4);
       scene.add(key);
       const env = new RoomEnvironment(),
@@ -56,12 +56,12 @@ export function createFeatureStudy(host: HTMLElement) {
       env.dispose();
       pmrem.dispose();
       const ivory = new THREE.MeshStandardMaterial({
-        color: 0xdde1d6,
+        color: 0xdde3ef,
         metalness: 0.55,
         roughness: 0.3,
       });
       const mint = new THREE.MeshStandardMaterial({
-        color: 0x80b1a0,
+        color: 0x929bc4,
         metalness: 0.55,
         roughness: 0.3,
       });
@@ -71,7 +71,7 @@ export function createFeatureStudy(host: HTMLElement) {
         roughness: 0.3,
       });
       const dark = new THREE.MeshStandardMaterial({
-        color: 0x243735,
+        color: 0x232b40,
         metalness: 0.6,
         roughness: 0.35,
       });
@@ -234,7 +234,7 @@ export function createFeatureStudy(host: HTMLElement) {
       dotsGeometry.setDrawRange(0, 0);
       const dots = new THREE.Points(
         dotsGeometry,
-        new THREE.PointsMaterial({ color: 0xa9d9c4, size: 0.018 }),
+        new THREE.PointsMaterial({ color: 0xb6bfdc, size: 0.018 }),
       );
       dots.frustumCulled = false;
       scanner.add(dots);

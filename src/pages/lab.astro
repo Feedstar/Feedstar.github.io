@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import SectionIntro from '../components/SectionIntro.astro';
 import LabWorkspace from '../components/LabWorkspace';
 import ExperimentCollection from '../components/ExperimentCollection.astro';
 import '../styles/lab.css';
@@ -8,19 +9,18 @@ import '../styles/lab-course.css';
 ---
 
 <Layout title="实验室 · Feedstar" page="lab">
-  <div class="page-intro wrap lab-page-intro">
-    <p class="eyebrow">01 / THE SMALL LABORATORY</p>
-    <h1>
-      把好奇，
-      <br />
-      <em>变成可以触碰的东西。</em>
-    </h1>
-    <p class="intro-description">
-      从一个模型、一个参数、一次观察开始。
-      <br />
-      让抽象的概念，在可运行的程序里变得具体。
-    </p>
-  </div>
+  <SectionIntro
+    number="01"
+    label="LABORATORY"
+    first="A small"
+    second="laboratory."
+    title="实验室 / 把好奇，变成可以触碰的东西。"
+    description="从一个模型、一个参数、一次观察开始。让抽象的概念，在可运行的程序里变得具体。"
+    detail="11 EXPERIMENTS"
+    href="#catalog"
+    action="进入实验"
+    id="lab-title"
+  />
   <section
     class="portfolio-field project-archive"
     id="catalog"

@@ -61,7 +61,7 @@
 .simulation-view {
   position: relative;
   min-height: 480px;
-  background: #191b27;
+  background: var(--scene-bg);
   overflow: hidden;
 }
 .simulation-view > canvas {
@@ -81,7 +81,7 @@
   justify-content: space-between;
   gap: 15px;
   pointer-events: none;
-  color: #beb7ce;
+  color: var(--scene-muted);
   font-size: 11px;
   letter-spacing: 0.08em;
   z-index: 1;
@@ -101,10 +101,10 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #78688d;
+  background: var(--scene-muted);
 }
 .engine-status i.live {
-  background: #cbb5e8;
+  background: var(--scene-accent);
   box-shadow: 0 0 8px #ceb0ed3b;
 }
 .parameter-panel {
@@ -136,7 +136,7 @@
 }
 .param input {
   width: 100%;
-  accent-color: #bda5da;
+  accent-color: var(--accent);
   margin: 18px 0 4px;
   height: 3px;
   cursor: ew-resize;
@@ -220,9 +220,9 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #191b27e8;
+  background: var(--scene-panel);
   z-index: 2;
-  color: #c6b8db;
+  color: var(--scene-muted);
   padding: 40px;
   text-align: center;
   font-family: var(--serif);
@@ -233,14 +233,14 @@
 }
 .engine-overlay button {
   padding: 8px 25px;
-  color: #e2d7ee;
+  color: var(--scene-fg);
   margin-top: 12px;
 }
 .loading-orbit {
   height: 35px;
   width: 35px;
-  border: 1px solid #75618e;
-  border-top-color: #d7c0ef;
+  border: 1px solid var(--scene-line);
+  border-top-color: var(--scene-accent);
   border-radius: 50%;
   animation: loading-turn 2s linear infinite;
 }
@@ -283,7 +283,7 @@
   font-size: 12px;
 }
 .compensation-toggle input {
-  accent-color: #bda5da;
+  accent-color: var(--accent);
   margin: 2px 0 0;
 }
 .compensation-toggle small {
@@ -325,10 +325,10 @@
   gap: 24px;
   margin-bottom: 5px;
   font-size: 11px;
-  color: #baa4db;
+  color: var(--accent);
 }
 .chart-panel .chart-legend > span:last-child {
-  color: #9381ac;
+  color: var(--muted);
   font-size: 11px;
 }
 .pd-explanation {

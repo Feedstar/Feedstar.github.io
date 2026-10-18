@@ -1,0 +1,130 @@
+/* One editorial opening for every section, independent of its canvas effect. */
+.section-intro {
+  background: var(--bg);
+  color: var(--fg);
+}
+.section-intro-inner {
+  width: min(var(--page-width), calc(100% - var(--page-gutter) * 2));
+  margin: auto;
+  min-height: min(800px, 90svh);
+  padding: 156px 0 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 56px;
+  border-bottom: 1px solid var(--line);
+}
+.section-intro-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  color: var(--muted);
+  font: 10px/1.5 var(--sans);
+  letter-spacing: 0.12em;
+}
+.section-intro-meta i {
+  font-style: normal;
+  margin: 0 10px;
+  color: var(--subtle);
+}
+.section-intro h1 {
+  font: 400 clamp(80px, 11.5vw, 168px)/0.88 var(--roman);
+  letter-spacing: -0.055em;
+}
+.section-intro h1 > span,
+.section-intro h1 > em {
+  display: block;
+}
+.section-intro h1 > em {
+  color: var(--accent);
+  margin-left: clamp(40px, 12vw, 180px);
+}
+.section-intro-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 40px;
+}
+.section-intro-title {
+  font: 400 clamp(19px, 1.8vw, 24px)/1.7 var(--serif);
+  margin: 0 0 12px;
+}
+.section-intro-description {
+  font: 13px/2 var(--sans);
+  color: var(--muted);
+  max-width: 520px;
+  margin: 0;
+  text-wrap: pretty;
+}
+.section-intro-link {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  white-space: nowrap;
+  font: 12px/1.5 var(--sans);
+}
+.section-intro-link > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  transition:
+    border-color 180ms,
+    transform 180ms;
+}
+.section-intro-link:hover > span {
+  border-color: var(--accent);
+  transform: translateY(3px);
+}
+@media (max-width: 650px) {
+  .section-intro-inner {
+    min-height: 77svh;
+    padding: 140px 0 40px;
+    gap: 48px;
+  }
+  .section-intro-meta {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    align-items: start;
+  }
+  .section-intro-meta > span:last-child {
+    text-align: right;
+    max-width: 100px;
+  }
+  .section-intro-meta i {
+    margin: 0 4px;
+  }
+  .section-intro h1 {
+    font-size: clamp(56px, 16vw, 102px);
+  }
+  .section-intro h1 > em {
+    margin-left: 8vw;
+  }
+  .section-intro-bottom {
+    flex-direction: column;
+    align-items: start;
+    gap: 24px;
+  }
+  .section-intro-title {
+    font-size: 18px;
+  }
+  .section-intro-description {
+    font-size: 12px;
+  }
+  .section-intro-link {
+    align-self: end;
+    font-size: 11px;
+    gap: 16px;
+  }
+  .section-intro-link > span {
+    width: 34px;
+    height: 34px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-intro-link > span {
+    transition: none;
+  }
+}

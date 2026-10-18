@@ -132,7 +132,7 @@ const documents = (await getCollection('docs')).sort(
   .site-footer {
     position: relative;
     z-index: 2;
-    padding: 66px 4.4% 26px;
+    padding: 66px var(--page-gutter) 26px;
     overflow: hidden;
     color: var(--fg);
     background: var(--bg);
@@ -159,7 +159,7 @@ const documents = (await getCollection('docs')).sort(
   }
   .footer-inner {
     position: relative;
-    max-width: 1180px;
+    max-width: var(--page-width);
     margin: auto;
   }
   .footer-columns {
@@ -331,7 +331,7 @@ const documents = (await getCollection('docs')).sort(
   }
   @media (max-width: 650px) {
     .site-footer {
-      padding: 44px 22px 24px;
+      padding: 44px var(--page-gutter) 24px;
     }
     .footer-columns {
       grid-template-columns: 1fr 1fr;

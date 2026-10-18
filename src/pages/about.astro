@@ -1,18 +1,22 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import SectionIntro from '../components/SectionIntro.astro';
 ---
 
 <Layout title="关于 · Feedstar" page="about">
-  <div class="page-intro wrap">
-    <p class="eyebrow">04 / ABOUT THIS SPACE</p>
-    <h1>
-      微光与秩序。
-      <br />
-      <em>A personal observatory.</em>
-    </h1>
-    <p class="intro-description">Feedstar 的个人空间。</p>
-  </div>
-  <section class="page-content wrap">
+  <SectionIntro
+    number="04"
+    label="ABOUT"
+    first="A space"
+    second="to wonder."
+    title="关于 / 微光与秩序。"
+    description="Feedstar 的个人空间。存放工作与学习中的思考，给新的问题留一点位置。"
+    detail="A PERSONAL OBSERVATORY"
+    href="#about-this-space"
+    action="关于这个空间"
+    id="about-title"
+  />
+  <section class="page-content wrap" id="about-this-space">
     <div class="about-body">
       <p class="about-quote">
         把问题留下，

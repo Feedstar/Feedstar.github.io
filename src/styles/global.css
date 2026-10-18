@@ -1,36 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Serif+SC:wght@400;500;600&display=swap');
+@import './tokens.css';
 @view-transition {
   navigation: auto;
-}
-:root {
-  --bg: #030512;
-  --bg-raised: #111525;
-  --fg: #f2f0ec;
-  --fg-bright: #fff;
-  --muted: #b6b5c1;
-  --subtle: #8e8c9d;
-  --line: rgba(211, 205, 236, 0.18);
-  --accent: #bca9e5;
-  --art-bg: #252434;
-  --text-glow: rgba(207, 188, 255, 0.3);
-  --serif: 'Noto Serif SC', 'Songti SC', SimSun, serif;
-  --roman: 'Cormorant Garamond', Georgia, serif;
-  --sans: Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  color-scheme: dark;
-}
-:root[data-theme='paper'] {
-  --bg: #eef0f5;
-  --bg-raised: #e0e4ed;
-  --fg: #242b3b;
-  --fg-bright: #141c30;
-  --muted: #566176;
-  --subtle: #657086;
-  --line: rgba(48, 65, 98, 0.2);
-  --accent: #78628f;
-  --text-glow: rgba(90, 61, 130, 0.15);
-  color-scheme: light;
 }
 * {
   box-sizing: border-box;
@@ -114,8 +85,8 @@ h3 {
   margin: 0;
 }
 ::selection {
-  background: #9581b6;
-  color: #fff;
+  background: var(--accent);
+  color: var(--bg);
 }
 a:focus-visible,
 button:focus-visible,
@@ -132,7 +103,7 @@ main {
   z-index: 1;
 }
 .wrap {
-  width: min(1320px, calc(100% - 112px));
+  width: min(var(--page-width), calc(100% - var(--page-gutter) * 2));
   margin-inline: auto;
 }
 .eyebrow {
@@ -174,7 +145,9 @@ main {
   justify-content: space-between;
   gap: 24px;
   height: 106px;
-  padding: 0 4.4%;
+  padding: 0 var(--page-gutter);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(20px);
   transition: background-color 220ms ease;
 }
 .site-header.is-scrolled {
@@ -293,7 +266,7 @@ main {
   min-height: 680px;
   overflow: hidden;
   isolation: isolate;
-  background: #131414;
+  background: var(--bg);
 }
 :root[data-theme='paper'] .orbit-sticky {
   background: var(--bg);
@@ -317,7 +290,7 @@ main {
   top: 15%;
   border-radius: 50%;
   background:
-    linear-gradient(90deg, #121414d9 8%, transparent 62%),
+    linear-gradient(90deg, var(--bg) 8%, transparent 62%),
     url('/assets/moon.jpg') 51% center/auto 100%;
 }
 .moon-scene[data-ready='true'] .moon-fallback {
@@ -352,7 +325,7 @@ main {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 12px #c9b2f988;
+  box-shadow: 0 0 12px var(--text-glow);
 }
 .hero-english {
   display: block;
@@ -363,7 +336,7 @@ main {
 .hero-english em {
   display: inline-block;
   margin-left: 9vw;
-  color: #d6c7ef;
+  color: var(--accent);
 }
 .hero-chinese {
   display: block;
@@ -489,24 +462,14 @@ main {
 .arrival .pill-link > span:first-child {
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
 }
-/* The light gallery is a deliberate change in material, scale and pace. */
+/* The same reading surface continues through the lunar opening and the index. */
 .portfolio-field {
-  --fg: #27252c;
-  --fg-bright: #0f0d16;
-  --muted: #65606c;
-  --subtle: #85808b;
-  --line: rgba(48, 39, 61, 0.2);
-  --accent: #796292;
-  --text-glow: rgba(103, 77, 142, 0.16);
-  --liquid-ink: #eeece8;
   position: relative;
   z-index: 2;
-  background: #eeece8;
+  background: var(--bg);
   color: var(--fg);
-  border-radius: 36px 36px 0 0;
-  padding: 110px 0 140px;
-  margin-top: -36px;
-  color-scheme: light;
+  border-top: 1px solid var(--line);
+  padding: 100px 0 120px;
 }
 .field-intro {
   padding-bottom: 80px;
@@ -523,11 +486,11 @@ main {
   gap: 40px;
 }
 .field-title h2 {
-  font: 500 clamp(48px, 6.2vw, 88px)/1.3 var(--sans);
+  font: 400 clamp(40px, 5.2vw, 72px)/1.4 var(--serif);
   letter-spacing: -0.055em;
 }
 .field-title h2 > span:not(.motion-glyph):not(.sr-only) {
-  color: #847b8e;
+  color: var(--accent);
 }
 .field-title > div {
   padding-left: 15%;
@@ -865,7 +828,7 @@ main {
   padding: 180px 0 80px;
 }
 .page-intro h1 {
-  font: 500 clamp(40px, 5.8vw, 80px)/1.4 var(--sans);
+  font: 400 clamp(36px, 4.8vw, 64px)/1.5 var(--serif);
   letter-spacing: -0.05em;
 }
 .page-intro h1 em {
@@ -883,7 +846,7 @@ main {
   padding: 20px 0 130px;
 }
 .reading-layout {
-  width: min(1180px, calc(100% - 112px));
+  width: min(1180px, calc(100% - var(--page-gutter) * 2));
   margin-inline: auto;
   padding: 180px 0 120px;
   display: grid;
@@ -1200,70 +1163,18 @@ a:focus-visible {
     background: #d3bef41a;
   }
 }
-/* Two overlapping liquid fronts rise inside the existing button geometry.
-   Native text stays above the fill, including client-rendered lab controls. */
-:is(button, .pill-link, .site-header nav a, .scroll-orb) {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
+/* Controls share a restrained hover; the scene keeps its own liquid interaction. */
+.theme-toggle:hover,
+.pill-link:hover,
+.scroll-cue:hover .scroll-orb {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
-:is(button, .pill-link, .site-header nav a, .scroll-orb)::before,
-:is(button, .pill-link, .site-header nav a, .scroll-orb)::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  left: -20%;
-  top: -110%;
-  width: 140%;
-  height: 320%;
-  border-radius: 45% 55% 38% 62%;
-  background: linear-gradient(
-    130deg,
-    var(--accent),
-    var(--fg) 60%,
-    var(--accent)
-  );
-  transform: translateY(75%) rotate(-14deg);
-  transition:
-    transform 280ms var(--ease-out),
-    opacity 220ms ease;
-  opacity: 0;
-}
-:is(button, .pill-link, .site-header nav a, .scroll-orb)::after {
-  border-radius: 55% 45% 60% 40%;
-  background: linear-gradient(
-    25deg,
-    var(--fg) 20%,
-    color-mix(in srgb, var(--fg) 78%, var(--accent)) 70%,
-    var(--fg)
-  );
-  transform: translateY(82%) rotate(12deg);
-  transition-delay: 35ms;
-}
-@media (hover: hover) and (pointer: fine) {
-  :is(button:not(:disabled), .pill-link, .site-header nav a):hover,
-  .scroll-cue:hover .scroll-orb {
-    color: var(--liquid-ink, var(--bg));
-    text-shadow: none;
-  }
-  :is(button:not(:disabled), .pill-link, .site-header nav a):hover::before,
-  .scroll-cue:hover .scroll-orb::before {
-    transform: translateY(0) rotate(8deg);
-    opacity: 1;
-  }
-  :is(button:not(:disabled), .pill-link, .site-header nav a):hover::after,
-  .scroll-cue:hover .scroll-orb::after {
-    transform: translateY(4%) rotate(-8deg);
-    opacity: 1;
-  }
-  .theme-toggle:hover .theme-orb {
-    background: linear-gradient(110deg, var(--bg) 48%, transparent 51%);
-    box-shadow: 0 0 0 1px var(--bg);
-  }
+button {
+  accent-color: var(--accent);
 }
 :root[data-theme='paper'] .hero-english em {
-  color: #75618c;
+  color: var(--accent);
 }
 :root[data-theme='paper'] .hero-english {
   text-shadow: 0 2px 24px #eae7e140;
@@ -1278,10 +1189,10 @@ a:focus-visible {
 }
 @media (max-width: 1000px) {
   .wrap {
-    width: calc(100% - 72px);
+    width: calc(100% - var(--page-gutter) * 2);
   }
   .site-header {
-    padding-inline: 36px;
+    padding-inline: var(--page-gutter);
   }
   .site-header nav a {
     padding: 12px 15px;
@@ -1333,11 +1244,11 @@ a:focus-visible {
 }
 @media (max-width: 650px) {
   .wrap {
-    width: calc(100% - 44px);
+    width: calc(100% - var(--page-gutter) * 2);
   }
   .site-header {
     height: 104px;
-    padding: 10px 22px;
+    padding: 10px var(--page-gutter);
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 2px 10px;
@@ -1462,8 +1373,8 @@ a:focus-visible {
     margin-top: 26px;
   }
   .portfolio-field {
-    border-radius: 24px 24px 0 0;
-    margin-top: -24px;
+    border-radius: 0;
+    margin-top: 0;
     padding-top: 65px;
     padding-bottom: 50px;
   }
@@ -1632,7 +1543,7 @@ a:focus-visible {
     padding-bottom: 70px;
   }
   .reading-layout {
-    width: calc(100% - 44px);
+    width: calc(100% - var(--page-gutter) * 2);
     padding: 110px 0 80px;
   }
   .article-header h1 {
@@ -1734,4 +1645,14 @@ html:not(.js) .orbit-journey,
 html:not(.js) .arrival,
 .orbit-journey[data-static='true'] .arrival {
   display: none;
+}
+
+/* Active navigation and scene controls keep their contrast on keyboard focus. */
+.site-header nav a[aria-current='page']:focus-visible {
+  color: var(--bg);
+  text-shadow: none;
+}
+#about-this-space {
+  padding-top: 72px;
+  scroll-margin-top: 106px;
 }

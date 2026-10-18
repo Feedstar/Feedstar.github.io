@@ -47,7 +47,7 @@
   padding: 5px;
   border: 1px solid var(--space-line);
   border-radius: 26px;
-  background: color-mix(in srgb, var(--space) 85%, white 15%);
+  background: var(--surface);
 }
 .document-toolbar button {
   color: var(--ink-soft);
@@ -144,7 +144,7 @@
   display: none;
 }
 .document-end {
-  margin: 0 8vw;
+  margin: 0 var(--page-gutter);
   padding: 100px 0 90px;
   border-top: 1px solid var(--space-line);
   display: grid;

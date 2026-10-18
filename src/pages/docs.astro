@@ -1,7 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
-import Archive from '../components/Archive.astro';
+import SectionIntro from '../components/SectionIntro.astro';
+import DocumentGallery from '../components/DocumentGallery.astro';
 const documents = (await getCollection('docs')).sort(
   (a, b) => a.data.order - b.data.order,
 );
@@ -28,5 +29,17 @@ const items = documents.map((doc, i) => ({
   page="docs"
   description="Feedstar 的工作记录与心得。记录机器人建模、仿真、强化学习与动作模仿的实践过程。"
 >
-  <Archive kind="docs" items={items} groups={groups} />
+  <SectionIntro
+    number="03"
+    label="DOCUMENTS"
+    first="In the"
+    second="making."
+    title="文档 / 理解，生长于实践。"
+    description="那些走过的步骤，与留下的思考。关于建模、学习，以及让想法发生的过程。"
+    detail={String(items.length).padStart(2, '0') + ' RECORDS'}
+    href="#archive-index"
+    action="浏览文档"
+    id="archive-title"
+  />
+  <DocumentGallery items={items} groups={groups} />
 </Layout>
