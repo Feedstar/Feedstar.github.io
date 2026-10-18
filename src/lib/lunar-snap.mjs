@@ -28,7 +28,11 @@ export function createLunarSnap(driver) {
     manual = armed = false;
     running = true;
     driver.state('gliding');
-    const duration = Math.max(900, 2400 * Math.sqrt((end - y) / (end - start)));
+    // Give erosion and particle assembly room to unfold, including short finishes.
+    const duration = Math.max(
+      1800,
+      5200 * Math.sqrt((end - y) / (end - start)),
+    );
     let began;
     const tick = (now) => {
       if (!running || disposed) return;

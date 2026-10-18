@@ -87,6 +87,13 @@ function harness() {
     'A paused downward gesture glides through intermediate frames.',
   );
   f.advance(2200);
+  assert.equal(
+    f.state,
+    'gliding',
+    'The lunar transition must not rush to the text in three seconds.',
+  );
+  assert(f.y < 1800);
+  f.advance(3000);
   assert.equal(f.y, 1800);
   assert.equal(f.state, 'complete');
   assert(f.writes.every((value, i) => !i || value >= f.writes[i - 1]));
@@ -105,7 +112,7 @@ for (const direction of [-120, 120]) {
   f.snap.input(direction);
   f.scroll(interruptedAt + direction);
   const writeCount = f.writes.length;
-  f.advance(4000);
+  f.advance(6000);
   assert.equal(
     f.writes.length,
     writeCount,
@@ -120,7 +127,7 @@ for (const direction of [-120, 120]) {
   f.scroll(0);
   f.snap.input(80);
   f.scroll(80);
-  f.advance(3000);
+  f.advance(6000);
   assert.equal(f.y, 1800, 'Returning to the opening permits a fresh journey.');
 }
 {
