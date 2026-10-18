@@ -1,0 +1,31 @@
+---
+import { siteProfile } from '../lib/site-profile';
+interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+---
+
+<img
+  class="profile-portrait-image"
+  src="/profile/feedstar-portrait-640.webp"
+  srcset="/profile/feedstar-portrait-320.webp 320w, /profile/feedstar-portrait-640.webp 640w, /profile/feedstar-portrait-960.webp 960w"
+  sizes={
+    compact
+      ? '80px'
+      : '(max-width: 700px) 280px, (max-width: 900px) 240px, 350px'
+  }
+  width="1122"
+  height="1402"
+  alt={compact ? '' : siteProfile.name + ' 的个人画像'}
+  loading="lazy"
+  decoding="async"
+/>
+<style>
+  .profile-portrait-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: inherit;
+  }
+</style>

@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import SectionIntro from '../components/SectionIntro.astro';
+import ProfilePortrait from '../components/ProfilePortrait.astro';
 import { siteProfile } from '../lib/site-profile';
 import '../styles/about.css';
 ---
@@ -27,33 +28,45 @@ import '../styles/about.css';
     id="about-this-space"
     aria-labelledby="about-person-title"
   >
-    <div class="about-body">
+    <div class="about-profile">
       <h2 class="about-quote" id="about-person-title">
         你好，我是 {siteProfile.name}。
       </h2>
-      <dl class="about-facts">
-        <div>
-          <dt>工作经验</dt>
-          <dd>{siteProfile.experience}</dd>
+      <div class="about-profile-copy">
+        <dl class="about-facts">
+          <div>
+            <dt>工作经验</dt>
+            <dd>{siteProfile.experience}</dd>
+          </div>
+          <div>
+            <dt>所在行业</dt>
+            <dd>{siteProfile.industry}</dd>
+          </div>
+          <div>
+            <dt>主要方向</dt>
+            <dd>{siteProfile.focus.join(' · ')}</dd>
+          </div>
+        </dl>
+        <p>
+          我在机器人行业工作，主要围绕强化学习和物理仿真展开探索。
+          比起只看到一个最终结果，我更想弄清楚：一个动作是怎样学会的，一个模型为什么会这样运动，以及参数变化之后，系统究竟发生了什么。
+        </p>
+        <p>
+          从模型与关节，到奖励设计、运动控制和接触反馈，这些问题经常彼此相连。
+          我希望把训练中的现象与仿真里的物理过程放在一起看，让每一次调试都有可以追溯的依据。
+        </p>
+      </div>
+      <figure class="about-portrait">
+        <div class="about-portrait-frame">
+          <ProfilePortrait />
         </div>
-        <div>
-          <dt>所在行业</dt>
-          <dd>{siteProfile.industry}</dd>
-        </div>
-        <div>
-          <dt>主要方向</dt>
-          <dd>{siteProfile.focus.join(' · ')}</dd>
-        </div>
-      </dl>
-      <p>
-        我在机器人行业工作，主要围绕强化学习和物理仿真展开探索。
-        比起只看到一个最终结果，我更想弄清楚：一个动作是怎样学会的，一个模型为什么会这样运动，以及参数变化之后，系统究竟发生了什么。
-      </p>
-      <p>
-        从模型与关节，到奖励设计、运动控制和接触反馈，这些问题经常彼此相连。
-        我希望把训练中的现象与仿真里的物理过程放在一起看，让每一次调试都有可以追溯的依据。
-      </p>
-
+        <figcaption>
+          <span>{siteProfile.name}</span>
+          <span>ROBOTICS & CURIOSITY</span>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="about-body">
       <section class="about-topic" aria-labelledby="about-focus-title">
         <p class="eyebrow">01 / CURRENT FOCUS</p>
         <h2 id="about-focus-title">现在关注什么</h2>

@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Moon from '../components/Moon.astro';
 import ExperimentCollection from '../components/ExperimentCollection.astro';
 import HomeDocuments from '../components/HomeDocuments.astro';
+import ProfilePortrait from '../components/ProfilePortrait.astro';
 import { siteProfile } from '../lib/site-profile';
 import { getCollection } from 'astro:content';
 const posts = (await getCollection('journal')).sort((a, b) =>
@@ -158,6 +159,13 @@ const posts = (await getCollection('journal')).sort((a, b) =>
         </span>
       </p>
       <div>
+        <a
+          class="home-profile-portrait"
+          href="/about/#about-this-space"
+          aria-label="认识 Feedstar"
+        >
+          <ProfilePortrait compact />
+        </a>
         <p>
           我叫 {siteProfile.name}，有 {siteProfile.experience} 工作经验。
           <br />
@@ -173,3 +181,18 @@ const posts = (await getCollection('journal')).sort((a, b) =>
     </div>
   </section>
 </Layout>
+
+<style>
+  .home-profile-portrait {
+    display: block;
+    width: 80px;
+    padding: 3px;
+    margin-bottom: 20px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .home-profile-portrait:hover {
+    border-color: var(--accent);
+  }
+</style>
