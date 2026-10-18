@@ -66,7 +66,54 @@
 .crystal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 80px 10%;
+  gap: 36px 10%;
+}
+.crystal-entry {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.crystal-loading {
+  display: none;
+  position: absolute;
+  inset: 210px 24px 80px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--muted);
+}
+.crystal-loading p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font: 15px/1.8 var(--serif);
+}
+.crystal-loading i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.crystal-loading > span {
+  font: 11px/1.8 var(--sans);
+}
+/* Gate the real scene from the initial HTML paint, even before its JS arrives.
+   Without JS (or after the boot watchdog) the same links form a text index. */
+.js
+  .crystal-journal:not([data-scene-state='static']):not(
+    [data-scene-state='ready']
+  )
+  .crystal-grid {
+  display: none;
+}
+.js
+  .crystal-journal:not([data-scene-state='static']):not(
+    [data-scene-state='ready']
+  )
+  .crystal-loading {
+  display: flex;
 }
 .crystal-entry[hidden] {
   display: none !important;
@@ -75,53 +122,6 @@
   display: block;
   position: relative;
   color: var(--crystal-fg);
-}
-.crystal-static-art {
-  position: relative;
-  height: 330px;
-  width: 86%;
-  margin: auto auto 35px;
-  display: grid;
-  place-items: center;
-  border: 2px solid #e4f3ffba;
-  border-radius: 26% 15% 24% 18%;
-  transform: rotate(var(--crystal-angle));
-  background:
-    linear-gradient(
-      130deg,
-      #ffffff30,
-      transparent 35%,
-      #b4d1ff10 60%,
-      #ffffff40
-    ),
-    radial-gradient(ellipse at 30% 30%, #edc8ff20, transparent 65%);
-  box-shadow:
-    inset -6px -8px 30px #af9fff30,
-    inset 6px 5px 2px #ffffff99,
-    0 0 35px #c8c9ff0f;
-}
-.crystal-static-art::after {
-  content: '';
-  position: absolute;
-  inset: 5% 8%;
-  border: 1px solid #ffffff40;
-  border-radius: 19% 30% 20% 32%;
-  transform: rotate(9deg);
-}
-.crystal-static-art img {
-  width: 78%;
-  height: 78%;
-  object-fit: contain;
-  transform: rotate(calc(-1 * var(--crystal-angle)));
-  mask-image: radial-gradient(ellipse, #000 66%, transparent 76%);
-}
-.crystal-static-art span {
-  font: 500 94px var(--roman);
-  color: white;
-  text-shadow:
-    -2px 0 #75defb,
-    2px 1px #d9b3ff,
-    0 0 18px #ffffff70;
 }
 .crystal-copy {
   position: relative;
@@ -180,7 +180,7 @@
 .crystal-journal[data-motion='ready'] .crystal-runway {
   height: calc(var(--crystal-height) + var(--crystal-travel));
 }
-.crystal-journal[data-motion='ready'] .crystal-viewport {
+.js .crystal-journal:not([data-scene-state='static']) .crystal-viewport {
   position: sticky;
   top: 0;
   height: 100svh;
@@ -188,7 +188,7 @@
   padding: 0;
   overflow: clip;
 }
-.crystal-journal[data-motion='ready'] .crystal-toolbar {
+.js .crystal-journal:not([data-scene-state='static']) .crystal-toolbar {
   position: absolute;
   top: 125px;
   left: 5vw;
@@ -196,8 +196,14 @@
   margin: 0;
   pointer-events: none;
 }
-.crystal-journal[data-motion='ready'] .crystal-toolbar nav {
+.js .crystal-journal:not([data-scene-state='static']) .crystal-toolbar nav {
   pointer-events: auto;
+}
+.crystal-canvas {
+  visibility: hidden;
+}
+.crystal-journal[data-scene-state='ready'] .crystal-canvas {
+  visibility: visible;
 }
 .crystal-journal[data-motion='ready'] .crystal-canvas {
   display: block;
@@ -215,6 +221,8 @@
   z-index: 2;
 }
 .crystal-journal[data-motion='ready'] .crystal-entry {
+  padding: 0;
+  border: 0;
   position: absolute;
   pointer-events: none;
 }
@@ -378,11 +386,7 @@
     grid-template-columns: 1fr;
     gap: 70px;
   }
-  .crystal-static-art {
-    height: 300px;
-    max-width: 360px;
-  }
-  .crystal-journal[data-motion='ready'] .crystal-toolbar {
+  .js .crystal-journal:not([data-scene-state='static']) .crystal-toolbar {
     top: 119px;
     left: 24px;
     right: 24px;
@@ -457,14 +461,6 @@
   .crystal-toolbar button {
     transition: none;
   }
-}
-:root[data-theme='paper'] .crystal-static-art {
-  border-color: #8093b9;
-  background: linear-gradient(130deg, #fff9, transparent 45%, #b2c7e555);
-  box-shadow:
-    inset -6px -8px 30px #7a8daf33,
-    inset 6px 5px 2px #fff,
-    0 14px 40px #52668718;
 }
 :root[data-theme='paper'] .crystal-journal[data-motion='ready'] .crystal-copy {
   background: radial-gradient(ellipse, #eef0f5e6, #eef0f500 72%);

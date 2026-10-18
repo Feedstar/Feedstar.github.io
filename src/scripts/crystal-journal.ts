@@ -1,5 +1,7 @@
+import { loadResource } from '../lib/load-resource.mjs';
 import {
   bootCancelled,
+  bootSignal,
   prepareFonts,
   sceneState,
   onBootCancel,
@@ -49,7 +51,8 @@ export function createCrystalJournal() {
     building = false,
     disposed = false,
     inView = false,
-    contextLost = false;
+    contextLost = false,
+    loadFailed = false;
   let raf = 0,
     previous = 0,
     time = 0,
@@ -204,7 +207,9 @@ export function createCrystalJournal() {
     paint();
     resume();
   };
-  const fallback = () => {
+  const fallback = (failed = false) => {
+    loadFailed ||= failed;
+    viewport.setAttribute('aria-busy', 'false');
     sceneState(root, 'fallback');
     ready = false;
     stop();
@@ -222,7 +227,7 @@ export function createCrystalJournal() {
     });
   };
   onBootCancel(() => {
-    fallback();
+    fallback(true);
     field?.dispose();
     field = null;
   });
@@ -235,9 +240,18 @@ export function createCrystalJournal() {
       fallback();
       return;
     }
-    if (building || ready || disposed || contextLost || reduce.matches) return;
+    if (
+      building ||
+      ready ||
+      disposed ||
+      contextLost ||
+      loadFailed ||
+      reduce.matches
+    )
+      return;
     building = true;
     root.dataset.sceneState = 'loading';
+    viewport.setAttribute('aria-busy', 'true');
     try {
       await prepareFonts();
       if (bootCancelled()) return;
@@ -251,10 +265,19 @@ export function createCrystalJournal() {
       root.dataset.motion = 'ready';
       ready = true;
       measure();
+      // The canvas stays hidden while all passes draw their first complete frame.
+      await loadResource(
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+        { signal: bootSignal },
+      );
+      if (disposed || bootCancelled() || reduce.matches || contextLost) return;
+      viewport.setAttribute('aria-busy', 'false');
       sceneState(root, 'ready');
       root.dataset.sceneState = 'ready';
     } catch (error) {
-      fallback();
+      fallback(true);
       field?.dispose();
       field = null;
       console.warn(
@@ -433,6 +456,7 @@ export function createCrystalJournal() {
     'webglcontextrestored',
     () => {
       contextLost = false;
+      loadFailed = false;
       field?.dispose();
       field = null;
       void enhance();

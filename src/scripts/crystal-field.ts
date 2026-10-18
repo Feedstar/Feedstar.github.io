@@ -382,14 +382,21 @@ export async function createCrystalField(
     ownedGeometries.push(geometry);
     return geometry;
   };
+  const decodeTexture = async (texture: THREE.Texture) => {
+    ownedTextures.push(texture);
+    const image = texture.image as HTMLImageElement;
+    await loadResource(image.decode(), { signal: bootSignal });
+    if (!image.naturalWidth || !image.naturalHeight)
+      throw new Error('Crystal image could not be decoded');
+    return texture;
+  };
   const loadNormal = async (index: number) => {
     const texture = await loadResource(
       textureLoader.loadAsync(`${asset}crystal${index}-normal.jpg`),
       { signal: bootSignal, dispose: (texture) => texture.dispose() },
     );
     texture.flipY = false;
-    ownedTextures.push(texture);
-    return texture;
+    return decodeTexture(texture);
   };
   const loadEnvironment = async () => {
     const texture = await loadResource(
@@ -409,8 +416,7 @@ export async function createCrystalField(
     );
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-    ownedTextures.push(texture);
-    return texture;
+    return decodeTexture(texture);
   };
   const requests = [
     ...Array.from({ length: 7 }, (_, i) => loadGeometry(i)),
@@ -876,6 +882,26 @@ export async function createCrystalField(
     frontScene.clear();
     screenScene.clear();
     renderer.dispose();
+  }
+  try {
+    // Warm every cover, including offscreen notes, before exposing any crystal.
+    ownedTextures.forEach((texture) => renderer.initTexture(texture));
+    entries.forEach((entry) => {
+      entry.coverGroup.visible = true;
+    });
+    await loadResource(
+      Promise.all([
+        renderer.compileAsync(backScene, camera),
+        renderer.compileAsync(frontScene, camera),
+      ]),
+      { signal: bootSignal },
+    );
+    entries.forEach((entry) => {
+      entry.coverGroup.visible = false;
+    });
+  } catch (error) {
+    dispose();
+    throw error;
   }
   refreshColors();
   return { layout, render, refreshColors, dispose };

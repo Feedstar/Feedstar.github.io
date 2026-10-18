@@ -17,7 +17,12 @@ interface Props {
 const { items, groups } = Astro.props;
 ---
 
-<div class="crystal-journal" data-crystal-journal data-boot-scene="crystals">
+<div
+  class="crystal-journal"
+  data-crystal-journal
+  data-boot-scene="crystals"
+  data-scene-state="waiting"
+>
   <SectionIntro
     number="02"
     label="JOURNAL"
@@ -62,8 +67,14 @@ const { items, groups } = Astro.props;
           data-crystal-canvas
           aria-hidden="true"
         ></canvas>
+        <div class="crystal-loading" role="status" aria-live="polite">
+          <p>
+            <i aria-hidden="true"></i>正在准备水晶
+          </p>
+          <span>模型、光影与封面就绪后，一起呈现。</span>
+        </div>
         <div class="crystal-grid">
-          {items.map((item, index) => (
+          {items.map((item) => (
             <article
               class="crystal-entry"
               data-crystal-entry
@@ -77,20 +88,6 @@ const { items, groups } = Astro.props;
                 data-title={item.title}
                 href={`/journal/${item.id}/`}
               >
-                <div
-                  class="crystal-static-art"
-                  style={`--crystal-hue:${205 + index * 23};--crystal-angle:${index % 2 ? 12 : -8}deg`}
-                  aria-hidden="true"
-                >
-                  <img
-                    src={`/journal-covers/${item.id}.webp`}
-                    alt=""
-                    width="1280"
-                    height="1280"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
                 <div class="crystal-copy">
                   <span class="crystal-meta">
                     {item.number} / {item.category}
