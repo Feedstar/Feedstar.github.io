@@ -17,14 +17,18 @@
     released = false,
     minimumElapsed = false;
   let outcome = 'ready';
-  let deadline, minimumTimer, hintTimer;
+  let deadline, hintTimer;
+  let frame = 0,
+    reported = 0,
+    displayed = 0;
+  const progress = (value) => {
+    if (!settled)
+      reported = Math.max(reported, Math.min(100, Math.max(0, value)));
+  };
   const updateEntry = () => {
     if (mode !== 'intro' || !settled || released) return;
     const status = document.querySelector('[data-boot-status]');
-    if (!minimumElapsed) {
-      if (status) status.textContent = '微光已就绪，片刻后开启。';
-      return;
-    }
+    if (!minimumElapsed || displayed < 100) return;
     root.dataset.boot = 'awaiting';
     const button = document.querySelector('[data-boot-enter]');
     const label = document.querySelector('[data-boot-enter-label]');
@@ -41,7 +45,7 @@
     if (released) return;
     released = true;
     clearTimeout(deadline);
-    clearTimeout(minimumTimer);
+    cancelAnimationFrame(frame);
     clearTimeout(hintTimer);
     delete root.dataset.bootHint;
     const loader = document.querySelector('.site-loader');
@@ -89,13 +93,20 @@
     else updateEntry();
   };
   const enter = () => {
-    if (mode !== 'intro' || !settled || !minimumElapsed || released) return;
+    if (
+      mode !== 'intro' ||
+      !settled ||
+      !minimumElapsed ||
+      displayed < 100 ||
+      released
+    )
+      return;
     try {
       sessionStorage.setItem('feedstar-entered', '1');
     } catch {}
     reveal();
   };
-  window.__feedstarBoot = { started, mode, finish, enter };
+  window.__feedstarBoot = { started, mode, progress, finish, enter };
   // The first visit always needs a click, including the bounded failure path.
   // This watchdog works even when the downloaded module graph never arrives.
   deadline = window.setTimeout(() => finish('timeout'), 18000);
@@ -104,12 +115,36 @@
       if (!document.querySelector('.site-loader')) return false;
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
-          // Count from the opening's paint, without waiting for module downloads
-          // (which can postpone DOMContentLoaded indefinitely on a broken network).
-          minimumTimer = window.setTimeout(() => {
-            minimumElapsed = true;
-            updateEntry();
-          }, 3000);
+          // The number and orbit traverse the opening together. A fast cache
+          // stretches 0–100 across three seconds; slow assets remain the ceiling.
+          const paintedAt = performance.now();
+          let previous = paintedAt,
+            lastPercent = -1;
+          const loader = document.querySelector('.site-loader');
+          const count = document.querySelector('[data-boot-progress]');
+          const animateProgress = (now) => {
+            if (released) return;
+            const elapsed = now - paintedAt;
+            const dt = Math.min(64, Math.max(0, now - previous));
+            previous = now;
+            minimumElapsed = elapsed >= 3000;
+            const timeCeiling = Math.min(100, (elapsed / 3000) * 100);
+            const assetCeiling = settled ? 100 : Math.min(reported, 99);
+            const target = Math.min(timeCeiling, assetCeiling);
+            // Rate-limit late resource batches so the readout never jumps.
+            displayed = Math.min(target, displayed + dt * 0.12);
+            loader?.style.setProperty('--boot-progress', String(displayed));
+            const percent = Math.floor(displayed);
+            if (count && percent !== lastPercent) {
+              lastPercent = percent;
+              count.innerHTML =
+                String(percent).padStart(2, '0') + '<span>%</span>';
+              count.setAttribute('aria-valuenow', String(percent));
+            }
+            if (displayed === 100) updateEntry();
+            else frame = requestAnimationFrame(animateProgress);
+          };
+          frame = requestAnimationFrame(animateProgress);
         }),
       );
       return true;

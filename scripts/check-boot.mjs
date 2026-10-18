@@ -63,11 +63,21 @@ function fixture({
       root[name] = value;
     },
   };
-  const loader = { hidden: true, contains: () => true },
+  const loader = {
+      hidden: true,
+      contains: () => true,
+      style: { setProperty() {} },
+    },
     status = {},
     font = {},
     button = { disabled: true },
-    label = {};
+    label = {},
+    count = {
+      value: 0,
+      setAttribute(name, value) {
+        if (name === 'aria-valuenow') this.value = Number(value);
+      },
+    };
   const main = {
     inert: true,
     removeAttribute() {},
@@ -105,6 +115,7 @@ function fixture({
         '[data-boot-enter]': button,
         '[data-boot-enter-label]': label,
         '[data-boot-status]': status,
+        '[data-boot-progress]': count,
       })[selector],
     querySelectorAll: () => [main],
   };
@@ -143,6 +154,7 @@ function fixture({
     setTimeout,
     clearTimeout,
     requestAnimationFrame: (fn) => setTimeout(() => fn(time), 16),
+    cancelAnimationFrame: clearTimeout,
     matchMedia: () => ({ matches: reduced }),
     Event,
     MutationObserver,
@@ -184,6 +196,7 @@ function fixture({
     advance,
     paint,
     restore,
+    count,
     boot: window.__feedstarBoot,
   };
 }
@@ -200,7 +213,7 @@ function fixture({
     true,
     'Cached assets must not bypass the 3-second opening',
   );
-  f.advance(1);
+  f.advance(17);
   assert.equal(f.root.dataset.boot, 'awaiting');
   assert.equal(f.button.disabled, false);
   f.advance(60000);
@@ -244,7 +257,7 @@ function fixture({
     true,
     'Count from the visible opening, not the request',
   );
-  f.advance(1);
+  f.advance(17);
   assert.equal(f.button.disabled, false);
 }
 {
@@ -257,6 +270,7 @@ function fixture({
     'Three seconds alone is not resource readiness',
   );
   f.boot.finish();
+  f.advance(1000);
   assert.equal(f.root.dataset.boot, 'awaiting');
   f.advance(60000);
   assert.equal(f.root.dataset.boot, 'awaiting');
@@ -264,7 +278,7 @@ function fixture({
 {
   const f = fixture();
   f.paint();
-  f.advance(18000);
+  f.advance(19000);
   assert.equal(f.root.dataset.bootOutcome, 'timeout');
   assert.equal(f.root.dataset.boot, 'awaiting');
   assert.equal(f.button.disabled, false);
@@ -287,7 +301,7 @@ function fixture({
   f.boot.finish('error');
   f.advance(2999);
   assert.equal(f.button.disabled, true);
-  f.advance(1);
+  f.advance(17);
   f.boot.enter();
   assert.equal(f.root.dataset.boot, 'done');
   assert.equal(
@@ -340,11 +354,76 @@ for (const options of [
   assert.equal(f.boot.mode, 'intro');
   f.paint();
   f.boot.finish();
-  f.advance(3000);
+  f.advance(3016);
   f.boot.enter();
   f.advance(520);
   assert.equal(f.root.dataset.boot, 'done');
 }
+// Fast caches still animate the entire range; 100 and the enabled entry are atomic.
+{
+  const f = fixture();
+  f.paint();
+  f.boot.progress(100);
+  f.boot.finish();
+  const readings = [];
+  for (let elapsed = 16; elapsed <= 2992; elapsed += 16) {
+    f.advance(16);
+    readings.push(f.count.value);
+    assert.ok(f.count.value < 100);
+    assert.equal(f.button.disabled, true);
+  }
+  assert.ok(
+    new Set(readings).size > 85,
+    'Progress must continuously traverse the opening',
+  );
+  assert.ok(
+    readings[46] >= 23 && readings[46] <= 26,
+    'At .75s the animation is about one-quarter complete',
+  );
+  assert.ok(
+    readings[93] >= 48 && readings[93] <= 51,
+    'At 1.5s it is about halfway',
+  );
+  assert.ok(
+    readings[140] >= 73 && readings[140] <= 76,
+    'At 2.25s it is about three-quarters complete',
+  );
+  f.advance(16);
+  assert.equal(f.count.value, 100);
+  assert.equal(f.button.disabled, false);
+}
+// The visual clock never fabricates completion while assets or first frames are pending.
+{
+  const f = fixture();
+  f.paint();
+  f.boot.progress(25);
+  f.advance(4000);
+  assert.equal(f.count.value, 25);
+  assert.equal(f.button.disabled, true);
+  f.boot.progress(100);
+  f.advance(1000);
+  assert.equal(f.count.value, 99);
+  assert.equal(f.button.disabled, true);
+  f.boot.finish();
+  f.advance(16);
+  assert.equal(f.count.value, 100);
+  assert.equal(f.button.disabled, false);
+}
+// Late batches are interpolated instead of snapping the number and ring.
+{
+  const f = fixture();
+  f.paint();
+  f.boot.progress(10);
+  f.advance(2000);
+  assert.equal(f.count.value, 10);
+  f.boot.progress(90);
+  f.advance(16);
+  assert.ok(f.count.value > 10 && f.count.value < 20);
+  f.boot.finish();
+  f.advance(2000);
+  assert.equal(f.count.value, 100);
+  assert.equal(f.button.disabled, false);
+}
 console.log(
-  'PASS: 3 visible seconds + resource readiness + manual entry; uninterrupted warm navigation; delayed nonblocking hint; timeout, reduced motion, BFCache, unavailable storage and late GPU disposal.',
+  'PASS: continuous 3-second progress, simultaneous 100% and entry, real-resource ceiling + manual entry; uninterrupted warm navigation; delayed nonblocking hint; timeout, reduced motion, BFCache, unavailable storage and late GPU disposal.',
 );

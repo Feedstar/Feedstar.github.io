@@ -4,6 +4,7 @@ declare global {
     __feedstarBoot?: {
       started: number;
       mode: 'intro' | 'navigation';
+      progress: (percent: number) => void;
       finish: (reason?: string) => void;
       enter: () => void;
     };
@@ -41,9 +42,7 @@ export function startSiteLoader() {
   const total = 1 + selected.length + scenes.length;
   let completed = 0;
   let failed = false;
-  const count = document.querySelector<HTMLElement>('[data-boot-progress]');
   const status = document.querySelector<HTMLElement>('[data-boot-status]');
-  const loader = document.querySelector<HTMLElement>('.site-loader');
   const stage = (name: string) =>
     document
       .querySelector(`[data-boot-stage='${name}']`)
@@ -51,16 +50,7 @@ export function startSiteLoader() {
   const report = (ok: boolean) => {
     if (bootSignal.aborted) return;
     failed ||= !ok;
-    const percent = Math.round((++completed / total) * 100);
-    loader?.style.setProperty('--boot-progress', String(percent));
-    document.documentElement.style.setProperty(
-      '--boot-progress',
-      String(percent),
-    );
-    if (count) {
-      count.innerHTML = String(percent).padStart(2, '0') + '<span>%</span>';
-      count.setAttribute('aria-valuenow', String(percent));
-    }
+    boot.progress((++completed / total) * 100);
   };
   const waitScene = (root: HTMLElement) =>
     new Promise<boolean>((resolve) => {

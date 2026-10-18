@@ -141,7 +141,7 @@ html[data-theme='paper'][data-boot-mode='intro'] .site-loader {
   stroke-dashoffset: calc(100 - var(--boot-progress));
   transform: rotate(-90deg);
   transform-origin: center;
-  transition: stroke-dashoffset 420ms ease;
+  /* The same frame clock drives the ring and number; no second CSS delay. */
 }
 .boot-orbits {
   stroke: var(--boot-accent);
