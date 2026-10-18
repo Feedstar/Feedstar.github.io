@@ -1,7 +1,6 @@
 import { clamp, smoothstep } from '../lib/erosion.mjs';
 
-// Scroll changes spatial relationships; no wheel interception or autoplayed
-// section timeline. A reverse scroll retraces the same masks and depth.
+// Native scrolling drives the content chapters in both directions.
 export function createChapters() {
   if (document.body.dataset.page !== 'home') return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -12,9 +11,6 @@ export function createChapters() {
     document.querySelectorAll<HTMLElement>('.study-card'),
   );
   const notesMark = document.querySelector<HTMLElement>('.notes-asterisk');
-  const lines = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-story-line]'),
-  );
   let frame = 0;
   const update = () => {
     frame = 0;
@@ -25,7 +21,6 @@ export function createChapters() {
       section.getBoundingClientRect(),
     );
     const cardRects = cards.map((card) => card.getBoundingClientRect());
-    const lineRects = lines.map((line) => line.getBoundingClientRect());
     for (const [index, section] of chapters.entries()) {
       const rect = chapterRects[index];
       const p = reduced.matches
@@ -62,15 +57,6 @@ export function createChapters() {
       window.style.clipPath = reduced.matches
         ? ''
         : `inset(${(1 - p) * 12}% ${(1 - p) * 5}% round 28px)`;
-    }
-    for (const [index, line] of lines.entries()) {
-      const rect = lineRects[index];
-      const p = reduced.matches
-        ? 1
-        : smoothstep(0, 1, (height * 0.94 - rect.top) / (height * 0.36));
-      line.style.clipPath = reduced.matches
-        ? ''
-        : `inset(0 ${(1 - p) * 100}% 0 0)`;
     }
   };
   const schedule = () => {

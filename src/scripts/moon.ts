@@ -5,6 +5,7 @@ import {
   sceneState,
 } from './page-resources';
 import * as THREE from 'three';
+import { mobileMoonLayout } from '../lib/lunar-layout.mjs';
 import { erosionThreshold, clamp, smoothstep } from '../lib/erosion.mjs';
 import { arrivalOpacity, lunarNotch, lunarTiming } from '../lib/lunar-flow.mjs';
 import { inkAssignment, inkOwners } from '../lib/ink-samples.mjs';
@@ -247,16 +248,28 @@ export function createMoon(canvas: HTMLCanvasElement) {
     camera.updateProjectionMatrix();
     const viewH = 2 * Math.tan(THREE.MathUtils.degToRad(17.5)) * 6,
       viewW = viewH * camera.aspect;
-    const mobile = w < 700;
-    const radius = mobile
-      ? Math.min(viewW * 0.31, viewH * 0.23)
-      : Math.min(viewH * 0.34, viewW * 0.27);
+    const copy = journey.querySelector<HTMLElement>('.hero-copy')!;
+    const header = document.querySelector<HTMLElement>('.site-header')!;
+    // offsetTop excludes the scroll-driven title transform, so rotating a phone
+    // or loading its fonts midway through the journey cannot shift the origin.
+    const layout =
+      w <= 650
+        ? mobileMoonLayout(
+            w,
+            h,
+            header.offsetHeight,
+            copy.offsetTop,
+            viewW,
+            viewH,
+          )
+        : {
+            radius: Math.min(viewH * 0.34, viewW * 0.27),
+            x: viewW * 0.15,
+            y: viewH * 0.01,
+          };
+    const { radius } = layout;
     group.scale.setScalar(radius);
-    group.position.set(
-      mobile ? viewW * 0.12 : viewW * 0.15,
-      mobile ? viewH * 0.22 : viewH * 0.01,
-      0,
-    );
+    group.position.set(layout.x, layout.y, 0);
     inkGroup.position.copy(group.position);
     inkGroup.scale.copy(group.scale);
     const moonX = (0.5 + group.position.x / viewW) * w;
@@ -379,7 +392,7 @@ export function createMoon(canvas: HTMLCanvasElement) {
     measureScroll = false;
     const rect = journey.getBoundingClientRect();
     targetProgress = clamp(
-      -rect.top / Math.max(1, journey.offsetHeight - innerHeight),
+      -rect.top / Math.max(1, journey.offsetHeight - host.clientHeight),
     );
     canvas.dataset.targetProgress = targetProgress.toFixed(4);
     active = rect.bottom > 0 && rect.top < innerHeight;

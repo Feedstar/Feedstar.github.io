@@ -30,7 +30,7 @@ export function startSiteLoader() {
   ];
   const images = [
     ...document.querySelectorAll<HTMLImageElement>(
-      '.home-document-art img, .home-profile-portrait img, .about-portrait img, .reading-cover img, .document-cover img, .crystal-static-art img',
+      '.home-document-art img, .about-portrait img, .reading-cover img, .document-cover img, .crystal-static-art img',
     ),
   ];
   const firstScreen = [...document.images].filter(

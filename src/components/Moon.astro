@@ -10,11 +10,21 @@
 </div>
 <script>
   import { createMoon } from '../scripts/moon';
+  import { createLunarScroll } from '../scripts/lunar-scroll';
   let dispose: (() => void) | undefined;
   function mount() {
     dispose?.();
     const canvas = document.querySelector<HTMLCanvasElement>('#moon-canvas');
-    if (canvas) dispose = createMoon(canvas);
+    if (canvas) {
+      const disposeMoon = createMoon(canvas);
+      const disposeScroll = createLunarScroll(
+        document.getElementById('orbit-journey')!,
+      );
+      dispose = () => {
+        disposeScroll();
+        disposeMoon();
+      };
+    }
   }
   mount();
   document.addEventListener('astro:page-load', mount);
