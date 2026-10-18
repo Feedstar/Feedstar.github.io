@@ -4,7 +4,7 @@ description: "以 Openloong 为例，记录模型资源、初始姿态、奖励�
 category: "强化学习"
 tags: ["Openloong", "Humanoid Gym", "配置记录"]
 order: 3
-cover: "/document-assets/reinforcement-learning-new-robot/media-01.webp"
+cover: /document-covers/reinforcement-learning-new-robot.webp
 ---
 
 现有的软件包允许添加新的机器人模型进行强化学习训练，本文做一个完整的流程演示，以上海人形机器人公司的开源模型**Openloong**为例（基于Humanoid Gym框架）。

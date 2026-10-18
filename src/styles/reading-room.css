@@ -96,6 +96,21 @@
   letter-spacing: 0.1em;
   color: var(--muted);
 }
+.reading-frontispiece-docs .reading-cover {
+  aspect-ratio: auto;
+}
+.reading-frontispiece-docs .reading-cover img {
+  height: auto;
+  aspect-ratio: 2;
+  object-fit: cover;
+  padding: 0;
+}
+.reading-frontispiece-docs .reading-cover > span {
+  position: static;
+  display: block;
+  padding: 16px 12px;
+  border-top: 1px solid var(--line);
+}
 .reading-enter {
   grid-column: 1;
   display: flex;

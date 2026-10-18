@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import '../styles/home-documents.css';
+
+const documents = (await getCollection('docs'))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((post, index) => ({
+    ...post,
+    number: String(index + 1).padStart(2, '0'),
+  }));
+// Introduce each subject once; keep the rest of the archive directly reachable.
+const categories = new Set<string>();
+const featured = documents.filter((post) => {
+  if (categories.has(post.data.category) || categories.size >= 3) return false;
+  categories.add(post.data.category);
+  return true;
+});
+const remaining = documents.filter((post) => !featured.includes(post));
+---
+
+<section
+  class="home-documents wrap"
+  id="documents"
+  data-chapter="documents"
+  aria-labelledby="home-documents-title"
+>
+  <span class="chapter-rule" aria-hidden="true"></span>
+  <div class="field-intro">
+    <p class="eyebrow" data-reveal>
+      03 / FIELD DOCUMENTS{' '}
+      <span>{String(documents.length).padStart(2, '0')} 篇工作记录</span>
+    </p>
+    <div class="field-title">
+      <h2 id="home-documents-title" data-reveal>
+        把经验，
+        <br />
+        <span>写成路径。</span>
+      </h2>
+      <div data-reveal>
+        <p>
+          从模型搭建到动作模仿，
+          <br />
+          把配置、过程与踩过的坑，整理成可以重走的路径。
+        </p>
+        <a class="text-link" href="/docs/#archive-index">
+          翻阅全部文档 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="home-document-grid">
+    {featured.map((post) => (
+      <article class="home-document-card" data-reveal>
+        <a href={`/docs/${post.id}/`} aria-labelledby={`home-doc-${post.id}`}>
+          <div class="home-document-art">
+            <img
+              src={post.data.cover}
+              alt=""
+              width="1600"
+              height="800"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="home-document-meta">
+            <span>{post.data.category}</span>
+            <span>DOC / {post.number}</span>
+          </div>
+          <h3 id={`home-doc-${post.id}`}>{post.data.title}</h3>
+          <p>{post.data.description}</p>
+          <span class="home-document-read" aria-hidden="true">
+            阅读文档 <span>↗</span>
+          </span>
+        </a>
+      </article>
+    ))}
+  </div>
+  {remaining.length > 0 && (
+    <div class="home-document-index" data-reveal>
+      <p class="eyebrow">继续翻阅 / ALSO IN THE ARCHIVE</p>
+      <div>
+        {remaining.map((post) => (
+          <a href={`/docs/${post.id}/`}>
+            <span class="home-document-index-number">{post.number}</span>
+            <span>{post.data.title}</span>
+            <span class="home-document-index-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+</section>

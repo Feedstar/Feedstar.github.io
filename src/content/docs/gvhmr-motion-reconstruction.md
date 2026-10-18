@@ -4,7 +4,7 @@ description: "记录视频人体运动重建的环境配置、数据准备、推
 category: "动作模仿"
 tags: ["GVHMR", "SMPL", "GMR"]
 order: 5
-cover: "/document-assets/gvhmr-motion-reconstruction/media-01.webp"
+cover: /document-covers/gvhmr-motion-reconstruction.webp
 ---
 
 ## 项目简介

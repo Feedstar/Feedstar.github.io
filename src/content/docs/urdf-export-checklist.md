@@ -4,7 +4,7 @@ description: "从资源完整性到关节、碰撞与惯量，记录 CAD 模型�
 category: "建模与仿真"
 tags: ["URDF", "SolidWorks", "模型检查"]
 order: 1
-cover: "/document-assets/urdf-export-checklist/media-01.webp"
+cover: /document-covers/urdf-export-checklist.webp
 ---
 
 > 本指南用于在从 SolidWorks 或其他 CAD 软件导出 URDF 文件后，系统性检查模型的正确性与仿真性能，确保其在 ROS2、Gazebo、Isaac Gym、MuJoCo 等环境中可正确运行。

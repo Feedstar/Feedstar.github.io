@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Moon from '../components/Moon.astro';
 import ExperimentCollection from '../components/ExperimentCollection.astro';
+import HomeDocuments from '../components/HomeDocuments.astro';
 import { getCollection } from 'astro:content';
 const posts = (await getCollection('journal')).sort((a, b) =>
   a.data.number.localeCompare(b.data.number),
@@ -143,9 +144,10 @@ const posts = (await getCollection('journal')).sort((a, b) =>
       </div>
     </div>
   </section>
+  <HomeDocuments />
   <section class="about-fragment wrap" data-chapter="about">
     <span class="chapter-rule" aria-hidden="true"></span>
-    <p class="eyebrow">03 / A NOTE FROM FEEDSTAR</p>
+    <p class="eyebrow">04 / A NOTE FROM FEEDSTAR</p>
     <div class="about-fragment-body">
       <p class="about-quote">
         <span data-story-line>有些理解，来自阅读。</span>

@@ -1,0 +1,184 @@
+.home-documents {
+  position: relative;
+  padding-block: 76px 110px;
+  scroll-margin-top: 92px;
+}
+.home-documents .field-intro {
+  padding-bottom: 52px;
+}
+.home-documents .field-intro > .eyebrow {
+  border: 0;
+  padding-bottom: 0;
+  margin-bottom: 38px;
+}
+.home-document-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(20px, 2.8vw, 40px);
+}
+.home-document-card {
+  min-width: 0;
+}
+.home-document-card > a {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-bottom: 1px solid var(--line);
+}
+.home-document-art {
+  aspect-ratio: 2;
+  overflow: hidden;
+  background: var(--art-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+}
+.home-document-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-document-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 24px 0 14px;
+  color: var(--muted);
+  font: 10px/1.8 var(--sans);
+  letter-spacing: 0.045em;
+}
+.home-document-meta > span:last-child {
+  color: var(--subtle);
+}
+.home-document-card h3 {
+  font: 500 clamp(19px, 1.8vw, 25px)/1.65 var(--sans);
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.home-document-card p {
+  margin: 16px 0 24px;
+  font: 13px/2 var(--sans);
+  color: var(--muted);
+}
+.home-document-read {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-block: 0 20px;
+  font: 11px/1.8 var(--sans);
+  color: var(--accent);
+}
+.home-document-read > span {
+  font-size: 22px;
+}
+.home-document-index {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr);
+  gap: 40px;
+  padding-top: 46px;
+}
+.home-document-index > p {
+  margin-top: 16px;
+  font-size: 9px;
+}
+.home-document-index a {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 20px;
+  gap: 18px;
+  align-items: center;
+  padding-block: 16px;
+  border-bottom: 1px solid var(--line);
+  font: 13px/1.9 var(--sans);
+  overflow-wrap: anywhere;
+}
+.home-document-index-number {
+  color: var(--subtle);
+  font: italic 22px/1 var(--roman);
+}
+.home-document-index-arrow {
+  color: var(--accent);
+  text-align: right;
+}
+.home-document-card a:focus-visible,
+.home-document-index a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 7px;
+  border-radius: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-document-card a:hover h3,
+  .home-document-index a:hover {
+    color: var(--accent);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-document-art img {
+    transition: transform 600ms var(--ease-out);
+  }
+  .home-document-card h3 {
+    transition: color 220ms ease;
+  }
+  .home-document-read > span {
+    transition: transform 240ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .home-document-card a:hover .home-document-art img {
+      transform: scale(1.035);
+    }
+    .home-document-card a:hover .home-document-read > span {
+      transform: translate(3px, -2px);
+    }
+  }
+}
+@media (max-width: 900px) {
+  .home-document-grid {
+    gap: 22px;
+  }
+  .home-document-card h3 {
+    font-size: 19px;
+  }
+  .home-document-card p {
+    font-size: 12px;
+  }
+}
+@media (max-width: 650px) {
+  .home-documents {
+    padding-block: 48px 76px;
+    scroll-margin-top: 104px;
+  }
+  .home-documents .field-intro {
+    padding-bottom: 34px;
+  }
+  .home-documents .field-intro > .eyebrow {
+    margin-bottom: 28px;
+  }
+  .home-documents .field-title > div {
+    padding-left: 0;
+  }
+  .home-document-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 34px;
+  }
+  .home-document-meta {
+    margin: 20px 0 12px;
+  }
+  .home-document-card h3 {
+    font-size: 22px;
+    text-wrap: pretty;
+  }
+  .home-document-card p {
+    margin-block: 12px 18px;
+    font-size: 13px;
+  }
+  .home-document-index {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-top: 28px;
+  }
+  .home-document-index a {
+    gap: 12px;
+    font-size: 12px;
+  }
+}

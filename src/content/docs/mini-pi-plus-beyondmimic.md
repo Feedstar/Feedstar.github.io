@@ -4,7 +4,7 @@ description: "从 BVH 重定向、动作裁剪到训练与 sim2sim，记录 Mini
 category: "动作模仿"
 tags: ["BeyondMimic", "GMR", "sim2sim"]
 order: 4
-cover: "/document-assets/mini-pi-plus-beyondmimic/media-01.webp"
+cover: /document-covers/mini-pi-plus-beyondmimic.webp
 ---
 
 > 关于mimic的探索，通过3D重映射，我们可以将人体运动捕捉数据映射到自己的机器人上，同时对这些数据进行转化成为利于模仿学习的格式。以下是我们试跑的高擎机器人的demo。

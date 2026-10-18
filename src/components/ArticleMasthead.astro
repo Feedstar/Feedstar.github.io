@@ -31,8 +31,8 @@ const notes = kind === 'journal';
       <img
         src={notes ? '/journal-covers/' + id + '.png' : cover}
         alt=""
-        width="1280"
-        height="1280"
+        width={notes ? 1280 : 1600}
+        height={notes ? 1280 : 800}
         fetchpriority="high"
       />
       <span aria-hidden="true">

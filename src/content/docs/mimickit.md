@@ -4,7 +4,7 @@ description: "整理运动模仿框架的试跑记录、配置入口、数据资
 category: "动作模仿"
 tags: ["MimicKit", "AMP", "模仿学习"]
 order: 6
-cover: "/document-assets/mimickit/media-01.webp"
+cover: /document-covers/mimickit.webp
 ---
 
 > [https://github.com/xbpeng/MimicKit](https://github.com/xbpeng/MimicKit)

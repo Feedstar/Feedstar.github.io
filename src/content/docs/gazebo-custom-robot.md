@@ -4,7 +4,7 @@ description: "将自建机器人从 SolidWorks 导入 ROS 2 与 Gazebo，整理�
 category: "建模与仿真"
 tags: ["ROS 2", "Gazebo", "Xacro"]
 order: 2
-cover: "/document-assets/gazebo-custom-robot/media-01.webp"
+cover: /document-covers/gazebo-custom-robot.webp
 ---
 
 本文记录在环境搭建完毕，可以正常运行demo后，尝试将自建模型从solidworks中导出，并在gazebo中进行运动控制仿真。
