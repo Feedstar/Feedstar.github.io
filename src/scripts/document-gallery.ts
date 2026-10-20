@@ -55,7 +55,14 @@ export function createDocumentGallery() {
   };
   const paint = () => {
     if (!field || !ready) return;
-    for (const region of field.render(current, time, hover)) {
+    let regions;
+    try {
+      regions = field.render(current, time, hover);
+    } catch (error) {
+      fail(error);
+      return;
+    }
+    for (const region of regions) {
       const entry = entries[region.index];
       const onstage =
         region.opacity > 0.08 && region.width > 2 && region.height > 2;
@@ -82,13 +89,13 @@ export function createDocumentGallery() {
     current = dampDocumentScroll(current, target, dt);
     if (Math.abs(target - current) < 0.01) current = target;
     paint();
-    raf = requestAnimationFrame(tick);
+    if (ready) raf = requestAnimationFrame(tick);
   };
   const resume = () => {
     if (ready && inView && !document.hidden && !reduce.matches && !raf)
       raf = requestAnimationFrame(tick);
   };
-  const measure = () => {
+  const measureField = () => {
     if (!ready || !field) return;
     const width = viewport.clientWidth;
     const height = viewport.clientHeight;
@@ -152,6 +159,13 @@ export function createDocumentGallery() {
     paint();
     resume();
   };
+  const measure = () => {
+    try {
+      measureField();
+    } catch (error) {
+      fail(error);
+    }
+  };
   const fallback = () => {
     sceneState(root, 'fallback');
     ready = false;
@@ -165,6 +179,17 @@ export function createDocumentGallery() {
       entry.removeAttribute('data-onstage');
       links[i].style.removeProperty('clip-path');
     });
+  };
+  const fail = (error: unknown) => {
+    // Restore native content before touching a renderer that may be lost.
+    fallback();
+    const failed = field;
+    field = null;
+    try {
+      failed?.dispose();
+    } finally {
+      console.warn('Document gallery is using its HTML layout.', error);
+    }
   };
   onBootCancel(() => {
     fallback();
@@ -189,16 +214,16 @@ export function createDocumentGallery() {
         field = null;
         return;
       }
-      if (reduce.matches) return;
+      if (reduce.matches) {
+        fallback();
+        return;
+      }
       root.dataset.motion = 'ready';
       ready = true;
       measure();
-      sceneState(root, 'ready');
+      if (ready) sceneState(root, 'ready');
     } catch (error) {
-      fallback();
-      field?.dispose();
-      field = null;
-      console.warn('Document gallery is using its HTML layout.', error);
+      fail(error);
     } finally {
       building = false;
     }
@@ -249,8 +274,12 @@ export function createDocumentGallery() {
     { signal },
   );
   const theme = new MutationObserver(() => {
-    field?.refreshColors();
-    paint();
+    try {
+      field?.refreshColors();
+      paint();
+    } catch (error) {
+      fail(error);
+    }
   });
   theme.observe(document.documentElement, {
     attributes: true,

@@ -1,6 +1,10 @@
 import { bootCancelled, prepareFonts, prepareImage } from './page-resources';
 import * as THREE from 'three';
 import {
+  createDocumentTexture,
+  resizeDocumentTexture,
+} from '../lib/document-texture';
+import {
   DOCUMENT_CAMERA_Z,
   DOCUMENT_IMAGE_RATIO,
   bendDocumentVertex,
@@ -136,11 +140,7 @@ function makePanel(
   isPicture: boolean,
 ): Panel {
   const canvas = document.createElement('canvas');
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
+  const texture = createDocumentTexture(canvas);
   const geometry = new THREE.PlaneGeometry(1, 1, 20, isPicture ? 14 : 8);
   const positions = geometry.getAttribute('position') as THREE.BufferAttribute;
   const base = new Float32Array(positions.array);
@@ -212,10 +212,18 @@ function prepareCanvas(
   height: number,
   resolution: number,
 ) {
-  panel.canvas.width = Math.max(1, Math.round(width * resolution));
-  panel.canvas.height = Math.max(1, Math.round(height * resolution));
+  panel.texture = resizeDocumentTexture(
+    panel.texture,
+    Math.max(1, Math.round(width * resolution)),
+    Math.max(1, Math.round(height * resolution)),
+  );
+  panel.mesh.material.uniforms.uTexture.value = panel.texture;
   const context = panel.canvas.getContext('2d');
   if (!context) throw new Error('A 2D canvas is required for document text.');
+  // Reusing a same-size canvas must also reset caption alpha/alignment state.
+  context.globalAlpha = 1;
+  context.textAlign = 'left';
+  context.textBaseline = 'alphabetic';
   context.setTransform(resolution, 0, 0, resolution, 0, 0);
   context.clearRect(0, 0, width, height);
   return context;
@@ -229,6 +237,8 @@ function drawPicture(
 ) {
   const resolution = Math.min(3, Math.max(2, 1024 / width));
   const context = prepareCanvas(card.picture, width, height, resolution);
+  context.fillStyle = palette.space;
+  context.fillRect(0, 0, width, height);
   const image = card.source;
   if (image?.naturalWidth && image.naturalHeight) {
     const sourceRatio = image.naturalWidth / image.naturalHeight;
@@ -425,9 +435,15 @@ export async function createDocumentField(
   let options: DocumentFieldLayout | null = null;
   let disposed = false;
   let previousTime: number | null = null;
+  const gl = renderer.getContext();
+  const pixel = new Uint8Array(4);
+  let verifyFrame = true;
+  let verifyDraw = true;
 
   function refreshColors() {
     if (disposed) return;
+    verifyFrame = true;
+    verifyDraw = true;
     palette = readPalette(root);
     cards.forEach((card) => {
       card.picture.mesh.material.uniforms.uFogColor.value.set(palette.space);
@@ -448,6 +464,22 @@ export async function createDocumentField(
         );
       }
     });
+    // Upload even the offscreen cards now: a failed texture must not turn into
+    // an invisible link when a later row scrolls into view. GL errors do not
+    // necessarily throw JavaScript exceptions (including in Firefox).
+    if (options) {
+      for (const card of cards) {
+        renderer.initTexture(card.picture.texture);
+        renderer.initTexture(card.caption.texture);
+      }
+      assertContext();
+    }
+  }
+
+  function assertContext() {
+    const error = gl.getError();
+    if (gl.isContextLost() || error !== gl.NO_ERROR)
+      throw new Error(`Document WebGL rendering failed (${error}).`);
   }
 
   function layout(next: DocumentFieldLayout, activeIndices: number[]) {
@@ -505,6 +537,7 @@ export async function createDocumentField(
         : Math.min(0.1, Math.max(0, timeSeconds - previousTime));
     previousTime = timeSeconds;
     const vertex = { x: 0, y: 0, z: 0, ripple: 0, opacity: 0, fog: 0 };
+    const samples: Point[] = [];
 
     const bounds = cards.map((card) => {
       const top = card.top - scrollPixels;
@@ -550,6 +583,26 @@ export async function createDocumentField(
           panelOpacity = Math.max(panelOpacity, vertex.opacity);
           if (vertex.opacity > 0.025)
             points.push(projectDocumentVertex(vertex, width, height));
+          // Interior cover vertices are opaque and safely away from silhouette
+          // antialiasing. Test the actual drawing buffer, not just CPU bounds.
+          if (
+            verifyFrame &&
+            panel === card.picture &&
+            samples.length < 3 &&
+            index % 21 === 10 &&
+            index >= 42 &&
+            index < panel.positions.count - 42 &&
+            vertex.opacity > 0.9
+          ) {
+            const point = projectDocumentVertex(vertex, width, height);
+            if (
+              point.x > 2 &&
+              point.x < width - 2 &&
+              point.y > 2 &&
+              point.y < height - 2
+            )
+              samples.push(point);
+          }
         }
         panel.positions.needsUpdate = true;
         panel.visibility.needsUpdate = true;
@@ -585,6 +638,31 @@ export async function createDocumentField(
       };
     });
     renderer.render(scene, camera);
+    if (verifyDraw) {
+      assertContext();
+      verifyDraw = false;
+    }
+    if (verifyFrame) {
+      if (samples.length) {
+        const drawn = samples.some((point) => {
+          gl.readPixels(
+            Math.floor((point.x / width) * gl.drawingBufferWidth),
+            gl.drawingBufferHeight -
+              1 -
+              Math.floor((point.y / height) * gl.drawingBufferHeight),
+            1,
+            1,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            pixel,
+          );
+          return pixel[3] > 32;
+        });
+        assertContext();
+        if (!drawn) throw new Error('Document canvas produced an empty frame.');
+        verifyFrame = false;
+      }
+    }
     return bounds;
   }
 
