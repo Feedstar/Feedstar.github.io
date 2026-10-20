@@ -5,25 +5,54 @@ import { setImmediate } from 'node:timers/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import {
   createDocumentTexture,
-  resizeDocumentTexture,
+  updateDocumentTexture,
 } from '../src/lib/document-texture.ts';
 
-// A resize must allocate new immutable storage; a redraw must reuse it.
-const canvas = { width: 300, height: 150 };
-const original = createDocumentTexture(canvas);
+// Pixel uploads avoid Firefox's failing Canvas source-surface mapping path.
+// Include transparent colored pixels and distinct top/bottom rows to catch
+// accidental premultiplication, extra copies, or row reordering.
+const rgba = new Uint8ClampedArray([
+  255, 0, 0, 255, 0, 255, 0, 128, 0, 0, 255, 0, 255, 255, 255, 255,
+]);
+let reads = 0;
+const context = {
+  canvas: { width: 2, height: 2 },
+  getImageData(x, y, width, height) {
+    assert.deepEqual([x, y, width, height], [0, 0, 2, 2]);
+    reads++;
+    return { data: rgba };
+  },
+};
+const original = createDocumentTexture();
 let releases = 0;
 original.addEventListener('dispose', () => releases++);
-assert.equal(resizeDocumentTexture(original, 300, 150), original);
-assert.equal(releases, 0);
-const resized = resizeDocumentTexture(original, 1320, 692);
+const resized = updateDocumentTexture(original, context);
 assert.notEqual(resized, original);
 assert.equal(releases, 1);
-assert.equal(resized.image, canvas);
-assert.equal(canvas.width, 1320);
-assert.equal(canvas.height, 692);
+assert.equal(resized.isDataTexture, true);
+assert.ok(resized.image.data instanceof Uint8Array);
+assert.equal(
+  resized.image.data.buffer,
+  rgba.buffer,
+  'Do not double the staging memory',
+);
+assert.equal(resized.image.width, 2);
+assert.equal(resized.image.height, 2);
+assert.deepEqual([...resized.image.data], [...rgba]);
+assert.equal(
+  resized.flipY,
+  false,
+  'WebGL2 typed arrays cannot use UNPACK_FLIP_Y',
+);
+assert.equal(resized.premultiplyAlpha, false);
 assert.equal(resized.colorSpace, original.colorSpace);
 assert.equal(resized.generateMipmaps, false);
-assert.equal(resizeDocumentTexture(resized, 1320, 692), resized);
+const version = resized.version;
+rgba[0] = 200;
+assert.equal(updateDocumentTexture(resized, context), resized);
+assert.equal(resized.version, version + 1);
+assert.equal(resized.image.data[0], 200);
+assert.equal(reads, 2);
 resized.dispose();
 
 // Exercise the real gallery controller with deterministic DOM/renderer failures.
@@ -234,5 +263,5 @@ for (const failure of ['render', 'layout', 'theme']) {
   assert.equal(f.state.created, 0);
 }
 console.log(
-  'Document rendering checks passed (texture resizing, initial/late failure, filters, context recovery, reduced motion).',
+  'Document rendering checks passed (RGBA pixel upload, resizing, initial/late failure, filters, context recovery, reduced motion).',
 );

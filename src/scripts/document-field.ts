@@ -2,7 +2,7 @@ import { bootCancelled, prepareFonts, prepareImage } from './page-resources';
 import * as THREE from 'three';
 import {
   createDocumentTexture,
-  resizeDocumentTexture,
+  updateDocumentTexture,
 } from '../lib/document-texture';
 import {
   DOCUMENT_CAMERA_Z,
@@ -49,7 +49,7 @@ type CardData = {
 type Panel = {
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   canvas: HTMLCanvasElement;
-  texture: THREE.CanvasTexture;
+  texture: THREE.DataTexture;
   base: Float32Array;
   positions: THREE.BufferAttribute;
   visibility: THREE.BufferAttribute;
@@ -77,7 +77,8 @@ const vertexShader = `
   varying float vFog;
   varying float vLift;
   void main() {
-    vUv = uv;
+    // CPU ImageData is top-down; typed-array uploads do not flip rows.
+    vUv = vec2(uv.x, 1.0 - uv.y);
     vVisibility = aVisibility;
     vFog = aFog;
     vLift = aLift;
@@ -140,7 +141,7 @@ function makePanel(
   isPicture: boolean,
 ): Panel {
   const canvas = document.createElement('canvas');
-  const texture = createDocumentTexture(canvas);
+  const texture = createDocumentTexture();
   const geometry = new THREE.PlaneGeometry(1, 1, 20, isPicture ? 14 : 8);
   const positions = geometry.getAttribute('position') as THREE.BufferAttribute;
   const base = new Float32Array(positions.array);
@@ -212,13 +213,13 @@ function prepareCanvas(
   height: number,
   resolution: number,
 ) {
-  panel.texture = resizeDocumentTexture(
-    panel.texture,
-    Math.max(1, Math.round(width * resolution)),
-    Math.max(1, Math.round(height * resolution)),
-  );
-  panel.mesh.material.uniforms.uTexture.value = panel.texture;
-  const context = panel.canvas.getContext('2d');
+  const pixelWidth = Math.max(1, Math.round(width * resolution));
+  const pixelHeight = Math.max(1, Math.round(height * resolution));
+  if (panel.canvas.width !== pixelWidth) panel.canvas.width = pixelWidth;
+  if (panel.canvas.height !== pixelHeight) panel.canvas.height = pixelHeight;
+  // Keep staging artwork in CPU memory so Firefox need not map an accelerated
+  // Canvas surface back out of its graphics process for texture upload.
+  const context = panel.canvas.getContext('2d', { willReadFrequently: true });
   if (!context) throw new Error('A 2D canvas is required for document text.');
   // Reusing a same-size canvas must also reset caption alpha/alignment state.
   context.globalAlpha = 1;
@@ -227,6 +228,11 @@ function prepareCanvas(
   context.setTransform(resolution, 0, 0, resolution, 0, 0);
   context.clearRect(0, 0, width, height);
   return context;
+}
+
+function uploadArtwork(panel: Panel, context: CanvasRenderingContext2D) {
+  panel.texture = updateDocumentTexture(panel.texture, context);
+  panel.mesh.material.uniforms.uTexture.value = panel.texture;
 }
 
 function drawPicture(
@@ -282,7 +288,7 @@ function drawPicture(
       context.fillText(line, 24, height / 2 + index * 29),
     );
   }
-  card.picture.texture.needsUpdate = true;
+  uploadArtwork(card.picture, context);
 }
 
 function drawCaption(
@@ -357,7 +363,7 @@ function drawCaption(
   context.moveTo(inset, height - 0.5);
   context.lineTo(width - inset, height - 0.5);
   context.stroke();
-  card.caption.texture.needsUpdate = true;
+  uploadArtwork(card.caption, context);
 }
 
 async function loadCardImage(
