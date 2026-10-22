@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { compareDocumentDates } from '../lib/document-order';
 import Wordmark from './Wordmark.astro';
 import { siteProfile } from '../lib/site-profile';
 import { siteNavigation } from '../lib/site-navigation';
@@ -10,7 +11,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
 );
 const latest = posts.slice(0, 3);
 const documents = (await getCollection('docs')).sort(
-  (a, b) => b.data.order - a.data.order,
+  compareDocumentDates,
 );
 ---
 
@@ -75,10 +76,10 @@ const documents = (await getCollection('docs')).sort(
           <span>02</span> 工作记录与心得
         </h2>
         <ul class="footer-experiments">
-          {documents.slice(0, 3).map((entry) => (
+          {documents.slice(0, 3).map((entry, index) => (
             <li>
               <a href={`/docs/${entry.id}/`}>
-                <span>{String(entry.data.order).padStart(2, '0')}</span>
+                <span>{String(index + 1).padStart(2, '0')}</span>
                 {entry.data.title}
               </a>
             </li>

@@ -2,21 +2,17 @@
 import { getCollection } from 'astro:content';
 import '../styles/home-documents.css';
 import ContentDates from './ContentDates.astro';
+import { compareDocumentDates } from '../lib/document-order';
 
 const documents = (await getCollection('docs'))
-  .sort((a, b) => a.data.order - b.data.order)
+  .sort(compareDocumentDates)
   .map((post, index) => ({
     ...post,
     number: String(index + 1).padStart(2, '0'),
   }));
-// Introduce each subject once; keep the rest of the archive directly reachable.
-const categories = new Set<string>();
-const featured = documents.filter((post) => {
-  if (categories.has(post.data.category) || categories.size >= 3) return false;
-  categories.add(post.data.category);
-  return true;
-});
-const remaining = documents.filter((post) => !featured.includes(post));
+// Continue the same chronological sequence from the cards into the index.
+const featured = documents.slice(0, 3);
+const remaining = documents.slice(3);
 ---
 
 <section

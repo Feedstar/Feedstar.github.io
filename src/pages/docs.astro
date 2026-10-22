@@ -1,10 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
+import { compareDocumentDates } from '../lib/document-order';
 import Layout from '../layouts/Layout.astro';
 import SectionIntro from '../components/SectionIntro.astro';
 import DocumentGallery from '../components/DocumentGallery.astro';
 const documents = (await getCollection('docs')).sort(
-  (a, b) => a.data.order - b.data.order,
+  compareDocumentDates,
 );
 const groups = ['建模与仿真', '强化学习', '动作模仿'];
 const titles: Record<string, string> = {

@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { compareDocumentDates } from './document-order';
 import { experimentCatalog, experimentHref } from './experiment-catalog';
 
 export interface DirectoryEntry {
@@ -39,12 +40,7 @@ export async function contentDirectory(): Promise<DirectoryEntry[]> {
   ]);
   return [
     ...documents
-      .sort(
-        (a, b) =>
-          (b.data.publishedDate || '').localeCompare(
-            a.data.publishedDate || '',
-          ) || a.data.order - b.data.order,
-      )
+      .sort(compareDocumentDates)
       .map((entry) => ({
         id: `docs:${entry.id}`,
         kind: 'docs' as const,

@@ -1,19 +1,24 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { compareDocumentDates } from '../../lib/document-order';
 import Layout from '../../layouts/Layout.astro';
 import ReadingToc from '../../components/ReadingToc.astro';
 import ArticleMasthead from '../../components/ArticleMasthead.astro';
 import '../../styles/documents.css';
 export async function getStaticPaths() {
   const documents = (await getCollection('docs')).sort(
-    (a, b) => a.data.order - b.data.order,
+    compareDocumentDates,
   );
   return documents.map((post, index) => ({
     params: { slug: post.id },
-    props: { post, next: documents[(index + 1) % documents.length] },
+    props: {
+      post,
+      number: String(index + 1).padStart(2, '0'),
+      next: documents[(index + 1) % documents.length],
+    },
   }));
 }
-const { post, next } = Astro.props;
+const { post, number, next } = Astro.props;
 const { Content, headings } = await render(post);
 ---
 
@@ -36,7 +41,7 @@ const { Content, headings } = await render(post);
     id={post.id}
     title={post.data.title}
     description={post.data.description}
-    number={String(post.data.order).padStart(2, '0')}
+    number={number}
     category={post.data.category}
     cover={post.data.cover}
     publishedDate={post.data.publishedDate}
