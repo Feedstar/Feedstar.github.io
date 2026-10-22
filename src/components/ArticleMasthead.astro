@@ -1,5 +1,6 @@
 ---
 import '../styles/reading-room.css';
+import ContentDates from './ContentDates.astro';
 interface Props {
   kind: 'journal' | 'docs';
   id: string;
@@ -8,6 +9,8 @@ interface Props {
   number: string;
   category: string;
   cover?: string;
+  publishedDate?: string;
+  updatedDate?: string;
 }
 const { kind, id, title, description, number, category, cover } = Astro.props;
 const notes = kind === 'journal';
@@ -49,6 +52,12 @@ const notes = kind === 'journal';
       </p>
       <h1 style={`view-transition-name:title-${kind}-${id}`}>{title}</h1>
       <p class="reading-deck">{description}</p>
+      {!notes && (
+        <ContentDates
+          publishedDate={Astro.props.publishedDate}
+          updatedDate={Astro.props.updatedDate}
+        />
+      )}
     </div>
     <a class="reading-enter" href="#article-start">
       进入正文 <span aria-hidden="true">↓</span>

@@ -1,4 +1,5 @@
 ---
+publishedDate: '2025-11-25'
 title: "MimicKit 使用与整理"
 description: "整理运动模仿框架的试跑记录、配置入口、数据资产，以及不同模仿算法的理解。"
 category: "动作模仿"

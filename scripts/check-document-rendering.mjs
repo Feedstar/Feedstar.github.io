@@ -62,7 +62,7 @@ const source = stripTypeScriptTypes(
     'utf8',
   ),
 )
-  .replace(/^import .*;\n/gm, '')
+  .replace(/^import .*;\r?\n/gm, '')
   .replace('export function', 'function');
 
 function element(dataset = {}) {

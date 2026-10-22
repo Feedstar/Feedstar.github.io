@@ -45,6 +45,7 @@ type CardData = {
   description: string;
   tags: string;
   english: string;
+  date: string;
 };
 type Panel = {
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
@@ -123,6 +124,7 @@ function readData(link: HTMLAnchorElement): CardData {
           .join('  ·  ')
       : text('.document-tags'),
     english: text('.document-english'),
+    date: text('.content-dates'),
   };
 }
 
@@ -333,7 +335,7 @@ function drawCaption(
   context.textAlign = 'right';
   context.font = `400 10px ${fontFamily}`;
   context.fillText(
-    card.data.english,
+    card.data.date || card.data.english,
     width - inset,
     10,
     Math.max(1, width - 40),

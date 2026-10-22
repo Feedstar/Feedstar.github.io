@@ -1,0 +1,23 @@
+---
+import { displayDate } from '../lib/content-dates.mjs';
+interface Props {
+  publishedDate?: string;
+  updatedDate?: string;
+}
+const { publishedDate, updatedDate } = Astro.props;
+---
+
+{(publishedDate || updatedDate) && (
+  <span class="content-dates">
+    {publishedDate && (
+      <span>
+        写于 <time datetime={publishedDate}>{displayDate(publishedDate)}</time>
+      </span>
+    )}
+    {updatedDate && updatedDate !== publishedDate && (
+      <span>
+        更新于 <time datetime={updatedDate}>{displayDate(updatedDate)}</time>
+      </span>
+    )}
+  </span>
+)}

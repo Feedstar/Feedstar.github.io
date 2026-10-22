@@ -1,0 +1,118 @@
+---
+import { siteProfile } from '../lib/site-profile';
+interface Props {
+  title: string;
+  description: string;
+  page: string;
+  noindex?: boolean;
+  article?: {
+    title: string;
+    category: string;
+    image: string;
+    width: number;
+    height: number;
+    publishedDate?: string;
+    updatedDate?: string;
+  };
+}
+const { title, description, page, article, noindex = false } = Astro.props;
+const absolute = (path: string) => new URL(path, Astro.site).href;
+const canonical = absolute(Astro.url.pathname);
+const cover = article
+  ? absolute(article.image)
+  : absolute('/social/observatory.png');
+const imageAlt = article
+  ? `${article.title} · Feedstar`
+  : 'Feedstar 个人观测站 · 机器人、强化学习与物理仿真';
+const person = {
+  '@type': 'Person',
+  '@id': absolute('/about/#person'),
+  name: siteProfile.name,
+  url: absolute('/about/'),
+  image: absolute('/profile/feedstar-portrait-640.webp'),
+  description: '从事机器人行业，有 2 年以上工作经验，专注强化学习与物理仿真。',
+  knowsAbout: ['机器人', ...siteProfile.focus],
+  sameAs: ['https://github.com/Feedstar'],
+};
+const website = {
+  '@type': 'WebSite',
+  '@id': absolute('/#website'),
+  url: absolute('/'),
+  name: 'Feedstar · 微光与秩序',
+  description: siteProfile.description,
+  inLanguage: 'zh-CN',
+  author: { '@id': person['@id'] },
+};
+const content = article
+  ? {
+      '@type': 'Article',
+      '@id': `${canonical}#article`,
+      mainEntityOfPage: canonical,
+      headline: article.title,
+      description,
+      image: [cover],
+      articleSection: article.category,
+      inLanguage: 'zh-CN',
+      author: { '@id': person['@id'] },
+      isPartOf: { '@id': website['@id'] },
+      ...(article.publishedDate
+        ? { datePublished: article.publishedDate }
+        : {}),
+      ...(article.updatedDate ? { dateModified: article.updatedDate } : {}),
+    }
+  : {
+      '@type':
+        page === 'about'
+          ? 'ProfilePage'
+          : page === 'search'
+            ? 'SearchResultsPage'
+            : 'WebPage',
+      '@id': canonical,
+      url: canonical,
+      name: title,
+      description,
+      inLanguage: 'zh-CN',
+      isPartOf: { '@id': website['@id'] },
+      ...(page === 'about' ? { mainEntity: { '@id': person['@id'] } } : {}),
+    };
+const structured = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [website, person, content],
+}).replace(/</g, '\\u003c');
+---
+
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, follow" />}
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={article ? 'article' : 'website'} />
+<meta property="og:url" content={canonical} />
+<meta property="og:site_name" content="Feedstar · 微光与秩序" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:image" content={cover} />
+<meta property="og:image:width" content={article?.width || 1200} />
+<meta property="og:image:height" content={article?.height || 630} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={cover} />
+<meta name="twitter:image:alt" content={imageAlt} />
+{article && <meta property="article:author" content={absolute('/about/')} />}
+{article && <meta property="article:section" content={article.category} />}
+{article?.publishedDate && (
+  <meta property="article:published_time" content={article.publishedDate} />
+)}
+{article?.updatedDate && (
+  <meta property="article:modified_time" content={article.updatedDate} />
+)}
+<script is:inline type="application/ld+json" set:html={structured} />
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title="Feedstar · 实验手记与工作文档"
+  href={absolute('/rss.xml')}
+/>
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />

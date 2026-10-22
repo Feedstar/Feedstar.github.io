@@ -1,5 +1,6 @@
 ---
 import '../styles/document-gallery.css';
+import ContentDates from './ContentDates.astro';
 interface Item {
   id: string;
   title: string;
@@ -10,6 +11,8 @@ interface Item {
   english: string;
   cover?: string;
   tags?: string[];
+  publishedDate?: string;
+  updatedDate?: string;
 }
 interface Props {
   items: Item[];
@@ -92,6 +95,10 @@ const { items, groups } = Astro.props;
                     <span>{tag}</span>
                   ))}
                 </div>
+                <ContentDates
+                  publishedDate={item.publishedDate}
+                  updatedDate={item.updatedDate}
+                />
                 <span class="document-english">{item.english}</span>
                 <span class="document-open" aria-hidden="true">
                   ↗

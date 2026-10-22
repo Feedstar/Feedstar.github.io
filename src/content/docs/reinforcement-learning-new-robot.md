@@ -1,4 +1,5 @@
 ---
+publishedDate: '2024-07-27'
 title: "强化学习配置新机器人"
 description: "以 Openloong 为例，记录模型资源、初始姿态、奖励参数与训练任务的接入过程。"
 category: "强化学习"

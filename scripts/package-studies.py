@@ -6,9 +6,10 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--check',action='store_true')
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]/'public/examples'
+# Canonical UTF-8/LF keeps archives identical on Windows and Ubuntu.
 for kind in ('inverse-kinematics','linkage','tendon','scanner'):
     model=root/'arm.xml' if kind=='inverse-kinematics' else root/'studies'/f'{kind}.xml'
-    entries={model.name:model.read_bytes(),'study.py':(root/'studies/study.py').read_bytes(), 'RUN.txt':f'''Feedstar / {kind}
+    entries={model.name:model.read_text(encoding='utf-8').encode('utf-8'),'study.py':(root/'studies/study.py').read_text(encoding='utf-8').encode('utf-8'), 'RUN.txt':f'''Feedstar / {kind}
 Original teaching example. Run locally with Python 3.10+.
 
 pip install mujoco==3.15.0 numpy

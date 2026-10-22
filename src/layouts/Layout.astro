@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import '../styles/content-meta.css';
+import Seo from '../components/Seo.astro';
 import Wordmark from '../components/Wordmark.astro';
 import Footer from '../components/Footer.astro';
 import BootHead from '../components/BootHead.astro';
@@ -10,6 +12,8 @@ const {
   title = 'Feedstar · 微光与秩序',
   description = siteProfile.description,
   page = 'home',
+  article,
+  noindex = false,
 } = Astro.props;
 ---
 
@@ -21,10 +25,7 @@ const {
     <meta name="description" content={description} />
     <meta name="theme-color" content="#030512" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <Seo {title} {description} {page} {article} {noindex} />
     <title>{title}</title>
     <script is:inline>
       document.documentElement.classList.add('js');
@@ -39,6 +40,24 @@ const {
       } catch {}
     </script>
     <BootHead />
+    <noscript>
+      <style is:inline>
+        .site-loader,
+        .site-loading-hint {
+          display: none !important;
+        }
+        body > :is(header, main, footer, .skip-link, .paper-grain) {
+          visibility: visible !important;
+        }
+        [data-reveal] {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        html {
+          overflow: auto !important;
+        }
+      </style>
+    </noscript>
   </head>
   <body data-page={page}>
     <SiteLoader />
@@ -77,6 +96,20 @@ const {
       import { createPointer } from '../scripts/pointer';
       import { createTitleMotion } from '../scripts/title-motion';
       import { createChapters } from '../scripts/chapters';
+      document.addEventListener('keydown', (event) => {
+        if (
+          (event.ctrlKey || event.metaKey) &&
+          event.key.toLowerCase() === 'k' &&
+          !event.altKey
+        ) {
+          event.preventDefault();
+          const field =
+            document.querySelector<HTMLInputElement>('#search-query');
+          if (field && document.documentElement.dataset.boot === 'done')
+            field.focus();
+          else location.assign('/search/');
+        }
+      });
       createPointer();
       createTitleMotion();
       createChapters();

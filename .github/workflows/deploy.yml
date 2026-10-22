@@ -25,6 +25,7 @@ jobs:
       - run: python3 scripts/package-arm.py --check
       - run: python3 scripts/package-studies.py --check
       - run: npm run build
+      - run: npm run check:site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

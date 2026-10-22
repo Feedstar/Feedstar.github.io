@@ -1,4 +1,5 @@
 ---
+publishedDate: '2025-11-13'
 title: "GVHMR · GMR 前置数据准备"
 description: "记录视频人体运动重建的环境配置、数据准备、推理输出与 GMR 接入过程。"
 category: "动作模仿"

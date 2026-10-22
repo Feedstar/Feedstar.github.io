@@ -1,4 +1,5 @@
 ---
+publishedDate: '2025-10-31'
 title: "Mini-Pi-Plus · BeyondMimic 使用记录"
 description: "从 BVH 重定向、动作裁剪到训练与 sim2sim，记录 Mini-Pi-Plus 的动作模仿流程。"
 category: "动作模仿"

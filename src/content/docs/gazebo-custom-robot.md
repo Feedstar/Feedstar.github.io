@@ -1,4 +1,5 @@
 ---
+publishedDate: '2024-07-12'
 title: "自建模型在 Gazebo 中的仿真"
 description: "将自建机器人从 SolidWorks 导入 ROS 2 与 Gazebo，整理模型迁移、控制器配置和运动调试过程。"
 category: "建模与仿真"

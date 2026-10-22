@@ -1,0 +1,36 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/discovery.css';
+const feedURL = new URL('/rss.xml', Astro.site).href;
+---
+
+<Layout
+  title="订阅 · Feedstar"
+  page="subscribe"
+  description="通过 RSS 订阅 Feedstar 的实验手记和工作文档，在自己的阅读器里继续探索。"
+>
+  <section class="discovery-page wrap" aria-labelledby="subscribe-title">
+    <p class="eyebrow">KEEP IN TOUCH / 让线索延续</p>
+    <h1 id="subscribe-title">
+      下一次发现，<em>在阅读器里相遇。</em>
+    </h1>
+    <p class="discovery-intro">
+      这里是一个可以运行实验、查阅配套手记、翻看工作记录的个人空间。通过
+      RSS，把新增的手记与文档带到你习惯的阅读器。
+    </p>
+    <div class="subscription-card">
+      <h2>实验手记与工作文档</h2>
+      <p>
+        复制下面的地址，在 RSS
+        阅读器中添加订阅即可。无需账号，也不需要留下邮箱。
+      </p>
+      <code>{feedURL}</code>
+      <a class="pill-link" href="/rss.xml">
+        打开订阅源 <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+    <p class="discovery-intro" style="margin-top:24px;font-size:13px">
+      文档保留原始写作日期；实验手记按主题与实验顺序组织，不标注时间。部分阅读器可能会把首次收录时间作为未标日期手记的显示时间。
+    </p>
+  </section>
+</Layout>

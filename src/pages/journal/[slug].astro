@@ -15,6 +15,13 @@ const { Content, headings } = await render(post);
   title={`${post.data.title} · Feedstar`}
   description={post.data.description}
   page="journal"
+  article={{
+    title: post.data.title,
+    category: post.data.category,
+    image: '/journal-covers/' + post.id + '.webp',
+    width: 1280,
+    height: 1280,
+  }}
 >
   <ArticleMasthead
     kind="journal"

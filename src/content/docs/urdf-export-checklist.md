@@ -1,4 +1,5 @@
 ---
+publishedDate: '2025-11-04'
 title: "URDF 导出检查完整指南"
 description: "从资源完整性到关节、碰撞与惯量，记录 CAD 模型导出后的逐项检查方法。"
 category: "建模与仿真"

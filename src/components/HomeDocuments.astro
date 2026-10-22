@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import '../styles/home-documents.css';
+import ContentDates from './ContentDates.astro';
 
 const documents = (await getCollection('docs'))
   .sort((a, b) => a.data.order - b.data.order)
@@ -64,7 +65,7 @@ const remaining = documents.filter((post) => !featured.includes(post));
           </div>
           <div class="home-document-meta">
             <span>{post.data.category}</span>
-            <span>DOC / {post.number}</span>
+            <ContentDates publishedDate={post.data.publishedDate} />
           </div>
           <h3 id={`home-doc-${post.id}`}>{post.data.title}</h3>
           <p>{post.data.description}</p>

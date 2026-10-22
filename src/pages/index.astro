@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Moon from '../components/Moon.astro';
+import { siteProfile } from '../lib/site-profile';
 import ExperimentCollection from '../components/ExperimentCollection.astro';
 import HomeDocuments from '../components/HomeDocuments.astro';
 import { getCollection } from 'astro:content';
@@ -36,6 +37,11 @@ const posts = (await getCollection('journal')).sort((a, b) =>
             让好奇发生。
           </span>
         </h1>
+        <p class="hero-identity">
+          我是 {siteProfile.name}，从事机器人行业 {siteProfile.experience}。
+          <br />
+          专注强化学习与物理仿真。
+        </p>
       </div>
       <div class="hero-bottom wrap">
         <a class="scroll-cue" href="#arrival">
@@ -44,11 +50,7 @@ const posts = (await getCollection('journal')).sort((a, b) =>
             向下探索<small>SCROLL TO UNFOLD</small>
           </span>
         </a>
-        <p class="hero-description">
-          写下一点理解。
-          <br />
-          让一个想法，在这里运行起来。
-        </p>
+        <p class="hero-description">仿真实验 · 配套手记 · 工作记录</p>
       </div>
       <div class="arrival wrap" id="arrival">
         <p class="eyebrow" data-particle-text>

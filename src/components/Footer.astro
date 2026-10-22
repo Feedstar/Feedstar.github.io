@@ -94,6 +94,9 @@ const documents = (await getCollection('docs')).sort(
           <span>03</span> 站内漫游
         </h2>
         <ul class="footer-navigation">
+          <li>
+            <a href="/subscribe/">RSS 订阅</a>
+          </li>
           {siteNavigation
             .filter((item) => item.page !== 'about')
             .map((item) => (

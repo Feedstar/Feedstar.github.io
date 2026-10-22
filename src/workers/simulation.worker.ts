@@ -13,6 +13,7 @@ let mj: any,
   data: any,
   id: ExampleId = 'pendulum',
   playing = true,
+  visible = true,
   disposed = false;
 let params = { ...simulationParams };
 let accumulator = 0,
@@ -83,7 +84,7 @@ async function load(next: ExampleId) {
   tick();
 }
 function tick() {
-  if (disposed) return;
+  if (disposed || !visible || !playing || !data) return;
   const now = performance.now();
   const elapsed = Math.min((now - last) / 1000, 0.06);
   last = now;
@@ -127,16 +128,26 @@ self.onmessage = async (event) => {
     if (message.type === 'params') {
       params = { ...params, ...message.params };
       apply();
-      if (!playing) {
+      if (!playing && model && data) {
         mj.mj_forward(model, data);
         send();
       }
+    }
+    if (message.type === 'visible') {
+      visible = Boolean(message.value);
+      clearTimeout(timer);
+      if (!visible) viewerForce?.clear();
+      last = performance.now();
+      accumulator = 0;
+      tick();
     }
     if (message.type === 'play') {
       playing = message.value;
       if (!playing) viewerForce?.clear();
       last = performance.now();
       accumulator = 0;
+      clearTimeout(timer);
+      tick();
     }
     if (message.type === 'reset') reset();
     if (message.type === 'step' && !playing) {

@@ -39,8 +39,7 @@ export default function Simulation({ id }: { id: ExampleId }) {
     worker = useRef<Worker | null>(null),
     latest = useRef<SimState | null>(null),
     history = useRef<Sample[]>([]),
-    latestParams = useRef(params),
-    playingRef = useRef(playing);
+    latestParams = useRef(params);
   const viewer = useViewerControls(worker, playing);
   const [xmlOpen, setXmlOpen] = useState(false);
   useEffect(() => {
@@ -61,7 +60,8 @@ export default function Simulation({ id }: { id: ExampleId }) {
       frame = 0,
       meshes: THREE.Mesh[] = [],
       lastUi = 0,
-      lastSample = -1;
+      lastSample = -1,
+      inView = false;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#191b27');
     scene.fog = new THREE.Fog('#191b27', 7, 16);
@@ -237,9 +237,9 @@ export default function Simulation({ id }: { id: ExampleId }) {
     w.postMessage({ type: 'play', value: playing });
     const matrix = new THREE.Matrix4();
     const draw = () => {
-      if (stopped) return;
+      frame = 0;
+      if (stopped || !inView || document.hidden) return;
       frame = requestAnimationFrame(draw);
-      if (document.hidden) return;
       const state = latest.current;
       if (state) {
         for (let i = 0; i < meshes.length; i++) {
@@ -298,17 +298,28 @@ export default function Simulation({ id }: { id: ExampleId }) {
       interaction.draw();
       renderer.render(scene, camera);
     };
-    draw();
-    const visible = () =>
-      w.postMessage({
-        type: 'play',
-        value: document.hidden ? false : playingRef.current,
-      });
+    const visible = () => {
+      const active = inView && !document.hidden;
+      el.dataset.renderActive = String(active);
+      w.postMessage({ type: 'visible', value: active });
+      if (active && !frame) draw();
+      else if (!active) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+    };
+    const observer = new IntersectionObserver((entries) => {
+      inView = entries[0].isIntersecting;
+      visible();
+    });
+    observer.observe(el.closest('.experiment-workspace')!);
+    visible();
     document.addEventListener('visibilitychange', visible);
     return () => {
       stopped = true;
       cancelAnimationFrame(frame);
       ro.disconnect();
+      observer.disconnect();
       document.removeEventListener('visibilitychange', visible);
       w.postMessage({ type: 'dispose' });
       interaction.dispose();
@@ -330,7 +341,6 @@ export default function Simulation({ id }: { id: ExampleId }) {
     };
   }, [id, retry]);
   useEffect(() => {
-    playingRef.current = playing;
     worker.current?.postMessage({ type: 'play', value: playing });
   }, [playing]);
   const change = (
