@@ -20,6 +20,8 @@ export function createReadingToc() {
     document.getElementById('reading-progress'),
   ];
   const compact = matchMedia('(max-width: 1000px)');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const summary = toc.querySelector('summary')!;
   let positions: number[] = [];
   let start = 0;
   let end = 1;
@@ -28,11 +30,60 @@ export function createReadingToc() {
   // The server-rendered contents initially marks the introduction as current.
   let active = 0;
   let previousPercent = -1;
+  let followPending = true;
+  let browsingToc = false;
+  let autoScrolling = false;
+
+  const followActiveLink = () => {
+    if (!followPending || browsingToc || !toc.open) return;
+    const link = links[active];
+    if (!link) return;
+    const bounds = toc.getBoundingClientRect();
+    // Do not move the page to an offscreen sidebar, including before the article.
+    if (bounds.top >= innerHeight || bounds.bottom <= 0) return;
+    const top =
+      Math.max(bounds.top, summary.getBoundingClientRect().bottom) + 12;
+    const bottom = Math.min(bounds.bottom, innerHeight - 16) - 12;
+    if (bottom <= top) return;
+    const item = link.getBoundingClientRect();
+    const delta =
+      item.top < top || item.height > bottom - top
+        ? item.top - top
+        : Math.max(0, item.bottom - bottom);
+    followPending = false;
+    const target = Math.max(
+      0,
+      Math.min(toc.scrollHeight - toc.clientHeight, toc.scrollTop + delta),
+    );
+    if (Math.abs(target - toc.scrollTop) < 1) return;
+    autoScrolling = true;
+    // scrollIntoView can also scroll the article. Only move the contents panel.
+    toc.scrollTo({
+      top: target,
+      behavior: reducedMotion.matches ? 'instant' : 'smooth',
+    });
+  };
+  const pauseFollow = () => {
+    browsingToc = true;
+    followPending = true;
+    if (autoScrolling) {
+      toc.scrollTo({ top: toc.scrollTop, behavior: 'instant' });
+      autoScrolling = false;
+    }
+  };
+  const resumeFollow = () => {
+    // Wait for the next reading update; leaving the panel alone must not snap it.
+    browsingToc = false;
+  };
+  const resumeOutside = (event: Event) => {
+    if (!toc.contains(event.target as Node)) resumeFollow();
+  };
 
   const update = () => {
     frame = 0;
     const y = scrollY;
     if (needsMeasure) {
+      followPending = true;
       positions = sections.map((section) =>
         section ? section.getBoundingClientRect().top + y : Infinity,
       );
@@ -57,7 +108,9 @@ export function createReadingToc() {
       links[next]?.setAttribute('aria-current', 'location');
       label.textContent = links[next]?.lastElementChild?.textContent ?? '开篇';
       active = next;
+      followPending = true;
     }
+    followActiveLink();
     if (percent !== previousPercent) {
       percentage.textContent = `${percent}%`;
       meter.setAttribute('aria-valuenow', String(percent));
@@ -84,7 +137,11 @@ export function createReadingToc() {
     const link = (event.target as Element).closest<HTMLAnchorElement>(
       '[data-toc-target]',
     );
-    if (!link || !compact.matches) return;
+    if (!link) return;
+    resumeFollow();
+    followPending = true;
+    schedule();
+    if (!compact.matches) return;
     // Collapsing changes the article's document position on small screens.
     // Measure before the browser performs the native anchor navigation.
     toc.open = false;
@@ -94,7 +151,18 @@ export function createReadingToc() {
   });
   // Heading focus makes keyboard reading continue at the destination.
   sections.forEach((section) => section?.setAttribute('tabindex', '-1'));
-  toc.addEventListener('toggle', measure);
+  toc.addEventListener('toggle', () => {
+    resumeFollow();
+    measure();
+  });
+  for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+    toc.addEventListener(type, pauseFollow, { passive: true });
+    document.addEventListener(type, resumeOutside, { passive: true });
+  }
+  toc.addEventListener('pointerleave', resumeFollow);
+  toc.addEventListener('focusout', (event) => {
+    if (!toc.contains(event.relatedTarget as Node | null)) resumeFollow();
+  });
   const observer = new ResizeObserver(measure);
   observer.observe(article);
   window.addEventListener('scroll', schedule, { passive: true });
@@ -113,6 +181,8 @@ export function createReadingToc() {
       window.removeEventListener('pageshow', measure);
       window.removeEventListener('hashchange', measure);
       compact.removeEventListener('change', resize);
+      for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown'])
+        document.removeEventListener(type, resumeOutside);
     }
   });
   measure();

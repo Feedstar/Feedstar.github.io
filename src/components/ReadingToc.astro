@@ -80,10 +80,15 @@ let chapter = 0;
     top: 145px;
     max-height: calc(100dvh - 172px);
     overflow-y: auto;
+    overscroll-behavior-y: contain;
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
   }
   summary {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg);
     list-style: none;
     cursor: pointer;
     padding: 0 0 20px;
