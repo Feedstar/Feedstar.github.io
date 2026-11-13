@@ -34,6 +34,7 @@ const dates = {
   'gvhmr-motion-reconstruction': '2025-11-13',
   mimickit: '2025-11-25',
   'urdf-export-checklist': '2025-11-04',
+  'agent-simulation-rsi': '2026-11-11',
 };
 const rss = read('rss.xml');
 assert.equal((rss.match(/<item>/g) || []).length, articles.length);
@@ -45,7 +46,7 @@ assert.equal(
   new Set(
     [...rss.matchAll(/<guid[^>]*>(.*?)<\/guid>/g)].map((match) => match[1]),
   ).size,
-  17,
+  articles.length,
 );
 assert.ok(!rss.includes('lastBuildDate'));
 const sitemap = read('sitemap.xml');

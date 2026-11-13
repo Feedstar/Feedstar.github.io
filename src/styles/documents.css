@@ -16,6 +16,28 @@
 .document-article .prose {
   overflow-wrap: anywhere;
 }
+.document-article .prose table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 32px 0;
+  border-collapse: collapse;
+  font: 14px/1.9 var(--sans);
+  scrollbar-width: thin;
+}
+.document-article .prose :is(th, td) {
+  min-width: 9em;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.document-article .prose th {
+  background: var(--bg-raised);
+  color: var(--fg-bright);
+  font-weight: 500;
+}
 .document-article .prose :is(h4, h5, h6) {
   font-size: 18px;
   line-height: 1.9;

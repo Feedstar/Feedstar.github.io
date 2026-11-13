@@ -7,7 +7,7 @@ import DocumentGallery from '../components/DocumentGallery.astro';
 const documents = (await getCollection('docs')).sort(
   compareDocumentDates,
 );
-const groups = ['建模与仿真', '强化学习', '动作模仿'];
+const groups = [...new Set(documents.map((doc) => doc.data.category))];
 const titles: Record<string, string> = {
   'urdf-export-checklist': 'The shape of a robot',
   'gazebo-custom-robot': 'Into the simulation',
@@ -15,6 +15,7 @@ const titles: Record<string, string> = {
   'mini-pi-plus-beyondmimic': 'Motion, transferred',
   'gvhmr-motion-reconstruction': 'Tracing human motion',
   mimickit: 'A language of movement',
+  'agent-simulation-rsi': 'Learning to improve',
 };
 const items = documents.map((doc, i) => ({
   id: doc.id,
@@ -28,7 +29,7 @@ const items = documents.map((doc, i) => ({
 <Layout
   title="文档 · Feedstar"
   page="docs"
-  description="Feedstar 的工作记录与心得。记录机器人建模、仿真、强化学习与动作模仿的实践过程。"
+  description="Feedstar 的工作记录、研究综述与心得。记录机器人建模、仿真、强化学习、动作模仿与 Agent 的探索过程。"
 >
   <SectionIntro
     number="03"
